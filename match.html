@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Principale - 試合一覧</title>
+  <link rel="icon" href="images/logo/Principale.png" type="image/png">
+</head>
+<body>
+  <div id="header" class="pt-24"></div>
+
+  <main>
+    <section class="text-gray-600 body-font">
+      <div class="container max-w-full px-5 py-24 mx-auto">
+
+        <!-- 大会選択 -->
+        <div class="text-center mb-6">
+          <label for="tournament-select" class="font-bold mr-2">大会選択：</label>
+          <select id="tournament-select" class="border px-2 py-1 rounded"></select>
+        </div>
+
+        <!-- 試合カード一覧 -->
+        <div id="match-list" class="max-w-[75%] mx-auto flex flex-col gap-6"></div>
+
+      </div>
+    </section>
+  </main>
+
+  <div id="footer" class="pt-4"></div>
+
+  <!-- Tailwind CSS v4 -->
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+  <!-- header/footer -->
+  <script>
+    fetch('header.html')
+      .then(res => res.text())
+      .then(html => document.getElementById('header').innerHTML = html);
+
+    fetch('footer.html')
+      .then(res => res.text())
+      .then(html => document.getElementById('footer').innerHTML = html);
+  </script>
+
+<script>
+fetch('data/matches.json')
+  .then(res => res.json())
+  .then(matchList => {
+    // 日付順ソート
+    matchList.sort((a,b) => new Date(b.date + " " + b.time) - new Date(a.date + " " + a.time));
+
+    // 大会名リスト（重複排除）
+    const tournaments = [...new Set(matchList.map(m => m.tournament))];
+    const select = document.getElementById('tournament-select');
+    tournaments.forEach((tournament, idx) => {
+      const option = document.createElement('option');
+      option.value = tournament;
+      option.textContent = tournament;
+      if(idx === 0) option.selected = true;
+      select.appendChild(option);
+    });
+
+    const wrapper = document.getElementById('match-list');
+
+    const getWeekdayEn = (dateStr) => {
+      const weekEn = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+      const d = new Date(dateStr);
+      return weekEn[d.getDay()];
+    };
+
+    const renderCards = (tournamentName) => {
+      wrapper.innerHTML = '';
+      const filtered = matchList.filter(m => m.tournament === tournamentName);
+      filtered.forEach(match => {
+        const isHome = match.home.team_name === "Principale";
+        const myTeam = isHome ? match.home : match.away;
+        const opponent = isHome ? match.away : match.home;
+
+        // 勝敗判定
+        const myScore = parseInt(isHome ? match.score.split('-')[0] : match.score.split('-')[1], 10);
+        const oppScore = parseInt(isHome ? match.score.split('-')[1] : match.score.split('-')[0], 10);
+
+        let resultLabel = '';
+        let labelColor = '';
+        if(myScore > oppScore){
+          resultLabel = 'WIN';
+          labelColor = 'bg-green-600 text-white';
+        } else if(myScore < oppScore){
+          resultLabel = 'LOSE';
+          labelColor = 'bg-red-600 text-white';
+        } else {
+          resultLabel = 'DRAW';
+          labelColor = 'bg-gray-500 text-white';
+        }
+
+        const weekdayEn = getWeekdayEn(match.date);
+        const dateFormatted = `${match.date} (${weekdayEn})`;
+
+        const card = document.createElement('a');
+        card.href = `match_detail.html?id=${match.id}`;
+        card.className = "block no-underline w-full mb-6";
+
+        card.innerHTML = `
+          <div class="bg-gray-100 p-4 rounded-lg shadow-md
+                      hover:-translate-y-1 hover:shadow-xl transition transform duration-300 font-sans relative max-w-[75%] mx-auto">
+
+            <p class="text-base font-bold text-white bg-black py-1 px-2 rounded mb-3 text-center">
+              ${match.tournament}｜${match.round}
+            </p>
+
+            <div class="relative flex justify-center items-center h-32">
+              <!-- 中央情報 -->
+              <div class="flex flex-col justify-center items-center text-center z-10">
+                <!-- H&A -->
+                <p class="text-center mt-1 mb-1">
+                  <span class="text-xs font-bold px-2 py-1 bg-blue-500 text-white">
+                    ${match.home_away}
+                  </span>
+                </p>
+                <p class="text-sm font-medium text-gray-600">${dateFormatted} ${match.time}</p>
+                <p class="text-4xl font-bold text-gray-900 my-2">${match.score}</p>
+                <span class="text-xs font-bold px-2 py-1 ${labelColor}">${resultLabel}</span>
+              </div>
+              
+
+
+
+              <!-- 自チーム -->
+              <div class="absolute left-0 top-1/2 transform -translate-y-1/2 flex flex-col items-center text-center px-2">
+                <img src="${myTeam.team_logo}" class="w-16 h-16 mb-1">
+                <p class="text-base font-bold text-gray-900 break-words max-w-[100px] text-center">${myTeam.team_name}</p>
+              </div>
+
+              <!-- 相手チーム -->
+              <div class="absolute right-0 top-1/2 transform -translate-y-1/2 flex flex-col items-center text-center px-2">
+                <img src="${opponent.team_logo}" class="w-16 h-16 mb-1">
+                <p class="text-base font-bold text-gray-900 break-words max-w-[100px] text-center">${opponent.team_name}</p>
+              </div>
+            </div>
+          </div>
+        `;
+        wrapper.appendChild(card);
+      });
+    };
+
+    renderCards(tournaments[0]);
+    select.addEventListener('change', e => renderCards(e.target.value));
+  })
+  .catch(err => console.error('試合結果読み込みエラー:', err));
+</script>
+
+</body>
+</html>

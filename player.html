@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Principale | 選手一覧</title>
+  <link rel="icon" href="images/logo/Principale.png" type="image/png">
+  <!-- Tailwind CSS v4 -->
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+
+<body class="bg-gray-50" style="font-family: 'Noto Sans JP', sans-serif;">
+  <!-- ヘッダー -->
+  <div id="header" class="pt-24"></div>
+
+  <main>
+    <section class="text-gray-600 body-font">
+      <div class="container max-w-full px-5 py-24 mx-auto">
+        <!-- ページタイトル -->
+        <h1 class="sm:text-3xl text-2xl font-black title-font mb-10 text-gray-900 text-center">PLAYERS</h1>
+
+        <!-- 選手一覧コンテナ -->
+        <div id="players-container" class="max-w-full mx-auto space-y-12"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- フッター -->
+  <div id="footer" class="pt-4"></div>
+
+  <script>
+    // ヘッダーとフッター読み込み
+    fetch('header.html')
+      .then(res => res.text())
+      .then(html => document.getElementById('header').innerHTML = html);
+
+    fetch('footer.html')
+      .then(res => res.text())
+      .then(html => document.getElementById('footer').innerHTML = html);
+
+    // 選手データ読み込み
+    fetch('data/players.json')
+      .then(res => res.json())
+      .then(players => {
+        const container = document.getElementById('players-container');
+
+        // ポジションごとにグループ化
+        const grouped = {};
+        players.forEach(player => {
+          if (!grouped[player.position]) grouped[player.position] = [];
+          grouped[player.position].push(player);
+        });
+
+        // ポジション順（退団も含む）
+        const positionsOrder = ["GK", "DF", "MF", "FW", "退団"];
+
+        positionsOrder.forEach(position => {
+          const group = grouped[position];
+          if (!group) return;
+
+          // セクション作成（背景色なし）
+          const section = document.createElement('div');
+          section.className = "px-4 py-6 rounded-lg shadow-md";
+
+          // ポジションタイトル
+          const title = document.createElement('h2');
+          title.textContent = position;
+          title.className = "text-xl font-bold mb-6 text-center";
+          section.appendChild(title);
+
+          // 選手カードコンテナ
+          const cardsContainer = document.createElement('div');
+          cardsContainer.className = "flex flex-wrap justify-center gap-6";
+
+          group.forEach(player => {
+            const card = document.createElement('a');
+            card.href = `player_detail.html?id=${player.psid}`;
+            card.className = "block basis-1/2 sm:basis-1/3 md:basis-1/5 p-3 no-underline";
+
+            card.innerHTML = `
+              <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm
+                          hover:-translate-y-1 hover:shadow-md transition duration-300 text-center">
+                
+                <img src="${player.image}" alt="${player.name}"
+                  class="w-28 h-28 mx-auto mb-3 object-cover rounded-lg bg-gray-100">
+
+                <h2 class="text-xl font-extrabold tracking-tight">${player.number}</h2>
+
+                <h3 class="text-base font-semibold mt-1 text-gray-900 leading-tight">
+                  ${player.name}
+                </h3>
+
+                <p class="text-xs text-gray-500 mt-1">${player.psid}</p>
+
+                <p class="text-sm text-gray-600 mt-1 font-medium">${player.position}</p>
+              </div>
+            `;
+            cardsContainer.appendChild(card);
+          });
+
+          section.appendChild(cardsContainer);
+          container.appendChild(section);
+        });
+
+      })
+      .catch(err => console.error('選手情報読み込みエラー:', err));
+  </script>
+
+</body>
+</html>
