@@ -5,42 +5,66 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Principale</title>
 <meta name="apple-mobile-web-app-title" content="Principale">
-<meta name="theme-color" content="#72bce6">
+<meta name="theme-color" content="#0d1b2a">
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="style.css?v=20261028a">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,800;1,700;1,800&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=20261028c">
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
 <body>
 
 <header class="hd" id="hd">
-  <a class="hd-brand" href="#home">
-    <img src="images/logo/Principale.png" alt="" width="44" height="44">
-    <span id="hd-name">Principale</span>
-  </a>
-  <nav class="hd-nav" id="hd-nav">
-    <a href="#home" data-nav="home">HOME</a>
-    <a href="#news" data-nav="news">NEWS</a>
-    <a href="#match" data-nav="match">MATCH</a>
-    <a href="#players" data-nav="players">PLAYERS</a>
-    <a href="#stats" data-nav="stats">STATS</a>
-    <a href="#transfer" data-nav="transfer">TRANSFER</a>
-    <a href="#history" data-nav="history">HISTORY</a>
-  </nav>
+  <div class="hd-in">
+    <a class="hd-brand" href="#home" aria-label="ホーム">
+      <img src="images/logo/Principale.png" alt="" width="46" height="46">
+      <span class="hd-name"><b id="hd-name">Principale</b><small>ASSOCIATE FOOTBALL CLUB</small></span>
+    </a>
+    <nav class="hd-nav" aria-label="メニュー">
+      <a href="#news" data-nav="news"><b>NEWS</b><small>ニュース</small></a>
+      <a href="#match" data-nav="match"><b>MATCH</b><small>試合</small></a>
+      <a href="#players" data-nav="players"><b>PLAYERS</b><small>選手</small></a>
+      <a href="#stats" data-nav="stats"><b>STATS</b><small>記録</small></a>
+      <a href="#transfer" data-nav="transfer"><b>TRANSFER</b><small>移籍</small></a>
+      <a href="#history" data-nav="history"><b>CLUB</b><small>クラブ</small></a>
+    </nav>
+    <button class="hd-menu" id="menu-btn" aria-label="メニューを開く" aria-expanded="false" aria-controls="drawer"><i></i><i></i><i></i><span>MENU</span></button>
+  </div>
 </header>
+
+<div class="drawer" id="drawer" hidden>
+  <nav class="drawer-nav" aria-label="メニュー">
+    <a href="#home"><b>HOME</b><small>ホーム</small></a>
+    <a href="#news"><b>NEWS</b><small>ニュース</small></a>
+    <a href="#match"><b>MATCH</b><small>試合日程・結果</small></a>
+    <a href="#players"><b>PLAYERS</b><small>選手一覧</small></a>
+    <a href="#stats"><b>STATS</b><small>記録・ランキング</small></a>
+    <a href="#transfer"><b>TRANSFER</b><small>移籍情報</small></a>
+    <a href="#history"><b>CLUB</b><small>クラブ・歴史・順位表</small></a>
+  </nav>
+  <div class="drawer-sns" id="drawer-sns"></div>
+</div>
 
 <main id="view"><div class="wrap"><div class="loading">読み込み中…</div></div></main>
 
 <footer class="ft">
-  <div class="ft-sns">
-    <a href="https://www.youtube.com/@principale_fifa" target="_blank" rel="noopener" aria-label="YouTube"><svg viewBox="0 0 24 24"><path d="M23.5 6.2a3 3 0 00-2.1-2.1C19.4 3.5 12 3.5 12 3.5s-7.4 0-9.4.6A3 3 0 00.5 6.2 31.9 31.9 0 000 12a31.9 31.9 0 00.5 5.8 3 3 0 002.1 2.1c2 .6 9.4.6 9.4.6s7.4 0 9.4-.6a3 3 0 002.1-2.1A31.9 31.9 0 0024 12a31.9 31.9 0 00-.5-5.8zM9.8 15V9l6.5 3-6.5 3z"/></svg></a>
-    <a href="https://X.com/Principale_fifa" target="_blank" rel="noopener" aria-label="X"><svg viewBox="0 0 24 24"><path d="M18.2 2.3h3.4l-7.4 8.4 8.7 11.5h-6.8l-5.3-7-6.1 7H1.3l7.9-9L.9 2.3h7l4.8 6.3 5.5-6.3zm-1.2 17.9h1.9L7.1 4.2H5.1l11.9 16z"/></svg></a>
-    <a href="https://discord.gg/wxY9n4Me5m" target="_blank" rel="noopener" aria-label="Discord"><svg viewBox="0 0 24 24"><path d="M20.3 4.4a19.8 19.8 0 00-4.9-1.5l-.6 1.2a18.3 18.3 0 00-5.5 0L8.7 2.9a19.7 19.7 0 00-4.9 1.5C.5 9-.3 13.6.1 18.1a19.9 19.9 0 006.1 3.1l1.3-2.1a13 13 0 01-1.9-.9l.4-.3a14.2 14.2 0 0012 0l.4.3c-.6.4-1.2.7-1.9.9l1.3 2.1a19.9 19.9 0 006.1-3.1c.5-5.2-.8-9.6-3.6-13.7zM8 15.3c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4zm8 0c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4z"/></svg></a>
+  <div class="ft-in">
+    <div class="ft-brand"><img src="images/logo/Principale.png" alt="" width="64" height="64"><b id="ft-club">Principale</b></div>
+    <nav class="ft-map">
+      <a href="#news">NEWS</a><a href="#match">MATCH</a><a href="#players">PLAYERS</a><a href="#stats">STATS</a><a href="#transfer">TRANSFER</a><a href="#history">CLUB</a>
+    </nav>
+    <div class="ft-sns" id="ft-sns">
+      <a href="https://www.youtube.com/@principale_fifa" target="_blank" rel="noopener" aria-label="YouTube"><svg viewBox="0 0 24 24"><path d="M23.5 6.2a3 3 0 00-2.1-2.1C19.4 3.5 12 3.5 12 3.5s-7.4 0-9.4.6A3 3 0 00.5 6.2 31.9 31.9 0 000 12a31.9 31.9 0 00.5 5.8 3 3 0 002.1 2.1c2 .6 9.4.6 9.4.6s7.4 0 9.4-.6a3 3 0 002.1-2.1A31.9 31.9 0 0024 12a31.9 31.9 0 00-.5-5.8zM9.8 15V9l6.5 3-6.5 3z"/></svg></a>
+      <a href="https://X.com/Principale_fifa" target="_blank" rel="noopener" aria-label="X"><svg viewBox="0 0 24 24"><path d="M18.2 2.3h3.4l-7.4 8.4 8.7 11.5h-6.8l-5.3-7-6.1 7H1.3l7.9-9L.9 2.3h7l4.8 6.3 5.5-6.3zm-1.2 17.9h1.9L7.1 4.2H5.1l11.9 16z"/></svg></a>
+      <a href="https://discord.gg/wxY9n4Me5m" target="_blank" rel="noopener" aria-label="Discord"><svg viewBox="0 0 24 24"><path d="M20.3 4.4a19.8 19.8 0 00-4.9-1.5l-.6 1.2a18.3 18.3 0 00-5.5 0L8.7 2.9a19.7 19.7 0 00-4.9 1.5C.5 9-.3 13.6.1 18.1a19.9 19.9 0 006.1 3.1l1.3-2.1a13 13 0 01-1.9-.9l.4-.3a14.2 14.2 0 0012 0l.4.3c-.6.4-1.2.7-1.9.9l1.3 2.1a19.9 19.9 0 006.1-3.1c.5-5.2-.8-9.6-3.6-13.7zM8 15.3c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4zm8 0c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4z"/></svg></a>
+    </div>
+    <p class="ft-copy">© <span id="ft-year">2026</span> <span id="ft-name">Principale</span>. All Rights Reserved.<br><small>FC27 監督キャリアの記録サイトです。データはGoogleスプレッドシートから読み込んでいます。</small></p>
   </div>
-  <p class="ft-copy">© <span id="ft-year">2026</span> <span id="ft-name">Principale</span><br><small>データはGoogleスプレッドシートから読み込んでいます</small></p>
 </footer>
 
-<script src="app.js?v=20261028a"></script>
+<script src="app.js?v=20261028c"></script>
 </body>
 </html>
