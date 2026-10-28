@@ -126,7 +126,7 @@ img{display:block;max-width:100%;}
 .hero{background:var(--navy);color:#fff;position:relative;overflow:hidden;}
 .hero::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(-60deg,rgba(114,188,230,.06) 0 26px,transparent 26px 52px);}
 .hero-in{max-width:1280px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1.75fr) minmax(0,1fr);gap:0;position:relative;}
-.slider{position:relative;}
+.slider{position:relative;min-width:0;}
 .slides{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;scroll-behavior:smooth;}
 .slides::-webkit-scrollbar{display:none;}
 .slide{flex:0 0 100%;scroll-snap-align:start;position:relative;display:block;}
@@ -145,7 +145,16 @@ img{display:block;max-width:100%;}
 .hl .meta{display:flex;gap:8px;align-items:center;font-size:11px;color:rgba(255,255,255,.6);}
 .hl p{font-size:14px;font-weight:700;line-height:1.5;margin-top:3px;}
 .hl:hover p{color:var(--sky);}
-@media(max-width:960px){ .hero-in{grid-template-columns:1fr;} .hero-side{display:none;} .slide-cap{position:static;background:var(--navy);padding:12px 16px 16px;min-height:86px;} .slide-cap h3{font-size:15px;max-width:none;} .dots{top:auto;bottom:auto;right:14px;margin-top:-24px;position:relative;justify-content:flex-end;} }
+@media(max-width:960px){
+  .hero-in{grid-template-columns:minmax(0,1fr);} .hero-side{display:none;}
+  .slides{gap:12px;padding:16px 16px 18px;scroll-padding:0 16px;}
+  .slide{flex:0 0 62%;max-width:260px;}
+  .slide .nv{border-radius:2px;}
+  .slide-cap{position:static;background:none;padding:8px 2px 0;}
+  .slide-cap .meta{margin-bottom:2px;font-size:11px;}
+  .slide-cap h3{font-size:13px;font-weight:700;line-height:1.45;max-width:none;}
+  .dots{display:none;}
+}
 
 /* カテゴリ */
 .cat{display:inline-block;font-family:var(--en);font-weight:700;font-size:12px;letter-spacing:.1em;padding:0 8px;line-height:1.7;color:#fff;background:var(--sky-d);}
@@ -259,7 +268,7 @@ img{display:block;max-width:100%;}
 .mrow-d b small{font-size:13px;margin-left:3px;}
 .mrow-d span{font-size:11px;color:var(--ink2);font-weight:700;line-height:1.4;display:block;margin-top:4px;}
 .mrow-t{display:flex;align-items:center;gap:10px;font-weight:700;font-size:14px;min-width:0;}
-.mrow-t span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.mrow-t span{min-width:0;line-height:1.35;overflow-wrap:anywhere;}
 .mrow-t.r{justify-content:flex-end;text-align:right;}
 .mrow-t .logo{width:40px;height:40px;flex:0 0 auto;font-size:11px;}
 .mrow-s{text-align:center;font-family:var(--en);font-weight:800;font-size:34px;line-height:1;}
@@ -331,11 +340,11 @@ img{display:block;max-width:100%;}
 .pitch::before{content:"";position:absolute;left:6%;right:6%;top:4%;bottom:-40%;border:2px solid rgba(255,255,255,.55);}
 .pitch::after{content:"";position:absolute;left:30%;right:30%;bottom:4%;height:16%;border:2px solid rgba(255,255,255,.55);border-bottom:none;}
 .pitch .arc{position:absolute;left:50%;top:-14%;width:30%;aspect-ratio:1;transform:translateX(-50%);border:2px solid rgba(255,255,255,.55);border-radius:50%;}
-.pp{position:absolute;transform:translate(-50%,-50%);width:22%;text-align:center;color:#fff;z-index:1;}
+.pp{position:absolute;transform:translate(-50%,-50%);width:24%;text-align:center;color:#fff;z-index:1;}
 .pp-s{width:40px;height:40px;margin:0 auto;border-radius:50%;background:var(--navy);border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-family:var(--en);font-weight:800;font-size:19px;position:relative;box-shadow:0 2px 6px rgba(0,0,0,.3);}
 .pp.opp .pp-s{background:#fff;color:var(--navy);border-color:var(--navy);}
 .pp.gk .pp-s{background:var(--gold);color:var(--navy);}
-.pp-n{display:block;font-size:11px;font-weight:700;line-height:1.25;margin-top:3px;text-shadow:0 1px 3px rgba(0,0,0,.7);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pp-n{display:block;font-size:11px;font-weight:700;line-height:1.25;margin-top:3px;text-shadow:0 1px 3px rgba(0,0,0,.7);white-space:normal;word-break:keep-all;overflow-wrap:anywhere;}
 .pp-r{position:absolute;right:-14px;top:-8px;font-family:var(--en);font-weight:800;font-size:12px;padding:0 4px;line-height:1.5;color:#fff;}
 .rt{font-family:var(--en);font-weight:800;color:#fff;padding:0 6px;display:inline-block;min-width:34px;text-align:center;}
 .rt.r9{background:#1565c0;} .rt.r8{background:#1aa053;} .rt.r7{background:#7cb342;} .rt.r6{background:#f2a000;} .rt.r5{background:#d83a3a;}
@@ -343,7 +352,7 @@ img{display:block;max-width:100%;}
 .ico-y,.ico-r{display:inline-block;width:8px;height:11px;border-radius:1px;vertical-align:-1px;}
 .ico-y{background:#f5c400;} .ico-r{background:#d83a3a;}
 .pp a{color:inherit;}
-@media(max-width:480px){ .pp-s{width:32px;height:32px;font-size:15px;} .pp-n{font-size:10px;} }
+@media(max-width:480px){ .pp-s{width:32px;height:32px;font-size:15px;} .pp-n{font-size:9.5px;line-height:1.2;} }
 .subs{margin-top:12px;font-size:13px;}
 .subs h4{font-family:var(--en);font-weight:800;font-size:15px;letter-spacing:.08em;margin-bottom:4px;}
 .subs li{list-style:none;display:flex;gap:8px;align-items:center;padding:4px 0;border-bottom:1px dashed var(--line);}
@@ -475,3 +484,27 @@ table.t{width:100%;border-collapse:collapse;font-size:13px;white-space:nowrap;}
 @media(max-width:760px){ .ft-in{grid-template-columns:1fr;justify-items:center;text-align:center;} .ft-map{justify-content:center;} }
 .nv-kind.long{font-size:6.6cqw;}
 .slide .nv-date{display:none;}
+
+/* ===== Jリーグ公式の項目に合わせた追加 ===== */
+/* ボール支配率（試合のスタッツ） */
+.poss{margin:4px 0 8px;text-align:center;}
+.poss-bar{display:flex;height:34px;overflow:hidden;font-family:var(--en);font-weight:800;font-size:18px;color:#fff;}
+.poss-bar i{display:flex;align-items:center;padding:0 12px;font-style:normal;}
+.poss-bar i:first-child{background:var(--sky-d);}
+.poss-bar i:last-child{background:var(--navy3);flex:1;justify-content:flex-end;}
+.poss span{display:block;font-size:12px;font-weight:700;color:var(--ink2);margin-top:6px;}
+/* ピッチの交代マーク */
+.pp-off{position:absolute;right:-10px;top:-6px;font-size:10px;color:#ffb4b4;text-shadow:0 1px 2px rgba(0,0,0,.6);}
+/* 選手ページのスタッツ（分類ごとのパネル） */
+.pstats{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;}
+.pstat{border:1px solid var(--line);}
+.pstat h3{background:var(--navy);color:#fff;font-size:13px;font-weight:700;padding:8px 14px;letter-spacing:.06em;}
+.pstat dl{display:grid;grid-template-columns:1fr 1fr;}
+.pstat dl div{padding:9px 14px;border-bottom:1px solid var(--line);}
+.pstat dl div:nth-child(odd){border-right:1px solid var(--line);}
+.pstat dt{font-size:11px;color:var(--ink2);font-weight:700;line-height:1.4;}
+.pstat dd{font-family:var(--en);font-weight:800;font-size:24px;line-height:1.2;}
+.pstat dd small{font-family:"Noto Sans JP",sans-serif;font-size:11px;font-weight:700;margin-left:3px;color:var(--ink2);}
+.pstat dd em{display:block;font-style:normal;font-family:"Noto Sans JP",sans-serif;font-size:10px;font-weight:500;color:var(--ink3);}
+.t th small{font-weight:500;opacity:.8;}
+#view{overflow-x:clip;}
