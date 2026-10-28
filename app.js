@@ -185,7 +185,7 @@ async function loadAll(){
     const date=pDate(F(o,"日付"));
     return { i, season:F(o,"シーズン"), date, key:dKey(date), comp:F(o,"大会")||"試合", round:F(o,"節・回戦"), ha, opp, gf, ga, pk, res, played,
       draw: played && gf===ga, scorers:parseNames(F(o,"得点者")), assists:parseNames(F(o,"アシスト")), mom:fullName(F(o,"MOM")), momAuto:false,
-      att:num(F(o,"観客数")), memo:F(o,"メモ"), video:F(o,"動画"), ts:{}, lu:{me:[],opp:[]}, ev:[] };
+      att:num(F(o,"観客数")), memo:F(o,"メモ"), ts:{}, lu:{me:[],opp:[]}, ev:[] };
   }).filter(Boolean);
   D.matches.sort((a,b)=>(a.date&&b.date? a.date-b.date : 0) || a.i-b.i);
   D.matches.forEach((m,k)=>m.id=k+1);
@@ -431,7 +431,7 @@ function matchBox(m, label){
         <div class="mteam">${logo(S.away)}${esc(S.away)}</div></div>
       ${m.played?`<div class="mres"><span class="res ${resCls(m)}">${resEN(m)}</span></div>`:""}
     </a>
-    <div class="mlinks">${m.played?`<a href="#match/${m.id}">試合詳細</a>${hasStats(m)?`<a href="#match/${m.id}/stats">スタッツ</a>`:""}${m.lu.me.length?`<a href="#match/${m.id}/lineup">スタメン</a>`:""}${m.video?`<a href="${esc(m.video)}" target="_blank" rel="noopener">動画</a>`:""}`
+    <div class="mlinks">${m.played?`<a href="#match/${m.id}">試合詳細</a>${hasStats(m)?`<a href="#match/${m.id}/stats">スタッツ</a>`:""}${m.lu.me.length?`<a href="#match/${m.id}/lineup">スタメン</a>`:""}`
       :`<a href="#match">試合日程</a><a href="#match/${m.id}">対戦情報</a>`}</div></div>`;
 }
 const hasStats = m => !!(m.ts.me || m.ts.opp);
@@ -531,7 +531,6 @@ function bMatch(){ bindSel("mt-season", v=>{ ST.season=v; render(); }); document
 const STAT_ITEMS = [["poss","ボール支配率","%"],["sh","シュート",""],["sot","枠内シュート",""],["xg","ゴール期待値（xG）",""],["pass","パス",""],["passp","パス成功率","%"],
   ["tk","タックル",""],["int","インターセプト",""],["foul","ファウル",""],["off","オフサイド",""],["ck","コーナーキック",""],["sv","セーブ",""],["yc","警告",""],["rc","退場",""]];
 const LOW_BETTER = {foul:1,off:1,yc:1,rc:1};
-function ytId(u){ const m=String(u||"").match(/(?:youtu\.be\/|v=|\/live\/|\/shorts\/|\/embed\/)([\w-]{11})/); return m?m[1]:null; }
 
 function vMatchDetail(arg){
   const [id, tab]=String(arg).split("/");
@@ -566,7 +565,6 @@ function bMatchDetail(){ document.querySelectorAll(".mtabs button").forEach(b=>b
   document.querySelectorAll("#lu-side .pill").forEach(b=>b.onclick=()=>{ ST.luSide=b.dataset.s; render(); }); }
 
 function tabSummary(m){
-  const v=ytId(m.video);
   const mom=m.mom ? m.lu.me.find(l=>same(l.name,m.mom)) : null;
   const list=(L)=> L.length? `<ul>${L.map(x=>`<li><a href="#player/${encodeURIComponent(x.name)}">${esc(x.name)}</a>${x.n>1?` ×${x.n}`:""}</li>`).join("")}</ul>` : `<p style="color:var(--ink3);font-size:13px">なし</p>`;
   return `<div class="box-grid">
@@ -576,8 +574,6 @@ function tabSummary(m){
       ${m.att?`<div class="box"><h3>ATTENDANCE<small>観客数</small></h3><b class="en" style="font-size:36px;font-weight:800">${nf(m.att)}</b> 人</div>`:""}
     </div>
     ${m.memo?`<div class="memo">${esc(m.memo)}</div>`:""}
-    ${v?`<div class="video"><iframe src="https://www.youtube-nocookie.com/embed/${v}" title="試合の動画" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`
-      : m.video?`<p style="margin-top:16px"><a class="btn" href="${esc(m.video)}" target="_blank" rel="noopener">VIDEO ›</a></p>`:""}
     ${hasStats(m)?`<div style="margin-top:28px">${tabStats(m, sides(m), 4)}</div>`:""}`;
 }
 function tabStats(m,S,limit){
