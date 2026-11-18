@@ -604,3 +604,6 @@ div.prow:hover{background:var(--white)}
 .srev li:last-child{border-bottom:0}
 .srev li span{grid-row:1/3;font-size:12px;font-weight:700;color:var(--tx3);align-self:center}
 .srev li b{font-weight:900;font-size:16px}
+/* 透過の選手写真は背景なし */
+.phero .photo img.face,.pcard .ph-wrap img.face,.rk-top img.face,.nt img.face,.mgr img.face,.pl img.face{background:transparent}
+.phero .photo img.face{object-fit:contain;object-position:bottom}
