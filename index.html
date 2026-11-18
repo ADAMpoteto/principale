@@ -3,16 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Principale ― キャリアモード記録</title>
-<meta name="description" content="FC27 キャリアモードの試合・選手・スタッツの記録">
-<meta name="theme-color" content="#111111">
+<title>Principale</title>
+<meta name="theme-color" content="#1c2833">
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=27c1">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=27d1">
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
 <body>
@@ -21,28 +20,36 @@
   <div class="top-in">
     <a class="brand" href="#/">
       <span id="brand-logo"></span>
-      <span class="brand-txt"><b id="brand-name">Principale</b><small id="brand-sub">CAREER MODE</small></span>
+      <span class="brand-txt"><b id="brand-name">Principale</b><small id="brand-sub">Associate Football Club</small></span>
     </a>
-    <label class="season-pick"><span>シーズン</span><select id="season" aria-label="シーズンを選ぶ"></select></label>
+    <nav class="tabs" id="tabs">
+      <a href="#/" data-p="home"><b>TOP</b><small>トップ</small></a>
+      <a href="#/matches" data-p="matches"><b>MATCHES</b><small>試合日程・結果</small></a>
+      <a href="#/table" data-p="table"><b>STANDINGS</b><small>順位表</small></a>
+      <a href="#/stats" data-p="stats"><b>STATS</b><small>記録</small></a>
+      <a href="#/squad" data-p="squad"><b>PLAYERS</b><small>選手・スタッフ</small></a>
+      <a href="#/transfers" data-p="transfers"><b>TRANSFERS</b><small>移籍情報</small></a>
+      <a href="#/history" data-p="history"><b>CLUB</b><small>クラブ</small></a>
+    </nav>
+    <label class="season-pick"><select id="season" aria-label="シーズン"></select></label>
+    <button class="menu-btn" id="menu-btn" aria-label="メニュー" aria-expanded="false"><i></i><i></i><i></i></button>
   </div>
-  <nav class="tabs" id="tabs" aria-label="メニュー">
-    <a href="#/" data-p="home">概要</a>
-    <a href="#/matches" data-p="matches">試合</a>
-    <a href="#/table" data-p="table">順位表</a>
-    <a href="#/stats" data-p="stats">スタッツ</a>
-    <a href="#/squad" data-p="squad">選手</a>
-    <a href="#/transfers" data-p="transfers">移籍</a>
-    <a href="#/history" data-p="history">歴史</a>
-  </nav>
 </header>
 
-<main id="view"><div class="wrap"><div class="loading">読み込み中…</div></div></main>
+<main id="view"><div class="loading">Loading…</div></main>
 
 <footer class="foot">
-  <p><b id="foot-name">Principale</b> ― FC27 キャリアモードの記録。データは Google スプレッドシートから読み込んでいます。</p>
+  <div class="foot-in">
+    <a class="foot-brand" href="#/"><span id="foot-logo"></span><b id="foot-name">Principale</b></a>
+    <nav>
+      <a href="#/">TOP</a><a href="#/matches">MATCHES</a><a href="#/table">STANDINGS</a><a href="#/stats">STATS</a>
+      <a href="#/squad">PLAYERS</a><a href="#/transfers">TRANSFERS</a><a href="#/history">CLUB</a>
+    </nav>
+  </div>
+  <div class="copy">© <span id="copy-name">Principale</span>. All Rights Reserved.</div>
 </footer>
 
 <div class="tip" id="tip" role="tooltip" hidden></div>
-<script src="app.js?v=27c1"></script>
+<script src="app.js?v=27d1"></script>
 </body>
 </html>
