@@ -201,9 +201,12 @@ async function loadAll() {
   const ss = new Set([...D.matches, ...D.trans, ...D.table, ...D.seasons].map(x => x.season).filter(Boolean));
   if (!ss.size && D.conf["最初のシーズン"]) ss.add(D.conf["最初のシーズン"]);
   D.seasonList = [...ss].sort().reverse();
+  if (!D.seasonList.length) D.seasonList = [curSeason()];
   const last = D.played[D.played.length - 1];
-  ST.season = (last && last.season) || D.seasonList[0] || "";
+  ST.season = ST.cur = (last && last.season) || D.seasonList[0];
 }
+/* 今のシーズン（7月はじまり。例：2026年11月 → 2026-27） */
+function curSeason() { const t = new Date(), y = t.getFullYear(); return t.getMonth() >= 6 ? `${y}-${String(y + 1).slice(2)}` : `${y - 1}-${String(y).slice(2)}`; }
 const isGoal = e => /ゴール/.test(e.kind) && !/失敗/.test(e.kind);
 function count(names) { const c = {}; names.filter(Boolean).forEach(n => c[n] = (c[n] || 0) + 1); return Object.keys(c).map(n => ({ name: n, n: c[n] })); }
 
@@ -447,7 +450,8 @@ const ICON = {
 };
 const dotD = d => d ? `${pad(d.getMonth() + 1)}.${pad(d.getDate())}` : "--.--";
 const dotY = d => d ? `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())}` : "";
-const band = (en, jp) => `<section class="band"><div class="band-in"><h1>${esc(en)}</h1><p>${esc(jp)}</p></div></section>`;
+const seasonSel = () => `<label class="ssel"><span>SEASON</span><select id="season" aria-label="シーズン">${D.seasonList.map(s => `<option value="${esc(s)}"${s === ST.season ? " selected" : ""}>${esc(s)}</option>`).join("")}</select></label>`;
+const band = (en, jp, withSeason) => `<section class="band"><div class="band-in"><div><h1>${esc(en)}</h1><p>${esc(jp)}</p></div>${withSeason ? seasonSel() : ""}</div></section>`;
 const sec = (en, jp, link, linkTxt) => `<h2 class="sec"><b>${esc(en)}</b><small>${esc(jp)}</small>${link ? `<a href="${link}">${esc(linkTxt || "VIEW ALL")}</a>` : ""}</h2>`;
 const kickoff = m => { const t = half(m.memo).match(/(\d{1,2}:\d{2})/); return t ? t[1] : ""; };
 const venue = m => m.stadium || (m.ha === "H" ? D.conf["ホームスタジアム"] : "") || "";
@@ -480,7 +484,7 @@ function rkCard(M, P, label) {
     ${R.slice(1, 5).map((x, i) => `<a class="rk-row" href="#/player/${encodeURIComponent(x.p.name)}"><span class="n">${i + 2}</span><span class="nm">${esc(x.p.name)}</span><span class="val">${v(x.v)}</span></a>`).join("")}
     ${R.length > 5 ? `<a class="all" href="#/stats/${encodeURIComponent(M.k)}">ランキングを見る</a>` : ""}</div>`;
 }
-const seasonLabel = s => s || "通算";
+const seasonLabel = s => s || "";
 
 /* ---------- ニュース（試合・移籍から自動で作る） ---------- */
 function buildNews() {
@@ -504,7 +508,7 @@ const newsList = L => `<div class="news">${L.map(n => `<a href="${n.href}"><time
    ページ
    ===================================================================== */
 function vHome() {
-  const s = ST.season, L = ofSeason(s), r = record(L);
+  const s = ST.cur, L = ofSeason(s), r = record(L);
   const next = D.matches.find(m => !m.played && (!s || m.season === s)) || D.matches.find(m => !m.played);
   const lastM = L[L.length - 1];
   const P = playerAgg(L);
@@ -516,7 +520,7 @@ function vHome() {
       <div class="nm-vs">${clubBox(h.home)}<span class="v">VS</span>${clubBox(h.away)}</div>
       <div class="nm-venue">${venue(next) ? esc(venue(next)) : next.ha === "H" ? "HOME" : next.ha === "A" ? "AWAY" : ""}</div>
       <a class="btn w" href="#/match/${next.id}">MATCH INFO</a></div>`; })()
-    : `<div class="nm-card"><p class="hero-lab">${esc(seasonLabel(s))}</p><div class="nm-date"><b style="font-size:72px">${esc(clubName())}</b></div></div>`;
+    : `<div class="hero-club">${logo(clubName(), "xl")}<div><p class="hero-lab">${esc(s)} SEASON</p><h1 class="hero-name">${esc(clubName())}</h1>${D.conf["リーグ"] ? `<p class="hero-sub">${esc(D.conf["リーグ"])}</p>` : ""}</div></div>`;
   const lr = lastM ? (() => { const h = homeAway(lastM); return `<a class="lr" href="#/match/${lastM.id}"><p class="hero-lab">LATEST RESULT</p><div class="lr-comp">${esc(roundTxt(lastM))}・${dotY(lastM.date)}</div>
       <div class="lr-score"><div class="club">${logo(h.home, "md")}<span>${esc(h.home)}</span></div><b>${scoreTxt(lastM)}</b><div class="club">${logo(h.away, "md")}<span>${esc(h.away)}</span></div></div>
       <div class="lr-sc">${lastM.scorers.map(x => esc(x.name) + (x.n > 1 ? ` ×${x.n}` : "")).join("、")}</div></a>`; })() : "";
@@ -528,7 +532,7 @@ function vHome() {
   <div class="wrap">${D.err ? `<div class="err">${esc(D.err)}</div>` : ""}
   <div class="grid"><div>
     ${news.length ? sec("NEWS", "ニュース", "#/news") + newsList(news) : ""}
-    ${recent.length ? sec("MATCHES", "試合日程・結果", "#/matches") + `<div class="mlist">${recent.map(matchRow).join("")}</div>` : ""}
+    ${sec("MATCHES", "試合日程・結果", "#/matches")}${recent.length ? `<div class="mlist">${recent.map(matchRow).join("")}</div>` : `<div class="panel">${empty("試合日程はまだありません。")}</div>`}
   </div><div>
     ${st ? sec("STANDINGS", st.comp, "#/table") + st.html : ""}
     ${sec("SEASON", seasonLabel(s))}
@@ -561,7 +565,7 @@ function vMatches() {
   const L = M.filter(m => ST.comp === "すべて" || m.comp === ST.comp);
   const groups = {}; L.forEach(m => { const k = m.date ? `${m.date.getFullYear()}.${pad(m.date.getMonth() + 1)}` : "-"; (groups[k] = groups[k] || []).push(m); });
   const r = record(L.filter(m => m.played));
-  return band("MATCHES", `試合日程・結果｜${seasonLabel(s)}`) + `<div class="wrap narrow">
+  return band("MATCHES", "試合日程・結果", true) + `<div class="wrap narrow">
     ${comps.length > 2 ? `<div class="pills" id="comp-pills">${comps.map(c => `<button class="pill${c === ST.comp ? " on" : ""}" data-c="${esc(c)}">${esc(c)}</button>`).join("")}</div>` : ""}
     ${r.n ? `<p class="mrec">${r.n}試合　${r.w}勝 ${r.d}分 ${r.l}敗　得点 ${r.gf}　失点 ${r.ga}</p>` : ""}
     <div class="mlist">${Object.keys(groups).map(g => `<div class="mh">${esc(g)}</div>${groups[g].map(matchRow).join("")}`).join("") || `<div class="panel">${empty("試合はまだありません。")}</div>`}</div></div>`;
@@ -664,7 +668,7 @@ function matchLineup(m) {
 function vTable() {
   const s = ST.season || D.seasonList[0];
   const st = standing(s, ST.tcomp, false);
-  return band("STANDINGS", `順位表｜${s || ""}`) + `<div class="wrap narrow">
+  return band("STANDINGS", "順位表", true) + `<div class="wrap narrow">
     ${st && st.comps.length > 1 ? `<div class="pills" id="tcomp">${st.comps.map(c => `<button class="pill${c === st.comp ? " on" : ""}" data-c="${esc(c)}">${esc(c)}</button>`).join("")}</div>` : ""}
     ${st ? sec(st.comp, s) + st.html : `<div class="panel">${empty("順位表はまだありません。")}</div>`}
     ${historyBlock()}</div>`;
@@ -676,14 +680,14 @@ function vStats(arg) {
   if (arg) {
     const M = PM.find(x => x.k === arg); if (!M) return `<div class="wrap">${empty("項目が見つかりません。")}</div>`;
     const R = ranked(P, M);
-    return band("STATS", `${M.k}｜${seasonLabel(s)}`) + `<div class="wrap narrow"><div class="panel rank-full">${R.map((x, i) => `<a class="rk-row" href="#/player/${encodeURIComponent(x.p.name)}"><span class="n">${i + 1}</span>${face(x.p.name)}
+    return band("STATS", M.k, true) + `<div class="wrap narrow"><div class="panel rank-full">${R.map((x, i) => `<a class="rk-row" href="#/player/${encodeURIComponent(x.p.name)}"><span class="n">${i + 1}</span>${face(x.p.name)}
         <span class="nm">${esc(x.p.name)}<small style="display:block;color:var(--tx3);font-size:12px;font-weight:500">${esc(x.p.pos || "")}　${x.p.apps}試合</small></span><span class="val">${fmtN(x.v, M.d)}${M.u === "%" ? "%" : ""}</span></a>`).join("") || empty("該当する選手がいません。")}</div>
       <p class="back"><a class="btn" href="#/stats">STATS</a></p></div>`;
   }
   const cards = PM.map(M => rkCard(M, P)).filter(Boolean);
   const TM = teamMetrics(L), tg = {}; TM.forEach(x => (tg[x.g] = tg[x.g] || []).push(x));
   const GE = { 概要: "OVERVIEW", 攻撃: "ATTACK", パス: "PASSING", 守備: "DEFENCE", 規律: "DISCIPLINE" };
-  return band("STATS", `記録｜${seasonLabel(s)}`) + `<div class="wrap">
+  return band("STATS", "記録", true) + `<div class="wrap">
     ${sec("PLAYER STATS", "選手記録")}
     ${cards.length ? `<div class="sgrid">${cards.join("")}</div>` : `<div class="panel">${empty("記録はまだありません。")}</div>`}
     ${sec("TEAM STATS", "チーム記録")}
@@ -704,7 +708,7 @@ function vSquad() {
       <div class="ph-wrap">${p.no != null ? `<span class="no">${p.no}</span>` : ""}${face(p.name)}<span class="pos">${esc(p.pos || "")}</span></div>
       <div class="info"><b>${esc(p.name)}</b><small>${/レンタル/.test(p.status) ? "期限付き移籍中" : a.apps ? `${a.apps}試合 ${a.g}得点 ${a.a}アシスト` : "出場なし"}</small></div></a>`; };
   const out = D.players.filter(p => /退団/.test(p.status));
-  return band("PLAYERS", "選手") + `<div class="wrap">
+  return band("PLAYERS", "選手", true) + `<div class="wrap">
     ${["GK", "DF", "MF", "FW", "他"].filter(k => G[k].length).map(k => sec(lbl[k][0], lbl[k][1]) + `<div class="pgrid">${G[k].sort((a, b) => (a.no ?? 999) - (b.no ?? 999)).map(card).join("")}</div>`).join("") || `<div class="panel">${empty("選手情報はまだありません。")}</div>`}
     ${D.conf["監督名"] ? sec("STAFF", "スタッフ") + `<div class="prof"><div><span>監督</span><b>${esc(D.conf["監督名"])}</b></div></div>` : ""}
     ${out.length ? sec("FORMER PLAYERS", "過去に在籍した選手") + `<div class="panel">${out.map(p => `<a class="prow" href="#/player/${encodeURIComponent(p.name)}"><span class="no"></span>${face(p.name)}<div class="nm"><b>${esc(p.name)}</b><small>${esc(p.pos)}</small></div></a>`).join("")}</div>` : ""}</div>`;
@@ -738,7 +742,7 @@ function vPlayer(name) {
   <div class="wrap">
     ${info.length ? sec("PROFILE", "プロフィール") + `<div class="prof">${info.map(([k, v]) => `<div><span>${k}</span><b>${esc(v)}</b></div>`).join("")}</div>` : ""}
     ${p.memo ? `<p style="color:var(--tx2);margin:12px 0 0">${esc(p.memo)}</p>` : ""}
-    ${sec("SEASON STATS", seasonLabel(s))}
+    <h2 class="sec"><b>SEASON STATS</b><small>シーズン成績</small><span style="margin-left:auto">${seasonSel()}</span></h2>
     ${tiles.length ? `<div class="tiles">${tiles.map(([k, v, u]) => `<div class="tile"><span>${k}</span><b>${typeof v === "number" ? fmtN(v) : esc(v)}${u ? `<small>${u}</small>` : ""}</b></div>`).join("")}</div>` : `<div class="panel">${empty("このシーズンの出場はありません。")}</div>`}
     ${ratings.length ? sec("RATING", "試合ごとの評価") + `<div class="chart">${ratingChart(ratings.slice(-30))}</div>` : ""}
     ${ovrChart ? sec("GROWTH", "総合値の推移") + `<div class="chart">${ovrChart}</div>` : ""}
@@ -767,7 +771,7 @@ function vTransfers() {
   const s = ST.season, T = D.trans.filter(t => !s || t.season === s).sort((a, b) => (b.date || 0) - (a.date || 0));
   const ins = T.filter(t => IN_KINDS.test(t.kind)), outs = T.filter(t => OUT_KINDS.test(t.kind)), etc = T.filter(t => !IN_KINDS.test(t.kind) && !OUT_KINDS.test(t.kind));
   const spend = sum(ins, t => t.fee), income = sum(outs, t => t.fee);
-  return band("TRANSFERS", `移籍情報｜${seasonLabel(s)}`) + `<div class="wrap narrow">
+  return band("TRANSFERS", "移籍情報", true) + `<div class="wrap narrow">
     ${T.length ? `<div class="tiles" style="margin-bottom:8px"><div class="tile"><span>獲得（${ins.length}人）</span><b>${money(spend) || "-"}</b></div>
       <div class="tile"><span>放出（${outs.length}人）</span><b>${money(income) || "-"}</b></div>
       <div class="tile"><span>収支</span><b>${spend || income ? (income - spend >= 0 ? "+" : "") + money(income - spend) : "-"}</b></div></div>` : ""}
@@ -808,8 +812,7 @@ function vHistory() {
    ===================================================================== */
 function parseHash() { const h = decodeURIComponent((location.hash || "").replace(/^#\/?/, "")); const [page, ...rest] = h.split("/").filter(Boolean); return { page: page || "home", arg: rest.join("/") || null }; }
 function fillSeason() {
-  const sel = $("season");
-  sel.innerHTML = D.seasonList.map(s => `<option value="${esc(s)}"${s === ST.season ? " selected" : ""}>${esc(s)}</option>`).join("") + `<option value=""${!ST.season ? " selected" : ""}>通算</option>`;
+  const sel = $("season"); if (!sel) return;
   sel.onchange = () => { ST.season = sel.value; render(); };
 }
 function render() {
@@ -833,6 +836,7 @@ window.addEventListener("hashchange", () => { const p = location.hash; if (!/^#\
   try { await loadAll(); } catch (e) { console.error(e); D.err = "データを読み込めませんでした。"; }
   document.title = clubName();
   ["brand-name", "foot-name", "copy-name"].forEach(id => $(id).textContent = clubName());
+  if (D.conf["創設年"]) $("copy-year").textContent = D.conf["創設年"];
   if (D.conf["サブタイトル"]) $("brand-sub").textContent = D.conf["サブタイトル"];
   $("brand-logo").innerHTML = logo(clubName()); $("foot-logo").innerHTML = logo(clubName());
   render();
