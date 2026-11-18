@@ -412,3 +412,41 @@ table.t{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
 .policy li{background:var(--white);border:1px solid var(--line);border-top:4px solid var(--navy);padding:18px 20px 20px;display:flex;flex-direction:column;gap:8px}
 .policy b{font-family:var(--en);font-size:40px;font-weight:800;line-height:1;color:var(--sky)}
 .policy span{font-size:15px;font-weight:700;line-height:1.7}
+
+/* 略称（スマホでは略称を表示） */
+.sn{display:none}
+@media (max-width:600px){.mrow .fn,.t .fn,.cmp-legend .fn{display:none}.mrow .sn,.t .sn,.cmp-legend .sn{display:inline}}
+
+/* 日本人縛り */
+.flag{width:18px;height:12px;flex:none;display:inline-block;vertical-align:-1px;margin-right:6px;box-shadow:0 0 0 1px #d0d6dc}
+.ident{background:var(--white);border-bottom:1px solid var(--line)}
+.ident-in{max-width:1200px;margin:0 auto;padding:22px 20px}
+.ident-sl{margin:0 0 14px;font-size:20px;font-weight:900;letter-spacing:.06em}
+.ident-g{display:grid;grid-template-columns:repeat(4,1fr);gap:0}
+.ident-g div{padding:4px 20px;border-left:3px solid var(--line);display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:14px;align-items:end}
+.ident-g div:first-child{border-left-color:#bc002d}
+.ident-g b{grid-row:1/3;font-family:var(--en);font-size:52px;font-weight:800;line-height:.9}
+.ident-g b small{font-size:22px}
+.ident-g span{font-family:var(--en);font-weight:700;font-size:15px;letter-spacing:.14em;color:var(--blue);line-height:1}
+.ident-g em{font-style:normal;font-size:12px;font-weight:700;color:var(--tx3)}
+@media (max-width:760px){.ident-g{grid-template-columns:1fr 1fr;row-gap:16px}.ident-g b{font-size:40px}}
+.acad{position:absolute;right:8px;top:10px;z-index:2;background:#bc002d;color:#fff;font-family:var(--en);font-size:11px;font-weight:700;letter-spacing:.1em;padding:1px 7px}
+.acad-tag{display:inline-block;margin-top:10px;background:#bc002d;color:#fff;font-family:var(--en);font-size:13px;font-weight:700;letter-spacing:.14em;padding:2px 10px}
+.pcard .info b{display:flex;align-items:center}
+.phero .pos .flag{width:24px;height:16px;vertical-align:-2px}
+.acad-row{grid-template-columns:110px 1fr}
+.acad-list{display:flex;flex-wrap:wrap;gap:10px}
+.acad-list a{display:flex;align-items:center;gap:10px;border:1px solid var(--line);padding:6px 14px 6px 6px;background:#fafbfc}
+.acad-list a:hover{border-color:var(--navy)}
+.acad-list b{display:flex;align-items:center;font-weight:700;font-size:14px}
+.acad-list small{display:block;font-size:11px;color:var(--tx3)}
+
+/* 両チームのスタメン */
+.lu-grid{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.lu-col{min-width:0;border-right:1px solid var(--line)}
+.lu-col:last-child{border-right:0}
+.lu-col .pitch{margin:14px}
+.pitch.opp{background:repeating-linear-gradient(180deg,#46805a 0 10%,#40774f 10% 20%)}
+div.prow:hover{background:var(--white)}
+@media (max-width:760px){.lu-grid{grid-template-columns:1fr}.lu-col{border-right:0}}
+.tile b.rec{white-space:nowrap;font-size:32px}
