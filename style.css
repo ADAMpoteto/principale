@@ -607,3 +607,43 @@ div.prow:hover{background:var(--white)}
 /* 透過の選手写真は背景なし */
 .phero .photo img.face,.pcard .ph-wrap img.face,.rk-top img.face,.nt img.face,.mgr img.face,.pl img.face{background:transparent}
 .phero .photo img.face{object-fit:contain;object-position:bottom}
+
+/* ===== 選手ページ：写真を大きく ===== */
+.phero-in{display:block;min-height:360px;padding-top:34px}
+.phero-in>div:first-child{position:relative;z-index:2;max-width:56%;padding-bottom:4px}
+.phero .photo{position:absolute;right:20px;bottom:0;top:16px;width:min(44%,380px);height:auto;display:flex;align-items:flex-end;justify-content:center;z-index:1}
+.phero .photo .face{width:100%;height:100%;border-radius:0;object-fit:contain;object-position:bottom}
+.phero .photo .face.ph{background-size:90% auto}
+@media (max-width:700px){
+  .phero-in{min-height:300px;padding:22px 16px 0}
+  .phero-in>div:first-child{max-width:58%}
+  .phero .photo{right:0;width:50%;top:24px}
+  .phero .bigno{font-size:68px}
+  .phero h1{font-size:24px;margin-top:10px}
+  .phero .pos{font-size:15px}
+  .phero .acad-tag{font-size:11px;padding:2px 8px}
+  .phero .ovr{margin:14px 0 20px}
+  .phero .ovr div{padding:0 14px 0 10px}
+  .phero .ovr b{font-size:30px}
+}
+
+/* ===== ニュースのサムネイル：カードの幅に合わせて縮む ===== */
+@media (max-width:900px){.ngrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
+.ncard{min-width:0;overflow:hidden}
+.nt{container-type:inline-size;gap:3cqw;padding:0 4cqw}
+.nt .logo.md{width:19cqw;height:19cqw;font-size:5cqw}
+.nt-s{font-size:12cqw;min-width:26cqw}
+.nt-s small{font-size:3.6cqw}
+.nt-w{font-size:9cqw;min-width:0;white-space:nowrap}
+.nt-w small{font-size:4.2cqw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nt-num{font-size:1.9em}
+.nt-t,.nt-r{justify-content:flex-start;padding:0 0 0 2cqw}
+.nt-t .face,.nt-r .face{width:40cqw;height:100%;aspect-ratio:auto;flex:none;object-fit:contain;object-position:bottom;align-self:flex-end}
+.nt-t .face.ph,.nt-r .face.ph{height:86%}
+.nt-r.club{justify-content:center;padding:0 4cqw}
+.nt-c2 svg{width:14cqw;height:14cqw}
+.art-th .nt .logo.md{width:19cqw;height:19cqw}
+.art-th .nt-s{font-size:12cqw;min-width:26cqw}
+.art-th .nt-w{font-size:9cqw}
+.nt-t .nt-w,.nt-r .nt-w{font-size:7cqw;overflow:hidden;text-overflow:clip}
+.nt-t .face,.nt-r .face{width:34cqw}
