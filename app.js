@@ -122,7 +122,7 @@ async function loadAll() {
   D.players = got.pl.map(o => ({
     name: F(o, "名前"), roma: F(o, "ローマ字"), no: num(F(o, "背番号")), pos: F(o, "ポジション").toUpperCase(), nat: F(o, "国籍"), birth: pDate(F(o, "生年月日")),
     foot: F(o, "利き足"), height: num(F(o, "身長")), weight: num(F(o, "体重")), ovr: num(F(o, "総合値")), pot: num(F(o, "ポテンシャル")), value: num(F(o, "市場価値")),
-    joined: F(o, "加入"), origin: F(o, "出身"), status: F(o, "在籍") || "在籍", photo: F(o, "写真"), memo: F(o, "メモ")
+    joined: F(o, "加入"), origin: F(o, "出身"), schools: [["小学", F(o, "小学"), 6, 6], ["中学", F(o, "中学"), 12, 3], ["高校", F(o, "高校"), 15, 3]], status: F(o, "在籍") || "在籍", photo: F(o, "写真"), memo: F(o, "メモ")
   })).filter(p => p.name);
   /* 役職が入っている行はスタッフ */
   const roleOf = {}; got.pl.forEach(o => { const n = F(o, "名前"), r = F(o, "役職"); if (n && r) roleOf[nameKey(n)] = r; });
@@ -1077,7 +1077,10 @@ function playerHistory(p, name, bySeason) {
   const me = clubName(), R = [];
   const T = D.trans.filter(t => same(t.name, name)).sort((a, b) => (a.date || 0) - (b.date || 0) || String(a.season).localeCompare(String(b.season)));
   const promo = T.find(t => t.kind === "ユース昇格");
-  if (/ユース/.test(p.origin || "") || promo) R.push({ p: `〜${promo ? promo.season : p.joined || ""}`, c: me + " ユース", lg: me, note: "" });
+  /* 小学・中学・高校（年は生年月日から。早生まれは1年早く入学） */
+  const y0 = p.birth ? p.birth.getFullYear() + ((p.birth.getMonth() < 3 || (p.birth.getMonth() === 3 && p.birth.getDate() === 1)) ? 0 : 1) : null;
+  (p.schools || []).forEach(([lb, v, a, n]) => { if (v) R.push({ p: y0 ? `${y0 + a}〜${y0 + a + n}` : lb, c: v, lg: "", note: lb, school: true }); });
+  if (/ユース/.test(p.origin || "") || promo) R.push({ p: `${y0 ? y0 + 15 : ""}〜${promo ? promo.season : p.joined || ""}`, c: me + " ユース", lg: me, note: "" });
   let cur = { p0: (promo && promo.season) || p.joined || (bySeason.length ? bySeason[bySeason.length - 1].se : ""), c: me, note: "" };
   const close = (to) => { if (cur) { R.push({ p: `${cur.p0}〜${to || ""}`, c: cur.c, note: cur.note }); cur = null; } };
   T.forEach(t => {
@@ -1089,7 +1092,7 @@ function playerHistory(p, name, bySeason) {
     .forEach(x => { if (!R.concat(cur ? [{ c: cur.c }] : []).some(r => same(r.c, x.club))) R.push({ p: x.season, c: x.club, note: "期限付き移籍" }); });
   if (cur) R.push({ p: `${cur.p0}〜`, c: cur.c, note: cur.note });
   if (!R.length) return "";
-  return sec("HISTORY", "チーム歴") + `<ol class="hist">${R.map(r => `<li><span>${esc(r.p)}</span>${logo(r.lg || r.c, "sm")}<b>${esc(r.c)}${leagueOf(r.c) ? `<small>${esc(leagueOf(r.c))}</small>` : ""}</b>${r.note ? `<em>${esc(r.note)}</em>` : ""}</li>`).join("")}</ol>`;
+  return sec("HISTORY", "チーム歴") + `<ol class="hist">${R.map(r => `<li><span>${esc(r.p)}</span>${r.school ? `<i class="hist-dot"></i>` : logo(r.lg || r.c, "sm")}<b>${esc(r.c)}${leagueOf(r.c) ? `<small>${esc(leagueOf(r.c))}</small>` : ""}</b>${r.note ? `<em${r.school ? ' class="sc"' : ""}>${esc(r.note)}</em>` : ""}</li>`).join("")}</ol>`;
 }
 
 const IN_KINDS = /^(加入|レンタル加入|レンタル復帰|ユース昇格)$/, OUT_KINDS = /^(退団|レンタル移籍)$/;
