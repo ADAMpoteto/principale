@@ -1,1031 +1,785 @@
 /* =====================================================================
-   Principale ― FC27 監督キャリアの記録サイト
-   データはGoogleスプレッドシートから読み込みます。
+   Principale ― FC27 キャリアモードの記録サイト（FotMob 風）
+   データは Google スプレッドシート「Principale」から読み込みます。
+   サンプル表示：URLの最後に ?demo を付ける（demo フォルダの架空データ）
 
-   ■ つなぎ方（どちらか1つ）
-     A. スプシを「共有 → リンクを知っている全員（閲覧者）」にする
-        → SHEET_ID にスプシのID（URLの /d/ と /edit の間）を入れるだけ（入れてあります）
-     B. スプシを「ファイル → 共有 → ウェブに公開（ドキュメント全体）」する
-        → 公開したときのURLを PUB_URL に貼る（こちらのほうが読み込みが安定します）
-
-   ■ 画像（GitHubの images フォルダに、名前と同じファイル名で置くだけ）
-     選手の写真   : images/player/上田 綺世.png   （.webp / .jpg でもOK。スペースなしでもOK）
-     クラブのロゴ : images/logo/鹿島.png           （試合シートの「相手」と同じ名前）
-     自分のクラブ : images/logo/Principale.png
-     画像がない選手・クラブは、頭文字で表示します。
+   ■ スプシのつなぎ方
+     スプシを「ファイル → 共有 → ウェブに公開（ドキュメント全体）」しておく（済み）。
+     うまく出ないときは「共有 → リンクを知っている全員（閲覧者）」にもしておく。
+   ■ 画像（GitHub の images フォルダに、名前と同じファイル名で置くだけ）
+     選手の写真 : images/player/高橋 蒼.png   （.webp / .jpg でもOK）
+     クラブロゴ : images/logo/鹿島アントラーズ.png （試合シートの「相手」と同じ名前）
    ===================================================================== */
-const SHEET_ID = "1ZRRBDpNq5W9pzgagLqxMQ8shDBI_vpNMLT8R_Wiezs8";
-const PUB_URL  = "";   // 例："https://docs.google.com/spreadsheets/d/e/2PACX-…/pubhtml"
-
-const SHEETS = {   // [シート名, gid]
-  match:  ["試合",         0],
-  tstats: ["チームスタッツ", 107],
-  lineup: ["出場選手",     108],
-  events: ["試合経過",     109],
-  player: ["選手",         102],
-  trans:  ["移籍",         103],
-  season: ["シーズン",     104],
-  table:  ["順位表",       105],
-  conf:   ["設定",         106]
+const SHEET_ID = "1OzrkAMDzxO5N2yAj78FubFt8SHacgZ84hXqXwNZc1HY";
+const PUB_ID   = "2PACX-1vS2hqvKKGnEgDYn-X8WOfquzm-DOxuOdzXo1KkNW5o7Jy342lgvZsvFhGupZcAZptF-cWSJhvtT3XR0";
+const SHEETS = {          // キー: [シート名, gid]
+  conf:  ["設定", 2],
+  match: ["試合", 3],
+  ts:    ["チームスタッツ", 4],
+  lu:    ["出場選手", 5],
+  ev:    ["試合経過", 6],
+  pl:    ["選手", 7],
+  gr:    ["能力推移", 8],
+  tr:    ["移籍", 9],
+  tb:    ["順位表", 10],
+  ss:    ["シーズン", 11]
 };
 const DEFAULT_CLUB = "Principale";
+const DEMO = /[?&]demo\b/.test(location.search);
 const IMG_EXT = ["png", "webp", "jpg"];
 
 /* ---------- 小物 ---------- */
 const $ = id => document.getElementById(id);
-const esc = s => String(s==null?"":s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const half = s => String(s==null?"":s).replace(/[０-９．－，＋％]/g, c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0));
-const F = (o,k) => (o && o[k]!=null) ? String(o[k]).trim() : "";
-function num(s){ const t=half(s).replace(/[,\s人万円€%]/g,""); if(t==="") return null; const n=Number(t); return isFinite(n)?n:null; }
-function pct(s){ const t=half(s).trim(); const n=num(t); if(n==null) return null; return (!/%/.test(t) && n>0 && n<=1 && /\./.test(t)) ? Math.round(n*1000)/10 : n; }
-function pDate(s){ const m=half(s).match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})/); return m?new Date(+m[1],+m[2]-1,+m[3]):null; }
-const WD=["日","月","火","水","木","金","土"], WDE=["SUN","MON","TUE","WED","THU","FRI","SAT"];
-const fmtD = d => d ? `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,"0")}/${String(d.getDate()).padStart(2,"0")}` : "";
-const fmtDW = d => d ? `${fmtD(d)}（${WD[d.getDay()]}）` : "";
-const fmtMD = d => d ? `${d.getMonth()+1}/${d.getDate()}` : "";
-const dKey = d => d ? fmtD(d) : "";
-const nf = n => Number(n||0).toLocaleString("ja-JP");
-const nameKey = s => String(s||"").replace(/[\s　・.]/g,"").toLowerCase();
-const surname = s => String(s||"").trim().split(/[\s　]+/)[0];
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const half = s => String(s == null ? "" : s).replace(/[０-９．－，＋％：]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
+const F = (o, k) => (o && o[k] != null) ? String(o[k]).trim() : "";
+function num(s) { const t = half(s).replace(/[,\s%€¥$円万人]/g, ""); if (t === "") return null; const n = Number(t); return isFinite(n) ? n : null; }
+function pDate(s) { const m = half(s).match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})/); return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null; }
+const pad = n => String(n).padStart(2, "0");
+const dKey = d => d ? `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` : "";
+const WD = ["日", "月", "火", "水", "木", "金", "土"];
+const fmtD = d => d ? `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())}` : "";
+const fmtMD = d => d ? `${d.getMonth() + 1}/${d.getDate()}` : "";
+const fmtDW = d => d ? `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日（${WD[d.getDay()]}）` : "";
+const nameKey = s => String(s || "").replace(/[\s　・.]/g, "").toLowerCase();
+const same = (a, b) => nameKey(a) === nameKey(b);
+const sum = (L, f) => L.reduce((a, x) => a + (f(x) || 0), 0);
+const fmtN = (v, d = 0) => v == null || !isFinite(v) ? "-" : Number(v).toLocaleString("ja-JP", { minimumFractionDigits: d, maximumFractionDigits: d });
 const empty = msg => `<div class="empty">${esc(msg)}</div>`;
-const same = (a,b) => nameKey(a)===nameKey(b);
-const sum = (L,f) => L.reduce((a,x)=>a+(f(x)||0),0);
-
-function cleanRows(rows){
-  return (rows||[]).map(o=>{ const n={}; Object.keys(o).forEach(k=>{ n[String(k).replace(/^﻿/,"").replace(/\s+/g,"").trim()]=o[k]; }); return n; })
-    .filter(o=>Object.values(o).some(v=>String(v==null?"":v).trim()!==""));
+function money(v) {
+  if (v == null) return "";
+  const u = D.conf["通貨の単位"] || "€", a = Math.abs(v);
+  const s = a >= 1e6 ? fmtN(v / 1e6, a % 1e6 ? 1 : 0) + "M" : a >= 1e3 ? fmtN(v / 1e3, 0) + "K" : fmtN(v);
+  const sg = v < 0 ? "-" : "", s2 = s.replace(/^-/, "");
+  return sg + (/[€$£]/.test(u) ? u + s2 : s2 + u);
 }
-function sheetUrl(key){
+function age(birth, at) { if (!birth) return null; const t = at || new Date(); let a = t.getFullYear() - birth.getFullYear(); if (t.getMonth() < birth.getMonth() || (t.getMonth() === birth.getMonth() && t.getDate() < birth.getDate())) a--; return a; }
+
+/* ---------- 読み込み ---------- */
+function sheetUrls(key) {
   const [name, gid] = SHEETS[key];
-  const m = String(PUB_URL).match(/\/d\/e\/([^/]+)\/pub/);
-  if(m) return `https://docs.google.com/spreadsheets/d/e/${m[1]}/pub?gid=${gid}&single=true&output=csv`;
-  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&headers=1&sheet=${encodeURIComponent(name)}`;
+  if (DEMO) return [`demo/${encodeURIComponent(name)}.csv`];
+  return [
+    `https://docs.google.com/spreadsheets/d/e/${PUB_ID}/pub?gid=${gid}&single=true&output=csv`,
+    `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&headers=1&sheet=${encodeURIComponent(name)}`
+  ];
 }
-function fetchCSV(url){
-  return new Promise((resolve,reject)=>{
-    if(typeof Papa==="undefined"){ reject(new Error("PapaParse 未読み込み")); return; }
-    Papa.parse(url, { download:true, header:true, skipEmptyLines:"greedy", complete:r=>resolve(cleanRows(r.data)), error:reject });
-  });
+function cleanRows(rows) {
+  return (rows || []).map(o => { const n = {}; Object.keys(o).forEach(k => { n[String(k).replace(/^﻿/, "").replace(/\s+/g, "")] = o[k]; }); return n; })
+    .filter(o => Object.values(o).some(v => String(v == null ? "" : v).trim() !== ""));
+}
+async function fetchSheet(key) {
+  let last;
+  for (const url of sheetUrls(key)) {
+    try {
+      const r = await fetch(url, { cache: "no-store" });
+      if (!r.ok) throw new Error(r.status);
+      const text = await r.text();
+      if (/^\s*<(!doctype|html)/i.test(text)) throw new Error("HTML");
+      return cleanRows(Papa.parse(text, { header: true, skipEmptyLines: "greedy" }).data);
+    } catch (e) { last = e; }
+  }
+  throw last;
 }
 
-/* ---------- 画像（名前→ファイル。見つからなければ次の候補、最後は頭文字） ---------- */
-const IMG_OK = {};
-function imgCands(dir, names){
-  const out=[]; names.filter(Boolean).forEach(n=>{
-    [...new Set([String(n).trim(), String(n).replace(/[\s　]/g,"")])].forEach(b=>IMG_EXT.forEach(e=>out.push(`images/${dir}/${b}.${e}`)));
+/* ---------- データ ---------- */
+const D = { conf: {}, matches: [], played: [], players: [], growth: [], trans: [], table: [], seasons: [], lineups: [], seasonList: [], err: "" };
+const ST = { season: null, comp: "すべて", mtab: "facts", trSeason: null };
+const clubName = () => D.conf["クラブ名"] || DEFAULT_CLUB;
+const shortName = () => D.conf["略称"] || clubName();
+function isMe(club) { const k = nameKey(club); return !!k && (k === nameKey(clubName()) || k === nameKey(D.conf["略称"]) || k === nameKey(DEFAULT_CLUB) || /^自分/.test(club)); }
+const sideOf = s => /相手|opp|away/i.test(s) ? "opp" : "me";
+
+/* 出場選手シートの数字の列（チームスタッツに無いときは選手の合計を使う） */
+const LU_NUM = ["出場時間", "評価", "得点", "アシスト", "シュート", "枠内シュート", "ゴール期待値", "パス", "パス成功", "キーパス", "ドリブル", "ドリブル成功",
+  "タックル", "タックル成功", "インターセプト", "ブロック", "クリア", "ボール奪取", "ボールロスト", "走行距離", "セーブ", "失点", "警告", "退場"];
+const TS_NUM = ["ボール支配率", "ボール奪取時間", "シュート", "ゴール期待値", "パス", "タックル", "タックル成功", "インターセプト", "セーブ", "ファウル", "オフサイド",
+  "コーナーキック", "フリーキック", "PK", "警告", "退場", "枠内シュート", "枠外シュート", "ブロックされたシュート", "ボックス内シュート", "パス成功", "キーパス",
+  "クロス", "スルーパス", "ドリブル", "ドリブル成功", "クリア", "ブロック", "空中戦勝利", "走行距離"];
+const LU_SUMMABLE = new Set(["シュート", "枠内シュート", "ゴール期待値", "パス", "パス成功", "キーパス", "ドリブル", "ドリブル成功", "タックル", "タックル成功",
+  "インターセプト", "ブロック", "クリア", "セーブ", "警告", "退場", "走行距離"]);
+
+function parseNames(s) {
+  return String(s || "").split(/[、,，\n／\/]/).map(t => t.trim()).filter(Boolean).map(t => {
+    const m = half(t).match(/^(.*?)[\s　]*[（(×xX]?\s*(\d+)\s*[)）点]?$/);
+    if (m && m[1].trim()) return { name: m[1].trim(), n: +m[2] };
+    return { name: t, n: 1 };
   });
+}
+function parsePK(s) { const m = half(s).match(/(\d+)\s*[-ー:－]\s*(\d+)/); return m ? { a: +m[1], b: +m[2] } : null; }
+function minN(s) { const m = half(s).match(/(\d+)(?:\s*\+\s*(\d+))?/); return m ? +m[1] + (m[2] ? +m[2] / 100 : 0) : 999; }
+
+async function loadAll() {
+  const keys = Object.keys(SHEETS);
+  const res = await Promise.allSettled(keys.map(fetchSheet));
+  const got = {}; let fails = 0;
+  keys.forEach((k, i) => { if (res[i].status === "fulfilled") got[k] = res[i].value; else { got[k] = []; fails++; console.warn(SHEETS[k][0], res[i].reason); } });
+  if (fails === keys.length) D.err = "スプレッドシートを読み込めませんでした。スプシが「ウェブに公開」されているか確認してください。";
+
+  got.conf.forEach(o => { const k = F(o, "項目"), v = F(o, "値"); if (k) D.conf[k] = v; });
+  const col = D.conf["テーマカラー"]; if (/^#[0-9a-f]{3,8}$/i.test(col || "")) document.documentElement.style.setProperty("--me", col);
+
+  D.players = got.pl.map(o => ({
+    name: F(o, "名前"), no: num(F(o, "背番号")), pos: F(o, "ポジション").toUpperCase(), nat: F(o, "国籍"), birth: pDate(F(o, "生年月日")),
+    foot: F(o, "利き足"), height: num(F(o, "身長")), ovr: num(F(o, "総合値")), pot: num(F(o, "ポテンシャル")), value: num(F(o, "市場価値")),
+    joined: F(o, "加入"), status: F(o, "在籍") || "在籍", photo: F(o, "写真"), memo: F(o, "メモ")
+  })).filter(p => p.name);
+
+  D.matches = got.match.map((o, i) => {
+    const opp = F(o, "相手"); if (!opp) return null;
+    const gf = num(F(o, "得点")), ga = num(F(o, "失点")), played = gf != null && ga != null, pk = parsePK(F(o, "PK"));
+    const res = !played ? "U" : gf > ga ? "W" : gf < ga ? "L" : pk ? (pk.a > pk.b ? "W" : "L") : "D";
+    let ha = F(o, "H/A").toUpperCase(); ha = /^A/.test(ha) ? "A" : /^N/.test(ha) ? "N" : "H";
+    const date = pDate(F(o, "日付"));
+    return { i, season: F(o, "シーズン"), date, key: dKey(date), comp: F(o, "大会") || "試合", round: F(o, "節・ラウンド"), ha, opp, gf, ga, pk, res, played,
+      scorers: parseNames(F(o, "得点者")), assists: parseNames(F(o, "アシスト")), mom: F(o, "MOM"), stadium: F(o, "スタジアム"), att: num(F(o, "観客数")),
+      memo: F(o, "メモ"), ts: {}, form: {}, lu: [], ev: [] };
+  }).filter(Boolean);
+  D.matches.sort((a, b) => (a.date && b.date ? a.date - b.date : 0) || a.i - b.i);
+  D.matches.forEach((m, k) => m.id = k + 1);
+  const byKey = {}; D.matches.forEach(m => { if (m.key && !byKey[m.key]) byKey[m.key] = m; });
+
+  got.ts.forEach(o => {
+    const m = byKey[dKey(pDate(F(o, "日付")))]; if (!m) return;
+    const side = sideOf(F(o, "チーム")), t = {};
+    TS_NUM.forEach(h => { const v = num(F(o, h)); if (v != null) t[h] = v; });
+    m.ts[side] = t; m.form[side] = F(o, "フォーメーション");
+  });
+  D.lineups = got.lu.map((o, i) => {
+    const m = byKey[dKey(pDate(F(o, "日付")))]; const name = F(o, "名前"); if (!m || !name) return null;
+    const s = {}; LU_NUM.forEach(h => { const v = num(F(o, h)); if (v != null) s[h] = v; });
+    const l = { i, m, name, role: F(o, "出場") || "先発", no: num(F(o, "背番号")), pos: F(o, "ポジション").toUpperCase(), s, rating: s["評価"] ?? null };
+    if (l.role !== "ベンチ") m.lu.push(l);
+    return l;
+  }).filter(Boolean);
+  got.ev.forEach((o, i) => {
+    const m = byKey[dKey(pDate(F(o, "日付")))]; if (!m) return;
+    m.ev.push({ i, min: half(F(o, "分")), mn: minN(F(o, "分")), side: sideOf(F(o, "チーム")), kind: F(o, "種類") || "その他",
+      player: F(o, "選手"), rel: F(o, "関連する選手"), note: F(o, "補足") });
+  });
+  D.matches.forEach(m => {
+    m.ev.sort((a, b) => a.mn - b.mn || a.i - b.i);
+    if (!m.played) return;
+    /* 得点者・アシストが空欄なら、出場選手 → 試合経過 の順で補う */
+    if (!m.scorers.length) {
+      const L = m.lu.filter(l => l.s["得点"]);
+      m.scorers = L.length ? L.map(l => ({ name: l.name, n: l.s["得点"] }))
+        : count(m.ev.filter(e => e.side === "me" && isGoal(e) && e.kind !== "オウンゴール").map(e => e.player));
+    }
+    if (!m.assists.length) {
+      const L = m.lu.filter(l => l.s["アシスト"]);
+      m.assists = L.length ? L.map(l => ({ name: l.name, n: l.s["アシスト"] }))
+        : count(m.ev.filter(e => e.side === "me" && isGoal(e) && e.rel).map(e => e.rel));
+    }
+    /* MOM が空欄なら最高評価の選手 */
+    if (!m.mom) { const r = m.lu.filter(l => l.rating != null).sort((a, b) => b.rating - a.rating)[0]; if (r) { m.mom = r.name; m.momAuto = true; } }
+  });
+  D.played = D.matches.filter(m => m.played);
+
+  D.growth = got.gr.map(o => ({ date: pDate(F(o, "日付")), season: F(o, "シーズン"), name: F(o, "名前"), ovr: num(F(o, "総合値")), pot: num(F(o, "ポテンシャル")), value: num(F(o, "市場価値")) }))
+    .filter(g => g.name && (g.ovr != null || g.pot != null)).sort((a, b) => (a.date || 0) - (b.date || 0));
+  D.trans = got.tr.map((o, i) => ({ i, season: F(o, "シーズン"), date: pDate(F(o, "日付")), kind: F(o, "区分") || "加入", name: F(o, "名前"), pos: F(o, "ポジション").toUpperCase(),
+    age: num(F(o, "年齢")), club: F(o, "相手クラブ"), fee: num(F(o, "移籍金")), memo: F(o, "メモ") })).filter(t => t.name);
+  D.table = got.tb.map(o => ({ season: F(o, "シーズン"), comp: F(o, "大会"), rank: num(F(o, "順位")), club: F(o, "クラブ"), p: num(F(o, "試合")), w: num(F(o, "勝")),
+    d: num(F(o, "分")), l: num(F(o, "負")), gf: num(F(o, "得点")), ga: num(F(o, "失点")), pts: num(F(o, "勝点")) })).filter(r => r.club);
+  D.seasons = got.ss.map(o => ({ season: F(o, "シーズン"), league: F(o, "リーグ"), rank: num(F(o, "リーグ順位")), titles: F(o, "獲得タイトル"), cap: F(o, "主将"), comment: F(o, "一言") })).filter(s => s.season);
+
+  const ss = new Set([...D.matches, ...D.trans, ...D.table, ...D.seasons].map(x => x.season).filter(Boolean));
+  if (!ss.size && D.conf["最初のシーズン"]) ss.add(D.conf["最初のシーズン"]);
+  D.seasonList = [...ss].sort().reverse();
+  const last = D.played[D.played.length - 1];
+  ST.season = (last && last.season) || D.seasonList[0] || "";
+}
+const isGoal = e => /ゴール/.test(e.kind) && !/失敗/.test(e.kind);
+function count(names) { const c = {}; names.filter(Boolean).forEach(n => c[n] = (c[n] || 0) + 1); return Object.keys(c).map(n => ({ name: n, n: c[n] })); }
+
+/* ---------- 画像（なければ頭文字） ---------- */
+const IMG_OK = {};
+function imgCands(dir, names) {
+  const out = [];
+  names.filter(Boolean).forEach(n => [...new Set([String(n).trim(), String(n).replace(/[\s　]/g, "")])].forEach(b =>
+    IMG_EXT.forEach(e => out.push(`images/${dir}/${b}.${e}`))));
   return [...new Set(out)];
 }
-function initials(name){
-  const s=String(name||"").trim(); if(!s) return "?";
-  if(/^[\x00-\x7F\s]+$/.test(s)){ const w=s.split(/\s+/).filter(Boolean); return (w.length>1? w[0][0]+w[1][0] : s.slice(0,2)).toUpperCase(); }
-  return surname(s).slice(0,2);
+function initials(name) {
+  const s = String(name || "").trim(); if (!s) return "?";
+  if (/^[\p{Script=Latin}\s.'’-]+$/u.test(s)) { const w = s.replace(/[^A-Za-z0-9\s]/g, " ").split(/\s+/).filter(Boolean); return (w.length > 1 ? w[0][0] + w[w.length - 1][0] : s.slice(0, 2)).toUpperCase(); }
+  return s.split(/[\s　]+/)[0].slice(0, 2);
 }
-function imgTag(cands, alt, cls, key){
-  const list=IMG_OK[key] ? [IMG_OK[key]] : cands;
-  return `<img class="${cls}" src="${esc(encodeURI(list[0]))}" alt="${esc(alt)}" loading="lazy" decoding="async"
-    data-k="${esc(key)}" data-c="${esc(list.slice(1).join("|"))}" data-i="${esc(initials(alt))}" onload="imgOk(this)" onerror="imgNext(this)">`;
+function imgTag(cands, alt, cls, key) {
+  const list = IMG_OK[key] ? [IMG_OK[key]] : cands;
+  if (IMG_OK[key] === false || !list.length) return `<div class="${cls} ph" role="img" aria-label="${esc(alt)}">${esc(initials(alt))}</div>`;
+  return `<img class="${cls}" src="${esc(encodeURI(list[0]))}" alt="${esc(alt)}" loading="lazy" decoding="async" data-k="${esc(key)}" data-c="${esc(list.slice(1).join("|"))}"
+    data-i="${esc(initials(alt))}" onload="imgOk(this)" onerror="imgNext(this)">`;
 }
-window.imgOk = el => { const k=el.dataset.k; if(k && !IMG_OK[k]) IMG_OK[k]=decodeURI(el.getAttribute("src")); };
+window.imgOk = el => { const k = el.dataset.k; if (k) IMG_OK[k] = decodeURI(el.getAttribute("src")); };
 window.imgNext = el => {
-  const rest=(el.dataset.c||"").split("|").filter(Boolean);
-  if(rest.length){ el.dataset.c=rest.slice(1).join("|"); el.src=encodeURI(rest[0]); return; }
-  const d=document.createElement("div"); d.className=el.className+" ph"; d.textContent=el.dataset.i||"?"; d.setAttribute("aria-label", el.alt||"");
+  const rest = (el.dataset.c || "").split("|").filter(Boolean);
+  if (rest.length) { el.dataset.c = rest.slice(1).join("|"); el.src = encodeURI(rest[0]); return; }
+  if (el.dataset.k) IMG_OK[el.dataset.k] = false;
+  const d = document.createElement("div"); d.className = el.className + " ph"; d.textContent = el.dataset.i || "?"; d.setAttribute("role", "img"); d.setAttribute("aria-label", el.alt || "");
   el.replaceWith(d);
 };
-function face(name, cls){
-  const n=fullName(name), p=D.players.find(x=>same(x.name,n)), ph=p&&p.photo ? String(p.photo).trim() : "";
-  /* 写真の欄にファイル名（拡張子つきでも、なしでも）を書けばそれを使う */
-  const c = ph ? (/\.(png|webp|jpe?g|gif)$/i.test(ph) ? [`images/player/${ph}`] : imgCands("player",[ph])).concat(imgCands("player",[n])) : imgCands("player",[n]);
-  return imgTag(c, n, "face "+(cls||""), "p:"+nameKey(n));
+const prof = name => D.players.find(p => same(p.name, name));
+function face(name, cls) {
+  const p = prof(name), ph = p && p.photo;
+  const c = (ph ? (/\.(png|webp|jpe?g|gif)$/i.test(ph) ? [`images/player/${ph}`] : imgCands("player", [ph])) : []).concat(imgCands("player", [name]));
+  return imgTag(c, name, "face " + (cls || ""), "p:" + nameKey(name));
 }
-const oppFace = (name, cls) => imgTag([], name, "face "+(cls||""), "o:"+nameKey(name));
-function logo(club, cls){
-  const me=isMe(club);
-  const names= me ? [clubName(), DEFAULT_CLUB] : [club];
-  return imgTag(imgCands("logo",names), me?clubName():club, "logo "+(cls||""), "l:"+(me?"__me":nameKey(club)));
+function logo(club, cls) {
+  const me = isMe(club), names = me ? [clubName(), DEFAULT_CLUB] : [club];
+  return imgTag(imgCands("logo", names), me ? clubName() : club, "logo " + (cls || ""), "l:" + (me ? "__me" : nameKey(club)));
 }
+const pLink = (name, inner) => `<a href="#/player/${encodeURIComponent(name)}">${inner || esc(name)}</a>`;
+
+/* ---------- 評価バッジ ---------- */
+function rtCls(r) { return r == null ? "r0" : r >= 9 ? "r9" : r >= 8 ? "r8" : r >= 7 ? "r7" : r >= 6 ? "r6" : "r5"; }
+const rt = r => r == null ? "" : `<span class="rt ${rtCls(r)}">${fmtN(r, 1)}</span>`;
+const wdl = m => `<span class="wdl ${m.res}" aria-label="${{ W: "勝ち", D: "引き分け", L: "負け" }[m.res]}">${{ W: "W", D: "D", L: "L" }[m.res]}</span>`;
+const scoreTxt = m => m.ha === "A" ? `${m.ga} - ${m.gf}` : `${m.gf} - ${m.ga}`;
+const homeAway = m => m.ha === "A" ? { home: m.opp, away: clubName(), hs: "opp", as: "me" } : { home: clubName(), away: m.opp, hs: "me", as: "opp" };
+const roundTxt = m => [m.comp, m.round].filter(Boolean).join(" ・ ");
 
 /* =====================================================================
-   データ
+   集計
    ===================================================================== */
-const D = { matches:[], played:[], stats:[], players:[], trans:[], seasons:[], table:[], lineups:[], conf:{}, seasonList:[], news:[], loaded:false, err:"" };
-const ST = { pSeason:null, luGrp:"概要", season:null, stSeason:"", trSeason:"", comp:"すべて", newsCat:"すべて", rk:"g", tblSeason:null, tblComp:null, mtab:"sum", luSide:"me" };
-
-const clubName = () => D.conf["クラブ名"] || DEFAULT_CLUB;
-const unit = () => D.conf["通貨の単位"] || "";
-function isMe(club){
-  const k=nameKey(club); if(!k) return false;
-  return k===nameKey(clubName()) || k===nameKey(D.conf["略称"]) || k===nameKey(DEFAULT_CLUB) || /自分/.test(club);
+const ofSeason = s => D.played.filter(m => !s || m.season === s);
+function record(L) {
+  const r = { n: L.length, w: 0, d: 0, l: 0, gf: 0, ga: 0, cs: 0 };
+  L.forEach(m => { r[m.res === "W" ? "w" : m.res === "L" ? "l" : "d"]++; r.gf += m.gf; r.ga += m.ga; if (m.ga === 0) r.cs++; });
+  r.pts = r.w * 3 + r.d; return r;
 }
-const NAME_CACHE = {};
-function fullName(n){
-  const s=String(n||"").trim(); if(!s) return s;
-  if(NAME_CACHE[s]) return NAME_CACHE[s];
-  const k=nameKey(s);
-  const pool=[...D.players.map(p=>p.name), ...D.stats.map(r=>r.name), ...D.lineups.filter(l=>l.side==="me").map(l=>l.rawName)];
-  let hit=pool.find(p=>nameKey(p)===k);
-  if(!hit){ const c=[...new Set(pool.filter(p=>nameKey(surname(p))===k).map(p=>String(p).trim()))]; if(c.length===1) hit=c[0]; }
-  return NAME_CACHE[s]=hit||s;
-}
-function parseNames(s){
-  return String(s||"").split(/[、,，\n／\/]/).map(t=>t.trim()).filter(Boolean).map(t=>{
-    const m=half(t).match(/^(.*?)[\s　]*[（(×xX]?\s*(\d+)\s*[)）点]?$/);
-    if(m && m[1].trim()) return { name:fullName(m[1].trim()), n:+m[2] };
-    return { name:fullName(t), n:1 };
+/* 選手ごとの集計 */
+function playerAgg(L) {
+  const P = {};
+  const get = n => P[nameKey(n)] || (P[nameKey(n)] = { name: n, apps: 0, starts: 0, min: 0, g: 0, a: 0, rSum: 0, rN: 0, mom: 0, cs: 0, yc: 0, rc: 0, s: {}, has: {}, list: [] });
+  L.forEach(m => {
+    if (m.lu.length) {
+      m.lu.forEach(l => {
+        const p = get(l.name); p.apps++; if (l.role === "先発") p.starts++;
+        p.min += l.s["出場時間"] ?? 0; p.list.push({ m, l });
+        if (l.rating != null) { p.rSum += l.rating; p.rN++; }
+        Object.keys(l.s).forEach(k => { p.s[k] = (p.s[k] || 0) + l.s[k]; p.has[k] = true; });
+        if (/GK/.test(l.pos) && l.role === "先発" && m.ga === 0) p.cs++;
+        if (!p.pos && l.pos) p.pos = l.pos;
+      });
+      const sc = {}, as = {};
+      m.scorers.forEach(x => sc[nameKey(x.name)] = (sc[nameKey(x.name)] || 0) + x.n);
+      m.assists.forEach(x => as[nameKey(x.name)] = (as[nameKey(x.name)] || 0) + x.n);
+      /* 得点・アシストは試合シート優先（出場選手シートと食い違ったとき） */
+      Object.keys(sc).forEach(k => { if (!P[k]) get(m.scorers.find(x => nameKey(x.name) === k).name); });
+      Object.keys(as).forEach(k => { if (!P[k]) get(m.assists.find(x => nameKey(x.name) === k).name); });
+      m._sc = sc; m._as = as;
+    } else {
+      m.scorers.forEach(x => { if (!/オウン/.test(x.name)) get(x.name); });
+      m.assists.forEach(x => get(x.name));
+    }
   });
+  Object.values(P).forEach(p => {
+    const k = nameKey(p.name);
+    p.g = 0; p.a = 0;
+    L.forEach(m => {
+      p.g += sum(m.scorers.filter(x => nameKey(x.name) === k), x => x.n);
+      p.a += sum(m.assists.filter(x => nameKey(x.name) === k), x => x.n);
+      if (m.mom && nameKey(m.mom) === k) p.mom++;
+    });
+    p.yc = p.s["警告"] || 0; p.rc = p.s["退場"] || 0;
+    p.rating = p.rN ? p.rSum / p.rN : null;
+    const pr = prof(p.name); if (pr && pr.pos) p.pos = pr.pos;
+  });
+  return Object.values(P).filter(p => !/オウン/.test(p.name));
 }
-function parsePK(s){
-  const t=half(s).trim(); if(!t) return null;
-  let m=t.match(/^(\d{1,2})\s*[-ー:：]\s*(\d{1,2})$/); if(m) return {a:+m[1], b:+m[2]};
-  m=t.match(/^\d{4}\D(\d{1,2})\D(\d{1,2})/); if(m) return {a:+m[1], b:+m[2]};
-  m=t.match(/^(\d{1,2})\/(\d{1,2})$/); if(m) return {a:+m[1], b:+m[2]};
+/* チームの値（チームスタッツ → 無ければ自分は出場選手の合計） */
+function tv(m, side, k) {
+  const t = m.ts[side]; if (t && t[k] != null) return t[k];
+  if (side === "me" && LU_SUMMABLE.has(k) && m.lu.some(l => l.s[k] != null)) return sum(m.lu, l => l.s[k]);
+  if (k === "パス成功率") { const a = tv(m, side, "パス成功"), b = tv(m, side, "パス"); return a != null && b ? a / b * 100 : null; }
+  if (k === "タックル成功率") { const a = tv(m, side, "タックル成功"), b = tv(m, side, "タックル"); return a != null && b ? a / b * 100 : null; }
+  if (k === "ドリブル成功率") { const a = tv(m, side, "ドリブル成功"), b = tv(m, side, "ドリブル"); return a != null && b ? a / b * 100 : null; }
   return null;
 }
-/* フォーメーション：「4-3-3」。日付に変わってしまったもの（2026/04/03）にも対応 */
-function parseForm(s){
-  const t=half(s).trim(); if(!t) return "";
-  if(/^\d(\s*[-ー]\s*\d){1,4}$/.test(t)) return t.replace(/\s*[-ー]\s*/g,"-");
-  const m=t.match(/^\d{4}\D(\d{1,2})\D(\d{1,2})$/); if(m) return `${+m[1]}-${+m[2]}`;
-  return t;
-}
-const sideOf = s => /相手|opp|away/i.test(s) ? "opp" : "me";
-const minN = s => { const m=half(s).match(/(\d+)(?:\s*\+\s*(\d+))?/); return m ? +m[1] + (m[2]? +m[2]/100 : 0) : 999; };
-const POS_DEPTH = {GK:0,CB:1,LB:1.1,RB:1.1,SW:.9,LWB:1.6,RWB:1.6,CDM:2,DM:2,CM:2.5,LM:2.6,RM:2.6,CAM:3,AM:3,LW:3.4,RW:3.4,LF:3.6,RF:3.6,CF:3.7,ST:4,FW:4,MF:2.5,DF:1};
-const POS_LAT = p => /^(LB|LWB|LM|LW|LF)$/.test(p)?0 : /^(RB|RWB|RM|RW|RF)$/.test(p)?2 : 1;
-const posGroup = p => { const x=String(p||"").toUpperCase().trim();
-  if(/^GK/.test(x)) return "GK"; if(/^(CB|LB|RB|LWB|RWB|SW|DF)/.test(x)) return "DF";
-  if(/^(CDM|CM|CAM|LM|RM|DM|AM|MF)/.test(x)) return "MF"; if(/^(LW|RW|CF|ST|LF|RF|FW)/.test(x)) return "FW"; return "OT"; };
-const GROUPS = [["GK","GOALKEEPER","ゴールキーパー"],["DF","DEFENDER","ディフェンダー"],["MF","MIDFIELDER","ミッドフィルダー"],["FW","FORWARD","フォワード"],["OT","OTHER","その他"]];
+function teamAvg(L, side, k) { const v = L.map(m => tv(m, side, k)).filter(x => x != null); return v.length ? { avg: v.reduce((a, b) => a + b, 0) / v.length, tot: v.reduce((a, b) => a + b, 0), n: v.length } : null; }
+function ratio(L, side, a, b) { let x = 0, y = 0; L.forEach(m => { const p = tv(m, side, a), q = tv(m, side, b); if (p != null && q) { x += p; y += q; } }); return y ? x / y * 100 : null; }
 
-/* ---------- FC27の項目（スプシの列名＝ここの名前） ---------- */
-const P_NUM = ["出場時間", "評価", "得点", "アシスト", "シュート", "パス", "ドリブル", "タックル", "オフサイド", "ファウル", "ボール奪取", "ボールロスト", "走行距離", "スプリント距離", "ボール保持率", "ドリブル成功", "ドリブル距離", "タックルされた回数", "獲得CK", "被ファウル", "獲得PK", "ダミーからのアシスト", "通常ドリブル率", "シールドドリブル率", "ストレイフドリブル率", "アジャイルドリブル率", "ドリブルでFWライン突破（間）試み", "ドリブルでFWライン突破（間）成功", "ドリブルでFWライン突破（外）試み", "ドリブルでFWライン突破（外）成功", "ドリブルでMFライン突破（間）試み", "ドリブルでMFライン突破（間）成功", "ドリブルでMFライン突破（外）試み", "ドリブルでMFライン突破（外）成功", "ドリブルでDFライン突破（間）試み", "ドリブルでDFライン突破（間）成功", "ドリブルでDFライン突破（外）試み", "ドリブルでDFライン突破（外）成功", "抜き去り", "スキルムーブで抜き去り", "股抜き", "縦への突破", "PKを除くゴール", "PKを除くゴール期待値", "枠内シュート", "枠外シュート", "ブロックされたシュート", "FKゴール", "PKゴール", "PK戦ゴール", "シュートからのアシスト", "通常シュート", "フィネスシュート", "ヘディングシュート", "パワーシュート", "ボレーシュート", "チップシュート", "セットプレーのシュート", "期待アシスト", "セカンドアシスト", "キーパス", "パスで抜いた人数", "パス成功", "パスカットされた", "オフサイドのパス", "クロス", "クロス成功", "ブロックされたクロス", "プレッシャー下のパス", "プレッシャー下のパス成功", "グラウンダーパス", "ロブパス", "スルーパス", "ロブスルーパス", "セットプレーのパス", "パスでFWライン突破（間）試み", "パスでFWライン突破（間）成功", "パスでFWライン突破（外）試み", "パスでFWライン突破（外）成功", "パスでFWライン突破（上）試み", "パスでFWライン突破（上）成功", "パスでMFライン突破（間）試み", "パスでMFライン突破（間）成功", "パスでMFライン突破（外）試み", "パスでMFライン突破（外）成功", "パスでMFライン突破（上）試み", "パスでMFライン突破（上）成功", "パスでDFライン突破（間）試み", "パスでDFライン突破（間）成功", "スタンディングタックル", "スタンディングタックル成功", "スライディングタックル", "スライディングタックル成功", "インターセプト", "ブロック", "クリア", "オフサイド誘発", "オフェンスデュエル", "オフェンスデュエル勝利", "ディフェンスデュエル", "ディフェンスデュエル勝利", "空中戦", "空中戦勝利", "突破された回数", "守備エリアで突破された回数", "ボックス内で突破された回数", "PK献上", "オウンゴール", "警告", "退場", "被シュート", "被枠内シュート", "セーブ", "失点", "パンチング", "飛び出してのセーブ", "PKセーブ", "PK失点", "PK戦セーブ", "PK戦失点", "通常シュートをセーブ", "フィネスシュートをセーブ", "ヘディングをセーブ", "パワーシュートをセーブ", "ボレーをセーブ", "チップをセーブ", "セットプレーをセーブ"];
-const T_NUM = ["ボール支配率", "ボール奪取時間", "シュート", "ゴール期待値", "パス", "タックル", "タックル成功", "インターセプト", "セーブ", "ファウル", "オフサイド", "コーナーキック", "フリーキック", "PK", "警告", "退場", "守備ライン突破（間）", "守備ライン突破（外）", "守備ライン突破（上）", "守備ライン突破の試み", "枠内シュート", "枠外シュート", "ブロックされたシュート", "通常シュート", "フィネスシュート", "ヘディングシュート", "パワーシュート", "ボレーシュート", "チップシュート", "セットプレーのシュート", "ボックス内シュート", "ボックス外シュート", "ニアサイドへのシュート", "ファーサイドへのシュート", "パス成功", "パスカットされた", "オフサイドのパス", "その他のパス", "グラウンダーパス", "ロブパス", "スルーパス", "ロブスルーパス", "クロス", "セットプレーのパス", "キーパス", "ダイレクトパス", "パス&ゴー", "サイドを使ったパス", "ブレイクアウェイのパス", "スタンディングタックル", "スタンディングタックル成功", "スライディングタックル", "スライディングタックル成功", "ブロック", "クリア", "オフェンスデュエル勝利", "ディフェンスデュエル勝利", "空中戦勝利", "突破された回数", "PK献上"];
-const MAX_KEYS = {};                              /* 合計ではなく最大値を取る項目 */
-const AVG_KEYS = {"評価":1,"ボール保持率":1,"通常ドリブル率":1,"シールドドリブル率":1,"ストレイフドリブル率":1,"アジャイルドリブル率":1};  /* 平均を取る項目 */
-const PCT_KEYS = {"ボール支配率":1};               /* %の項目（0.56 のような入力も56に直す） */
-const rate = (a,b) => (a!=null && b) ? a/b*100 : null;
-
-async function loadAll(){
-  const keys=Object.keys(SHEETS);
-  const res=await Promise.allSettled(keys.map(k=>fetchCSV(sheetUrl(k))));
-  const got={}; let fails=0;
-  keys.forEach((k,i)=>{ if(res[i].status==="fulfilled") got[k]=res[i].value; else { got[k]=[]; fails++; console.error(SHEETS[k][0], res[i].reason); } });
-  if(fails===keys.length) D.err="スプレッドシートを読み込めませんでした。スプシを「リンクを知っている全員（閲覧者）」に共有するか、「ウェブに公開」して app.js の PUB_URL にURLを入れてください。";
-
-  got.conf.forEach(o=>{ const k=F(o,"項目"), v=F(o,"値"); if(k) D.conf[k]=v; });
-  D.players=got.player.map(o=>({ name:F(o,"名前"), pos:F(o,"ポジション").toUpperCase(), nat:F(o,"国籍"), birth:pDate(F(o,"生年月日")), birthS:F(o,"生年月日"),
-    foot:F(o,"利き足"), height:num(F(o,"身長")), memo:F(o,"メモ"), photo:F(o,"写真") })).filter(p=>p.name);
-  /* 出場選手（名前合わせに使うので先に） */
-  D.lineups=got.lineup.map((o,i)=>{ const side=sideOf(F(o,"チーム")); const raw=F(o,"名前");
-    const s={}; P_NUM.forEach(h=>{ const v=num(F(o,h)); if(v!=null) s[h]=v; });
-    return { i, key:dKey(pDate(F(o,"日付"))), side, role:F(o,"出場")||"先発", no:num(F(o,"背番号")), rawName:raw, pos:F(o,"ポジション").toUpperCase(), s,
-      min:s["出場時間"]??null, g:s["得点"]||0, a:s["アシスト"]||0, yc:s["警告"]||0, rc:s["退場"]||0 }; }).filter(l=>l.rawName && l.key);
-  D.lineups.forEach(l=>l.name = l.side==="me" ? fullName(l.rawName) : l.rawName);
-
-  /* 試合（得点・失点が空欄なら「これからの試合」） */
-  D.matches=got.match.map((o,i)=>{
-    const gf=num(F(o,"得点")), ga=num(F(o,"失点")), opp=F(o,"相手");
-    if(!opp) return null;
-    const played = gf!=null && ga!=null;
-    const pk=parsePK(F(o,"PK"));
-    const res = !played ? "U" : gf>ga?"W" : gf<ga?"L" : pk ? (pk.a>pk.b?"W":"L") : "D";
-    let ha=F(o,"H/A").toUpperCase(); ha = /^A/.test(ha)?"A" : /^N/.test(ha)?"N" : "H";
-    const date=pDate(F(o,"日付"));
-    return { i, season:F(o,"シーズン"), date, key:dKey(date), comp:F(o,"大会")||"試合", round:F(o,"節・回戦"), ha, opp, gf, ga, pk, res, played,
-      draw: played && gf===ga, scorers:parseNames(F(o,"得点者")), assists:parseNames(F(o,"アシスト")), mom:fullName(F(o,"MOM")),
-      att:num(F(o,"観客数")), memo:F(o,"メモ"), ts:{}, form:{}, lu:{me:[],opp:[]}, ev:[] };
-  }).filter(Boolean);
-  D.matches.sort((a,b)=>(a.date&&b.date? a.date-b.date : 0) || a.i-b.i);
-  D.matches.forEach((m,k)=>m.id=k+1);
-  const byKey={}; D.matches.forEach(m=>{ if(m.key && !byKey[m.key]) byKey[m.key]=m; });
-
-  /* チームスタッツ */
-  got.tstats.forEach(o=>{ const m=byKey[dKey(pDate(F(o,"日付")))]; if(!m) return; const side=sideOf(F(o,"チーム"));
-    const t={}; T_NUM.forEach(h=>{ const v= PCT_KEYS[h] ? pct(F(o,h)) : num(F(o,h)); if(v!=null) t[h]=v; });
-    m.ts[side]=t; m.form[side]=parseForm(F(o,"フォーメーション")); });
-  /* 出場選手を試合につなぐ */
-  D.lineups.forEach(l=>{ const m=byKey[l.key]; if(m){ l.m=m; m.lu[l.side].push(l); } });
-  /* 試合経過 */
-  got.events.forEach((o,i)=>{ const m=byKey[dKey(pDate(F(o,"日付")))]; if(!m) return; const side=sideOf(F(o,"チーム"));
-    const nm = s => side==="me" ? fullName(s) : s;
-    m.ev.push({ i, min:half(F(o,"分")), mn:minN(F(o,"分")), side, kind:F(o,"種類")||"その他", player:nm(F(o,"選手")), rel:nm(F(o,"関連する選手")),
-      note:F(o,"補足") }); });
-  D.matches.forEach(m=>{
-    m.ev.sort((a,b)=>a.mn-b.mn || a.i-b.i);
-    if(!m.played) return;
-    /* 得点者・アシストが空欄なら、出場選手 → 試合経過 の順で補う */
-    if(!m.scorers.length){
-      const L=m.lu.me.filter(l=>l.g); if(L.length) m.scorers=L.map(l=>({name:l.name,n:l.g}));
-      else { const c={}; m.ev.filter(e=>e.side==="me"&&isGoal(e)&&e.player).forEach(e=>c[e.player]=(c[e.player]||0)+1); m.scorers=Object.keys(c).map(n=>({name:n,n:c[n]})); }
-    }
-    if(!m.assists.length){
-      const L=m.lu.me.filter(l=>l.a); if(L.length) m.assists=L.map(l=>({name:l.name,n:l.a}));
-      else { const c={}; m.ev.filter(e=>e.side==="me"&&isGoal(e)&&e.rel).forEach(e=>c[e.rel]=(c[e.rel]||0)+1); m.assists=Object.keys(c).map(n=>({name:n,n:c[n]})); }
-    }
-  });
-  D.played=D.matches.filter(m=>m.played);
-
-  D.trans=got.trans.map((o,i)=>({ i, season:F(o,"シーズン"), date:pDate(F(o,"日付")), kind:F(o,"区分")||"加入", name:fullName(F(o,"名前")),
-    club:F(o,"相手クラブ"), fee:num(F(o,"移籍金")), memo:F(o,"メモ") })).filter(t=>t.name);
-  D.seasons=got.season.map(o=>({ season:F(o,"シーズン"), league:F(o,"リーグ"), rank:half(F(o,"リーグ順位")).replace(/位$/,""), cup:F(o,"国内カップ"),
-    lcup:F(o,"リーグカップ"), intl:F(o,"国際大会"), cap:fullName(F(o,"主将")), comment:F(o,"一言") })).filter(s=>s.season);
-  D.table=got.table.map(o=>({ season:F(o,"シーズン"), comp:F(o,"大会"), rank:num(F(o,"順位")), club:F(o,"クラブ"), p:num(F(o,"試合")),
-    w:num(F(o,"勝")), d:num(F(o,"分")), l:num(F(o,"負")), gf:num(F(o,"得点")), ga:num(F(o,"失点")), pts:num(F(o,"勝点")) })).filter(r=>r.club);
-
-  const ss=new Set([...D.matches,...D.trans,...D.seasons,...D.table].map(x=>x.season).filter(Boolean));
-  if(D.conf["最初のシーズン"] && !ss.size) ss.add(D.conf["最初のシーズン"]);
-  D.seasonList=[...ss].sort().reverse();
-  const lastPlayed=D.played[D.played.length-1];
-  ST.season = (lastPlayed && lastPlayed.season) || D.seasonList[0] || null;
-  ST.stSeason = ST.trSeason = ST.season || "";
-  buildNews();
-  D.loaded=true;
-  ["hd-name","ft-club","ft-name"].forEach(id=>$(id).textContent=clubName());
-}
-const isGoal = e => /^(ゴール|PKゴール|FKゴール)$/.test(e.kind);
-
-/* ---------- 集計 ---------- */
-const ofSeason = s => D.played.filter(m=>!s || m.season===s);
-function record(L){
-  const r={n:L.length,w:0,d:0,l:0,gf:0,ga:0,cs:0};
-  L.forEach(m=>{ if(m.draw) r.d++; else if(m.res==="W") r.w++; else r.l++; r.gf+=m.gf; r.ga+=m.ga; if(m.ga===0) r.cs++; });
-  return r;
-}
-const seasonInfo = s => D.seasons.find(x=>x.season===s) || null;
-function myRank(s){
-  const S=seasonInfo(s); if(S && S.rank) return S.rank;
-  const t=D.table.filter(r=>r.season===s && isMe(r.club));
-  return t.length ? String(t[0].rank||"") : "";
-}
-function leagueName(s){
-  const S=seasonInfo(s); if(S && S.league) return S.league;
-  const L=ofSeason(s).filter(m=>/リーグ|League|J1|J2|J3/i.test(m.comp));
-  return L.length ? L[0].comp : "";
-}
-/* チームの値：チームスタッツシート → なければ出場選手の合計 */
-function teamVal(m, side, h){
-  const t=m.ts[side]||{};
-  if(t[h]!=null) return t[h];
-  const L=m.lu[side].filter(l=>l.s[h]!=null);
-  if(!L.length || h==="ボール支配率") return null;
-  return MAX_KEYS[h] ? Math.max(...L.map(l=>l.s[h])) : AVG_KEYS[h] ? L.reduce((a,l)=>a+l.s[h],0)/L.length : L.reduce((a,l)=>a+l.s[h],0);
-}
-function fromMatches(s){
-  const M={}; const add=(n,k,v)=>{ if(!n) return; (M[n]=M[n]||{name:n,得点:0,アシスト:0,mom:0})[k]+=v; };
-  ofSeason(s).forEach(m=>{ m.scorers.forEach(x=>add(x.name,"得点",x.n)); m.assists.forEach(x=>add(x.name,"アシスト",x.n)); if(m.mom) add(m.mom,"mom",1); });
-  return Object.values(M).map(o=>({...o, g:o.得点, a:o.アシスト}));
-}
-/* 出場選手シートから、選手のシーズン成績（合計）を作る。s=""なら通算 */
-function luAgg(s){
-  const M={};
-  D.lineups.filter(l=>l.side==="me" && l.m && l.m.played && (!s || l.m.season===s) && (l.role!=="ベンチ" || l.min)).forEach(l=>{
-    const k=nameKey(l.name);
-    const o=M[k]=M[k]||{name:l.name,season:s,apps:0,starts:0,cs:0,mom:0,pos:"",no:null,_n:{}};
-    o.apps++; if(l.role==="先発") o.starts++; if(l.pos) o.pos=l.pos; if(l.no!=null) o.no=l.no;
-    Object.keys(l.s).forEach(h=>{ const v=l.s[h]; o[h]= MAX_KEYS[h] ? Math.max(o[h]??0, v) : (o[h]||0)+v; o._n[h]=(o._n[h]||0)+1; });
-    if(l.pos==="GK" && l.role==="先発" && l.m.ga===0) o.cs++;
-    if(same(l.m.mom,l.name)) o.mom++;
-  });
-  return Object.values(M).map(o=>({...o, g:o["得点"]||0, a:o["アシスト"]||0, yc:o["警告"]||0, rc:o["退場"]||0, min:o["出場時間"]||0}));
-}
-const seasonRows = s => luAgg(s);
-function statRowsFor(s){
-  const L=luAgg(s);
-  if(L.length) return L;
-  return fromMatches(s);
-}
-function seasonsOfPlayer(name){
-  return D.seasonList.slice().sort().map(s=>seasonRows(s).find(r=>same(r.name,name))).filter(Boolean);
-}
-const latestStat = name => { const L=seasonsOfPlayer(name); return L[L.length-1]||null; };
-const profile = name => D.players.find(p=>same(p.name,name)) || null;
-function ageAt(birth, season){
-  if(!birth) return null; const y=parseInt(season,10); const ref=y? new Date(y,7,1) : new Date();
-  let a=ref.getFullYear()-birth.getFullYear(); if(ref < new Date(ref.getFullYear(), birth.getMonth(), birth.getDate())) a--; return a;
-}
-const IN_K=["加入","レンタル加入","昇格","レンタル復帰"], OUT_K=["退団","レンタル移籍"];
-const trDir = k => IN_K.includes(k)?"in" : OUT_K.includes(k)?"out" : "etc";
-const money = v => v==null ? "" : `${nf(v)}${esc(unit())}`;
-function topOf(s, k){
-  let rows=statRowsFor(s).filter(r=>r[k]); if(!rows.length) rows=fromMatches(s).filter(r=>r[k]);
-  rows.sort((a,b)=>b[k]-a[k]); return rows[0]||null;
-}
-
-/* ---------- 選手の指標（FC27「パフォーマンス」画面の並び） ----------
-   [名前, 合計から値を出す式, 単位, 小数の桁, 1試合平均も出す, ランキングに載る条件] */
-const per = (T,h) => T.apps ? (T[h]||0)/T.apps : null;
-const mean = (T,h) => (T._n && T._n[h]) ? T[h]/T._n[h] : null;   /* 評価・割合は平均 */
-const sumOf = (T,L) => L.some(h=>T[h]!=null) ? L.reduce((a,h)=>a+(T[h]||0),0) : null;
-const tkl = T => T["タックル"]!=null ? T["タックル"] : sumOf(T,["スタンディングタックル","スライディングタックル"]);
-const tklW = T => sumOf(T,["スタンディングタックル成功","スライディングタックル成功"]);
-const LB_P = [["FW",["間","外","上"]],["MF",["間","外","上"]],["DF",["間"]]];
-const LB_D = [["FW",["間","外"]],["MF",["間","外"]],["DF",["間","外"]]];
-const lbItems = (how, L) => L.flatMap(([l,ws])=>ws.map(w=>{ const k=`${how}で${l}ライン突破（${w}）`;
-  return [`${k}成功`, T=>T[`${k}成功`], "回", 0, 0, null, T=>T[`${k}試み`]]; }));
+/* ランキングの項目（FotMob の「選手スタッツ」） */
 const PM = [
-  ["概要", [
-    ["出場試合数", T=>T.apps, "試合"], ["先発", T=>T.starts, "試合"], ["出場時間", T=>T["出場時間"], "分"], ["MOM", T=>T.mom, "回"],
-    ["平均評価", T=>mean(T,"評価"), "", 2, 0, T=>T.apps],
-    ["得点", T=>T["得点"], "点", 0, 1], ["アシスト", T=>T["アシスト"], "", 0, 1], ["得点＋アシスト", T=>(T["得点"]||0)+(T["アシスト"]||0), "", 0, 1],
-    ["シュート", T=>T["シュート"], "本", 0, 1], ["シュート精度", T=>rate(T["枠内シュート"],T["シュート"]), "%", 1, 0, T=>T["シュート"]],
-    ["パス", T=>T["パス"], "本", 0, 1], ["パス成功率", T=>rate(T["パス成功"],T["パス"]), "%", 1, 0, T=>T["パス"]],
-    ["ドリブル", T=>T["ドリブル"], "回", 0, 1], ["ドリブル成功率", T=>rate(T["ドリブル成功"],T["ドリブル"]), "%", 1, 0, T=>T["ドリブル"]],
-    ["タックル", tkl, "回", 0, 1], ["タックル成功率", T=>rate(tklW(T),tkl(T)), "%", 1, 0, tkl],
-    ["オフサイド", T=>T["オフサイド"], "回"], ["ファウル", T=>T["ファウル"], "回"],
-    ["ボール奪取", T=>T["ボール奪取"], "回", 0, 1], ["ボールロスト", T=>T["ボールロスト"], "回", 0, 1],
-    ["走行距離", T=>T["走行距離"], "km", 1, 1], ["スプリント距離", T=>T["スプリント距離"], "km", 2, 1] ]],
-  ["ポゼッション", [
-    ["ボール保持率", T=>mean(T,"ボール保持率"), "%", 1], ["ドリブル成功", T=>T["ドリブル成功"], "回", 0, 1], ["ドリブル距離", T=>T["ドリブル距離"], "km", 2, 1],
-    ["タックルされた回数", T=>T["タックルされた回数"], "回"], ["獲得CK", T=>T["獲得CK"], "本"], ["被ファウル", T=>T["被ファウル"], "回"], ["獲得PK", T=>T["獲得PK"], "回"],
-    ["ダミーからのアシスト", T=>T["ダミーからのアシスト"], ""],
-    ["通常ドリブル率", T=>mean(T,"通常ドリブル率"), "%", 1], ["シールドドリブル率", T=>mean(T,"シールドドリブル率"), "%", 1],
-    ["ストレイフドリブル率", T=>mean(T,"ストレイフドリブル率"), "%", 1], ["アジャイルドリブル率", T=>mean(T,"アジャイルドリブル率"), "%", 1],
-    ["抜き去り", T=>T["抜き去り"], "回", 0, 1], ["スキルムーブで抜き去り", T=>T["スキルムーブで抜き去り"], "回"], ["股抜き", T=>T["股抜き"], "回"], ["縦への突破", T=>T["縦への突破"], "回"],
-    ...lbItems("ドリブル", LB_D) ]],
-  ["シュート", [
-    ["PKを除くゴール", T=>T["PKを除くゴール"], "点"], ["PKを除くゴール期待値", T=>T["PKを除くゴール期待値"], "", 2, 1],
-    ["得点とゴール期待値の差", T=>T["PKを除くゴール期待値"]!=null?(T["PKを除くゴール"]??((T["得点"]||0)-(T["PKゴール"]||0)))-T["PKを除くゴール期待値"]:null, "", 2],
-    ["枠内シュート", T=>T["枠内シュート"], "本", 0, 1], ["枠外シュート", T=>T["枠外シュート"], "本"], ["ブロックされたシュート", T=>T["ブロックされたシュート"], "本"],
-    ["シュート決定率", T=>rate(T["得点"]||0,T["シュート"]), "%", 1, 0, T=>T["シュート"]],
-    ["FKゴール", T=>T["FKゴール"], "点"], ["PKゴール", T=>T["PKゴール"], "点"], ["PK戦ゴール", T=>T["PK戦ゴール"], "点"], ["シュートからのアシスト", T=>T["シュートからのアシスト"], ""],
-    ["通常シュート", T=>T["通常シュート"], "本"], ["フィネスシュート", T=>T["フィネスシュート"], "本"], ["ヘディングシュート", T=>T["ヘディングシュート"], "本"],
-    ["パワーシュート", T=>T["パワーシュート"], "本"], ["ボレーシュート", T=>T["ボレーシュート"], "本"], ["チップシュート", T=>T["チップシュート"], "本"], ["セットプレーのシュート", T=>T["セットプレーのシュート"], "本"] ]],
-  ["パス", [
-    ["期待アシスト", T=>T["期待アシスト"], "", 2, 1], ["セカンドアシスト", T=>T["セカンドアシスト"], ""], ["キーパス", T=>T["キーパス"], "本", 0, 1],
-    ["パスで抜いた人数", T=>T["パスで抜いた人数"], "人", 0, 1], ["パス成功", T=>T["パス成功"], "本", 0, 1], ["パスカットされた", T=>T["パスカットされた"], "本"], ["オフサイドのパス", T=>T["オフサイドのパス"], "本"],
-    ["クロス", T=>T["クロス"], "本", 0, 1], ["クロス成功", T=>T["クロス成功"], "本"], ["クロス成功率", T=>rate(T["クロス成功"],T["クロス"]), "%", 1, 0, T=>T["クロス"]], ["ブロックされたクロス", T=>T["ブロックされたクロス"], "本"],
-    ["プレッシャー下のパス", T=>T["プレッシャー下のパス"], "本", 0, 1], ["プレッシャー下のパス成功率", T=>rate(T["プレッシャー下のパス成功"],T["プレッシャー下のパス"]), "%", 1, 0, T=>T["プレッシャー下のパス"]],
-    ["グラウンダーパス", T=>T["グラウンダーパス"], "本"], ["ロブパス", T=>T["ロブパス"], "本"], ["スルーパス", T=>T["スルーパス"], "本"], ["ロブスルーパス", T=>T["ロブスルーパス"], "本"], ["セットプレーのパス", T=>T["セットプレーのパス"], "本"],
-    ...lbItems("パス", LB_P) ]],
-  ["守備", [
-    ["スタンディングタックル", T=>T["スタンディングタックル"], "回", 0, 1], ["スタンディングタックル成功率", T=>rate(T["スタンディングタックル成功"],T["スタンディングタックル"]), "%", 1, 0, T=>T["スタンディングタックル"]],
-    ["スライディングタックル", T=>T["スライディングタックル"], "回", 0, 1], ["スライディングタックル成功率", T=>rate(T["スライディングタックル成功"],T["スライディングタックル"]), "%", 1, 0, T=>T["スライディングタックル"]],
-    ["インターセプト", T=>T["インターセプト"], "回", 0, 1], ["ブロック", T=>T["ブロック"], "回"], ["クリア", T=>T["クリア"], "回", 0, 1], ["オフサイド誘発", T=>T["オフサイド誘発"], "回"],
-    ["オフェンスデュエル勝利", T=>T["オフェンスデュエル勝利"], "回"], ["オフェンスデュエル勝率", T=>rate(T["オフェンスデュエル勝利"],T["オフェンスデュエル"]), "%", 1, 0, T=>T["オフェンスデュエル"]],
-    ["ディフェンスデュエル勝利", T=>T["ディフェンスデュエル勝利"], "回"], ["ディフェンスデュエル勝率", T=>rate(T["ディフェンスデュエル勝利"],T["ディフェンスデュエル"]), "%", 1, 0, T=>T["ディフェンスデュエル"]],
-    ["空中戦勝利", T=>T["空中戦勝利"], "回"], ["空中戦勝率", T=>rate(T["空中戦勝利"],T["空中戦"]), "%", 1, 0, T=>T["空中戦"]],
-    ["突破された回数", T=>T["突破された回数"], "回"], ["守備エリアで突破された回数", T=>T["守備エリアで突破された回数"], "回"], ["ボックス内で突破された回数", T=>T["ボックス内で突破された回数"], "回"],
-    ["PK献上", T=>T["PK献上"], "回"], ["オウンゴール", T=>T["オウンゴール"], "点"], ["警告", T=>T["警告"], "枚"], ["退場", T=>T["退場"], "回"] ]],
-  ["GK", [
-    ["被シュート", T=>T["被シュート"], "本"], ["被枠内シュート", T=>T["被枠内シュート"], "本"], ["セーブ", T=>T["セーブ"], "回", 0, 1], ["失点", T=>T["失点"], "点", 0, 1],
-    ["セーブ率", T=>rate(T["セーブ"],T["被枠内シュート"]), "%", 1, 0, T=>T["被枠内シュート"]], ["クリーンシート", T=>T.cs, "試合"],
-    ["パンチング", T=>T["パンチング"], "回"], ["飛び出してのセーブ", T=>T["飛び出してのセーブ"], "回"],
-    ["PKセーブ", T=>T["PKセーブ"], "回"], ["PK失点", T=>T["PK失点"], "点"], ["PK戦セーブ", T=>T["PK戦セーブ"], "回"], ["PK戦失点", T=>T["PK戦失点"], "点"],
-    ["通常シュートをセーブ", T=>T["通常シュートをセーブ"], "回"], ["フィネスシュートをセーブ", T=>T["フィネスシュートをセーブ"], "回"], ["ヘディングをセーブ", T=>T["ヘディングをセーブ"], "回"],
-    ["パワーシュートをセーブ", T=>T["パワーシュートをセーブ"], "回"], ["ボレーをセーブ", T=>T["ボレーをセーブ"], "回"], ["チップをセーブ", T=>T["チップをセーブ"], "回"], ["セットプレーをセーブ", T=>T["セットプレーをセーブ"], "回"] ]]
+  { k: "得点", f: p => p.g, u: "", d: 0 },
+  { k: "アシスト", f: p => p.a, u: "", d: 0 },
+  { k: "得点+アシスト", f: p => p.g + p.a, u: "", d: 0 },
+  { k: "平均評価", f: p => p.rating, u: "", d: 2, base: p => p.rN, rating: true },
+  { k: "MOM", f: p => p.mom, u: "回", d: 0 },
+  { k: "出場", f: p => p.apps, u: "試合", d: 0 },
+  { k: "出場時間", f: p => p.has["出場時間"] ? p.min : null, u: "分", d: 0 },
+  { k: "90分あたりの得点", f: p => p.min >= 90 && p.g ? p.g / p.min * 90 : null, u: "", d: 2, base: p => p.min },
+  { k: "ゴール期待値", f: p => p.s["ゴール期待値"], u: "", d: 2 },
+  { k: "シュート", f: p => p.s["シュート"], u: "", d: 0 },
+  { k: "枠内シュート", f: p => p.s["枠内シュート"], u: "", d: 0 },
+  { k: "キーパス", f: p => p.s["キーパス"], u: "", d: 0 },
+  { k: "パス成功率", f: p => p.s["パス"] ? p.s["パス成功"] / p.s["パス"] * 100 : null, u: "%", d: 1, base: p => p.s["パス"] },
+  { k: "ドリブル成功", f: p => p.s["ドリブル成功"], u: "", d: 0 },
+  { k: "タックル成功", f: p => p.s["タックル成功"], u: "", d: 0 },
+  { k: "インターセプト", f: p => p.s["インターセプト"], u: "", d: 0 },
+  { k: "クリア", f: p => p.s["クリア"], u: "", d: 0 },
+  { k: "ボール奪取", f: p => p.s["ボール奪取"], u: "", d: 0 },
+  { k: "セーブ", f: p => p.s["セーブ"], u: "", d: 0 },
+  { k: "クリーンシート", f: p => p.cs, u: "", d: 0 },
+  { k: "走行距離", f: p => p.s["走行距離"], u: "km", d: 1 },
+  { k: "警告", f: p => p.yc, u: "", d: 0 },
+  { k: "退場", f: p => p.rc, u: "", d: 0 }
 ];
-const PM_ALL = PM.flatMap(([g,L])=>L.map(x=>({g, k:x[0], f:x[1], u:x[2]||"", d:x[3]||0, avg:!!x[4], base:x[5]||x[6]||null})));
-const fmtV = (v,d) => v==null||!isFinite(v) ? "-" : d ? (+v).toFixed(d) : nf(Math.round(v));
-/* 1試合平均（走行距離などは記録がある試合数で割る） */
-function avgOf(T, M){ const h=M.k; const n=(T._n&&T._n[h])||T.apps; const v=M.f(T); return (v!=null && n) ? v/n : null; }
+function ranked(P, M) {
+  let R = P.map(p => ({ p, v: M.f(p) })).filter(x => x.v != null && x.v !== 0 && isFinite(x.v));
+  if (M.base) { const mx = Math.max(0, ...P.map(p => M.base(p) || 0)); const need = Math.max(1, mx * 0.3); R = R.filter(x => (M.base(x.p) || 0) >= need); }
+  return R.sort((a, b) => b.v - a.v || (b.p.apps - a.p.apps));
+}
 
-/* =====================================================================
-   ニュース（試合・移籍・シーズンの行から自動で作る）
-   ===================================================================== */
-const KIND_EN = { "加入":"NEW COMER", "レンタル加入":"NEW COMER", "昇格":"PROMOTION", "レンタル復帰":"WELCOME BACK", "退団":"FAREWELL", "レンタル移籍":"ON LOAN", "契約延長":"RENEWAL" };
-const resWord = m => m.draw ? (m.pk ? (m.res==="W"?"PK戦の末に勝利":"PK戦の末に敗退") : "引き分け") : m.res==="W" ? "勝利" : "敗戦";
-const resEN = m => !m.played ? "NEXT" : m.draw && m.pk ? (m.res==="W"?"WIN (PK)":"LOSE (PK)") : m.draw?"DRAW" : m.res==="W"?"WIN":"LOSE";
-const resCls = m => !m.played ? "U" : m.draw && !m.pk ? "D" : m.res;
-const compRound = m => [m.comp, m.round].filter(Boolean).join(" ");
-const sides = m => m.ha==="A" ? {home:m.opp, away:clubName(), hs:m.ga, as:m.gf, hSide:"opp", aSide:"me"} : {home:clubName(), away:m.opp, hs:m.gf, as:m.ga, hSide:"me", aSide:"opp"};
-
-function buildNews(){
-  const N=[];
-  D.played.forEach(m=>N.push({ id:"m"+m.id, cat:"MATCH", date:m.date, sort:m.date, m,
-    title:`【${compRound(m)}】${m.opp}に${m.gf}-${m.ga}で${resWord(m)}` }));
-  D.trans.forEach(t=>{
-    const who=`${t.name}選手`;
-    const tt={ "加入":`${who} 加入のお知らせ`, "レンタル加入":`${who} 期限付き移籍加入のお知らせ`, "昇格":`${who} トップチーム昇格のお知らせ`,
-      "レンタル復帰":`${who} 期限付き移籍からの復帰のお知らせ`, "退団":`${who} 退団のお知らせ`, "レンタル移籍":`${who} 期限付き移籍のお知らせ`,
-      "契約延長":`${who} 契約延長のお知らせ` }[t.kind] || `${who} ${t.kind}のお知らせ`;
-    N.push({ id:"t"+t.i, cat:"TRANSFER", date:t.date, sort:t.date, t, title:tt });
-  });
-  D.seasons.forEach(S=>{
-    const L=ofSeason(S.season); const last=L.length? L[L.length-1].date : null;
-    const t=titlesOf(S);
-    N.push({ id:"s"+S.season, cat:"SEASON", date:null, sort:last? new Date(last.getTime()+86400000) : null, S,
-      title: t.length ? `${S.season}シーズン ${t.join("・")}！` : `${S.season}シーズンを終えて${S.rank?`（${S.league||"リーグ"} ${S.rank}位）`:""}` });
-  });
-  N.sort((a,b)=>(b.sort?b.sort.getTime():-1)-(a.sort?a.sort.getTime():-1));
-  D.news=N;
-}
-function titlesOf(S){
-  const t=[]; if(/^1$/.test(S.rank)) t.push(`${S.league||"リーグ"}優勝`);
-  [["国内カップ",S.cup],["リーグカップ",S.lcup],["国際大会",S.intl]].forEach(([k,v])=>{ if(/^優勝/.test(v||"")) t.push(`${k}優勝`); });
-  return t;
-}
-const mark = () => `<div class="nv-mark">${logo(clubName())}<span>${esc(clubName())}</span></div>`;
-function visual(n){
-  if(n.m){ const m=n.m, S=sides(m);
-    return `<div class="nv m ${resCls(m)}">
-      <div class="nv-comp">${esc(compRound(m))}</div><div class="nv-res">${resEN(m)}</div>
-      <div class="nv-board"><div class="nv-team">${logo(S.home)}${esc(S.home)}</div>
-        <div class="nv-score">${S.hs}-${S.as}${m.pk?`<small>PK ${m.ha==="A"?`${m.pk.b}-${m.pk.a}`:`${m.pk.a}-${m.pk.b}`}</small>`:""}</div>
-        <div class="nv-team">${logo(S.away)}${esc(S.away)}</div></div>
-      <div class="nv-date">${fmtD(m.date)}</div>${mark()}</div>`; }
-  if(n.t){ const t=n.t, P=profile(t.name), s=seasonRows(t.season).find(r=>same(r.name,t.name)) || latestStat(t.name);
-    const dir=trDir(t.kind);
-    const rows=[["NUMBER", s&&s.no!=null?s.no:""],["POSITION",(s&&s.pos)||(P&&P.pos)||""],["NATIONALITY",P&&P.nat||""],
-      [dir==="out"?"NEXT CLUB":"PREVIOUS CLUB", t.club]].filter(r=>r[1]!=="" && r[1]!=null);
-    return `<div class="nv t ${dir==="out"?"out":""}">
-      <div class="nv-kind${(KIND_EN[t.kind]||t.kind).length>9?" long":""}">${esc(KIND_EN[t.kind]||t.kind)}<small>${esc(t.kind)}</small></div>
-      <div class="nv-name">${esc(t.name)}</div>
-      <dl class="nv-dl">${rows.map(([k,v])=>`<dt>${k}</dt><dd>${esc(v)}</dd>`).join("")}</dl>
-      <div class="nv-photo">${face(t.name)}</div>${mark()}</div>`; }
-  const S=n.S, r=record(ofSeason(S.season)), t=titlesOf(S);
-  return `<div class="nv s"><div class="nv-sn">${esc(S.season)} SEASON</div>
-    <div class="nv-sbig">${S.rank?`${esc(S.rank)}<small>位</small>`:`${r.w}<small>勝</small>${r.d}<small>分</small>${r.l}<small>敗</small>`}</div>
-    <div class="nv-stt">${t.length? t.map(x=>`<span>${esc(x)}</span>`).join("") : esc(S.league||"")}</div>${mark()}</div>`;
-}
-const nDate = n => n.date ? fmtD(n.date) : esc((n.S&&n.S.season)||"");
-const newsCard = n => `<a class="ncard" href="#news/${encodeURIComponent(n.id)}"><div class="thumb">${visual(n)}</div>
-  <div class="meta"><span class="cat ${n.cat}">${n.cat}</span><span>${nDate(n)}</span></div><h3>${esc(n.title)}</h3></a>`;
-const newsRow = n => `<a class="nrow" href="#news/${encodeURIComponent(n.id)}"><div class="thumb">${visual(n)}</div>
-  <div><div class="meta"><span class="cat ${n.cat}">${n.cat}</span><span>${nDate(n)}</span></div><h3>${esc(n.title)}</h3></div></a>`;
-const pLink = n => `<a href="#player/${encodeURIComponent(n)}"><b>${esc(n)}</b></a>`;
-function newsBody(n){
-  const P=[];
-  if(n.m){ const m=n.m;
-    P.push(`<p>${fmtDW(m.date)}、${esc(compRound(m))}で${m.ha==="H"?"ホームに":m.ha==="A"?"アウェイで":"中立地で"}${esc(m.opp)}と対戦し、${m.gf}-${m.ga}${m.pk?`（PK ${m.pk.a}-${m.pk.b}）`:""}で${resWord(m)}しました。</p>`);
-    if(m.scorers.length) P.push(`<p>得点は${m.scorers.map(x=>`${pLink(x.name)}${x.n>1?`（${x.n}点）`:""}`).join("、")}。${m.assists.length?`アシストは${m.assists.map(x=>`${pLink(x.name)}${x.n>1?`（${x.n}）`:""}`).join("、")}が記録しました。`:""}</p>`);
-    else if(m.gf===0) P.push(`<p>攻撃陣はゴールを奪えませんでした。</p>`);
-    const po=teamVal(m,"me","ボール支配率"), sm=teamVal(m,"me","シュート"), so=teamVal(m,"opp","シュート");
-    if(po!=null || (sm!=null&&so!=null)) P.push(`<p>${po!=null?`ボール支配率は${fmtV(po,0)}%`:""}${po!=null&&sm!=null&&so!=null?"、":""}${sm!=null&&so!=null?`シュートは${sm}本対${so}本`:""}でした。</p>`);
-    if(m.mom) P.push(`<p>マン・オブ・ザ・マッチには${pLink(m.mom)}が選ばれました。</p>`);
-    if(m.att) P.push(`<p>観客数：${nf(m.att)}人</p>`);
-    if(m.memo) P.push(`<h2>監督コメント</h2><p>${esc(m.memo)}</p>`);
-    P.push(`<div class="nd-link"><a class="btn" href="#match/${m.id}">MATCH DETAIL ›</a></div>`);
-  } else if(n.t){ const t=n.t, dir=trDir(t.kind), club=t.club?esc(t.club):"";
-    const s={ "加入":`${club?`${club}より、`:""}${pLink(t.name)}選手が加入することが決まりました。`,
-      "レンタル加入":`${club?`${club}より、`:""}${pLink(t.name)}選手が期限付き移籍で加入することが決まりました。`,
-      "昇格":`${pLink(t.name)}選手がトップチームに昇格することが決まりました。`,
-      "レンタル復帰":`${club?`期限付き移籍先の${club}から、`:""}${pLink(t.name)}選手が復帰することが決まりました。`,
-      "退団":`${pLink(t.name)}選手が${club?`${club}へ移籍し、`:""}チームを離れることになりました。`,
-      "レンタル移籍":`${pLink(t.name)}選手が${club?`${club}へ`:""}期限付き移籍することになりました。`,
-      "契約延長":`${pLink(t.name)}選手と契約を延長しました。` }[t.kind] || `${pLink(t.name)}選手：${esc(t.kind)}`;
-    P.push(`<p>${s}</p>`);
-    if(t.fee) P.push(`<p>移籍金：${money(t.fee)}</p>`);
-    const pr=profile(t.name);
-    if(pr){ const it=[pr.pos&&`ポジション：${esc(pr.pos)}`, pr.nat&&`国籍：${esc(pr.nat)}`, pr.birth&&`年齢：${ageAt(pr.birth,t.season)}歳`, pr.height&&`身長：${pr.height}cm`, pr.foot&&`利き足：${esc(pr.foot)}`].filter(Boolean);
-      if(it.length) P.push(`<h2>プロフィール</h2><p>${it.join("<br>")}</p>`); }
-    if(t.memo) P.push(`<h2>メモ</h2><p>${esc(t.memo)}</p>`);
-    if(dir!=="out") P.push(`<div class="nd-link"><a class="btn" href="#player/${encodeURIComponent(t.name)}">PLAYER PROFILE ›</a></div>`);
-  } else { const S=n.S, r=record(ofSeason(S.season));
-    P.push(`<p>${esc(S.season)}シーズンが終了しました。${S.league?`${esc(S.league)}は${S.rank?`${esc(S.rank)}位`:""}`:""}${r.n?`、公式戦${r.n}試合で${r.w}勝${r.d}分${r.l}敗（${r.gf}得点・${r.ga}失点）`:""}でした。</p>`);
-    const cups=[["国内カップ",S.cup],["リーグカップ",S.lcup],["国際大会",S.intl]].filter(x=>x[1]);
-    if(cups.length) P.push(`<p>${cups.map(([k,v])=>`${k}：${esc(v)}`).join("<br>")}</p>`);
-    const top=topOf(S.season,"g"); if(top) P.push(`<p>チーム得点王は${pLink(top.name)}（${top.g}点）。</p>`);
-    if(S.cap) P.push(`<p>主将：${pLink(S.cap)}</p>`);
-    if(S.comment) P.push(`<h2>監督コメント</h2><p>${esc(S.comment)}</p>`);
-    P.push(`<div class="nd-link"><a class="btn" href="#history">CLUB HISTORY ›</a></div>`);
+/* チームスタッツ（FotMob の「チームスタッツ」） */
+function teamMetrics(L) {
+  const r = record(L), out = [];
+  const add = (g, k, v, u, d, sub) => { if (v != null && isFinite(v)) out.push({ g, k, v, u, d, sub }); };
+  const avg = (k, side = "me") => teamAvg(L, side, k);
+  if (r.n) {
+    add("概要", "1試合平均得点", r.gf / r.n, "", 2, `合計 ${r.gf}`);
+    add("概要", "1試合平均失点", r.ga / r.n, "", 2, `合計 ${r.ga}`);
+    add("概要", "クリーンシート", r.cs, "", 0, `${fmtN(r.cs / r.n * 100, 0)}%の試合`);
+    add("概要", "勝率", r.w / r.n * 100, "%", 1, `${r.w}勝${r.d}分${r.l}敗`);
   }
-  return P.join("");
-}
-
-/* =====================================================================
-   画面
-   ===================================================================== */
-function seasonSel(id, val, all){
-  const opts=(all?[["","通算"]]:[]).concat(D.seasonList.map(s=>[s,`${s}シーズン`]));
-  if(!opts.length) return "";
-  return `<select class="sel" id="${id}" aria-label="シーズンを選ぶ">${opts.map(([v,l])=>`<option value="${esc(v)}"${v===(val||"")?" selected":""}>${esc(l)}</option>`).join("")}</select>`;
-}
-const bindSel = (id, fn) => { const el=$(id); if(el) el.onchange=()=>fn(el.value); };
-const band = (en, jp) => `<section class="ph-band" data-bg="${esc(en)}"><div class="ph-in"><h1><b>${esc(en)}</b><small>${esc(jp)}</small></h1></div></section>`;
-const secH = (en, jp, more) => `<div class="sec-h"><h2><b>${en}</b><small>${jp}</small></h2>${more?`<a class="more" href="${more}">VIEW MORE</a>`:""}</div>`;
-const dateEN = d => d ? `<b>${d.getMonth()+1}.${String(d.getDate()).padStart(2,"0")}<small>${WDE[d.getDay()]}</small></b>` : "<b>--</b>";
-
-/* 試合カード（HOME） */
-function matchBox(m, label){
-  const S=sides(m);
-  return `<div class="mbox"><div class="mbox-h"><b>${label}</b><span class="ha ${m.ha}" style="color:#fff">${m.ha==="H"?"HOME":m.ha==="A"?"AWAY":"NEUTRAL"}</span></div>
-    <a class="mbox-b" href="#match/${m.id}">
-      <div class="mdate">${dateEN(m.date)}<span style="font-size:12px;color:var(--ink2);font-weight:700">${m.date?m.date.getFullYear():""}</span></div>
-      <div class="mcomp">${esc(compRound(m))}</div>
-      <div class="mboard"><div class="mteam">${logo(S.home)}${esc(S.home)}</div>
-        <div class="mscore">${m.played?`${S.hs}-${S.as}${m.pk?`<small>PK ${m.ha==="A"?`${m.pk.b}-${m.pk.a}`:`${m.pk.a}-${m.pk.b}`}</small>`:""}`:`<span class="vs">VS</span>`}</div>
-        <div class="mteam">${logo(S.away)}${esc(S.away)}</div></div>
-      ${m.played?`<div class="mres"><span class="res ${resCls(m)}">${resEN(m)}</span></div>`:""}
-    </a>
-    <div class="mlinks">${m.played?`<a href="#match/${m.id}">試合詳細</a>${hasStats(m)?`<a href="#match/${m.id}/stats">スタッツ</a>`:""}${m.lu.me.length?`<a href="#match/${m.id}/lineup">出場選手</a>`:""}`
-      :`<a href="#match">試合日程</a><a href="#match/${m.id}">対戦情報</a>`}</div></div>`;
-}
-
-/* ---------- HOME ---------- */
-let sliderTimer=null;
-function vHome(){
-  const s=ST.season, r=record(ofSeason(s)), rk=myRank(s), lg=leagueName(s);
-  const next=D.matches.find(m=>!m.played), last=D.played.slice(-2).reverse();
-  const boxes=[]; if(next) boxes.push(matchBox(next,"NEXT MATCH")); if(last[0]) boxes.push(matchBox(last[0],"LATEST RESULT")); if(!next && last[1]) boxes.push(matchBox(last[1],"PREVIOUS RESULT"));
-  const slides=D.news.slice(0,5);
-  const leaders=[["TOP SCORER","g","点"],["TOP ASSIST","a",""],["KEY PASS","キーパス","本"]].map(([l,k,u])=>{
-    let rows=statRowsFor(s).filter(x=>x[k]); if(!rows.length) rows=fromMatches(s).filter(x=>x[k]);
-    rows.sort((a,b)=>b[k]-a[k]); const t=rows[0]; if(!t) return "";
-    return `<a class="leader" href="#player/${encodeURIComponent(t.name)}">${face(t.name)}<div><span>${l}</span><b>${esc(t.name)}</b><em>${t[k]}<small>${u}</small></em></div></a>`;
-  }).join("");
-  const tb=standing(s, null, true);
-  return `
-  <section class="hero"><div class="hero-in">
-    ${slides.length?`<div class="slider"><div class="slides" id="slides">${slides.map(n=>`<a class="slide" href="#news/${encodeURIComponent(n.id)}">${visual(n)}
-        <div class="slide-cap"><div class="meta"><span class="cat ${n.cat}">${n.cat}</span><span class="en" style="font-weight:600">${nDate(n)}</span></div><h3>${esc(n.title)}</h3></div></a>`).join("")}</div>
-      ${slides.length>1?`<div class="dots" id="dots">${slides.map((_,i)=>`<button aria-label="${i+1}枚目"${i?"":' class="on"'}></button>`).join("")}</div>`:""}</div>`
-    :`<div style="aspect-ratio:16/9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;position:relative">${logo(clubName(),"")}<b class="en" style="font-size:48px;font-weight:800;font-style:italic;letter-spacing:.04em">${esc(clubName().toUpperCase())}</b></div>`}
-    <div class="hero-side"><h2>NEWS<small>最新ニュース</small></h2>
-      ${D.news.slice(0,5).map(n=>`<a class="hl" href="#news/${encodeURIComponent(n.id)}"><div class="meta"><span class="cat ${n.cat}">${n.cat}</span><span class="en">${nDate(n)}</span></div><p>${esc(n.title)}</p></a>`).join("")||`<p style="font-size:13px;opacity:.7;margin-top:10px">スプシに試合や移籍を入れると、ここにニュースが並びます。</p>`}
-    </div></div></section>
-
-  <section class="match-band"><div class="wrap">
-    ${secH("MATCH","試合日程・結果","#match")}
-    ${boxes.length?`<div class="mgrid">${boxes.join("")}</div>`:empty("試合シートに入れると、ここに試合が出ます。")}
-    <div class="season-strip">
-      <div><span>${esc(s||"SEASON")} 成績</span><b>${r.w}<small>勝</small>${r.d}<small>分</small>${r.l}<small>敗</small></b></div>
-      <div><span>${esc(lg||"リーグ")} 順位</span><b>${rk?`${esc(rk)}<small>位</small>`:"-"}</b></div>
-      <div><span>得点</span><b>${r.gf}</b></div><div><span>失点</span><b>${r.ga}</b></div>
-    </div>
-  </div></section>
-
-  <div class="wrap">
-    <section class="sec">${secH("NEWS","ニュース","#news")}
-      ${D.news.length?`<div class="ngrid">${D.news.slice(0,8).map(newsCard).join("")}</div>`:empty("試合・移籍・シーズンのシートに入れると、ニュースが自動でできます。")}</section>
-    ${leaders?`<section class="sec">${secH("PLAYERS","今シーズンの主な選手","#players")}<div class="leaders">${leaders}</div></section>`:""}
-    ${tb?`<section class="sec">${secH("STANDINGS","順位表","#history")}${tb}</section>`:""}
-  </div>`;
-}
-function bHome(){
-  const box=$("slides"), dots=$("dots"); if(!box) return;
-  const btns=dots?[...dots.children]:[];
-  const kids=[...box.children];
-  const cur=()=>{ let b=0,d=1e9; kids.forEach((k,i)=>{ const x=Math.abs(k.offsetLeft-box.offsetLeft-box.scrollLeft-(kids[0].offsetLeft-box.offsetLeft)); if(x<d){d=x;b=i;} }); return b; };
-  const go=i=>box.scrollTo({left:kids[i].offsetLeft-kids[0].offsetLeft});
-  btns.forEach((b,i)=>b.onclick=e=>{ e.preventDefault(); go(i); restart(); });
-  box.addEventListener("scroll",()=>{ const i=cur(); btns.forEach((b,k)=>b.classList.toggle("on",k===i)); },{passive:true});
-  const restart=()=>{ clearInterval(sliderTimer); if(kids.length>1 && !matchMedia("(prefers-reduced-motion: reduce)").matches)
-    sliderTimer=setInterval(()=>{ if(!document.body.contains(box)){ clearInterval(sliderTimer); return; } const i=cur(); go(i>=kids.length-1 || box.scrollLeft+box.clientWidth>=box.scrollWidth-4 ? 0 : i+1); },6000); };
-  restart();
-}
-
-/* ---------- NEWS ---------- */
-function vNews(){
-  const cats=["すべて","MATCH","TRANSFER","SEASON"];
-  const L=D.news.filter(n=>ST.newsCat==="すべて"||n.cat===ST.newsCat);
-  return `${band("NEWS","ニュース")}<div class="wrap narrow">
-    <div class="pill-tabs" id="nw-tabs">${cats.map(c=>`<button class="pill${c===ST.newsCat?" on":""}" data-c="${c}">${c==="すべて"?"ALL":c}</button>`).join("")}</div>
-    ${L.length?`<div class="nlist">${L.map(newsRow).join("")}</div>`:empty("まだニュースはありません。")}</div>`;
-}
-function bNews(){ document.querySelectorAll("#nw-tabs .pill").forEach(b=>b.onclick=()=>{ ST.newsCat=b.dataset.c; render(); }); }
-function vNewsDetail(id){
-  const n=D.news.find(x=>x.id===id); if(!n) return `${band("NEWS","ニュース")}<div class="wrap narrow">${empty("ニュースが見つかりません。")}</div>`;
-  const i=D.news.indexOf(n), nx=D.news[i-1], pv=D.news[i+1];
-  return `${band("NEWS","ニュース")}<div class="wrap narrow">
-    <div class="crumb"><a href="#home">HOME</a> › <a href="#news">NEWS</a></div>
-    <article><div class="nd-head"><div class="meta"><span class="cat ${n.cat}">${n.cat}</span><span>${n.date?fmtDW(n.date):nDate(n)}</span></div><h1>${esc(n.title)}</h1></div>
-      ${visual(n)}<div class="nd-body">${newsBody(n)}</div></article>
-    <div class="pager">${pv?`<a href="#news/${encodeURIComponent(pv.id)}"><small>‹ PREV</small>${esc(pv.title)}</a>`:"<span></span>"}${nx?`<a class="nx" href="#news/${encodeURIComponent(nx.id)}"><small>NEXT ›</small>${esc(nx.title)}</a>`:""}</div></div>`;
-}
-
-/* ---------- MATCH ---------- */
-function vMatch(){
-  const s=ST.season, L0=D.matches.filter(m=>!s || m.season===s), comps=["すべて",...new Set(L0.map(m=>m.comp))];
-  if(!comps.includes(ST.comp)) ST.comp="すべて";
-  const L=L0.filter(m=>ST.comp==="すべて"||m.comp===ST.comp), r=record(L.filter(m=>m.played));
-  return `${band("MATCH","試合日程・結果")}<div class="wrap">
-    <div class="toolbar">${seasonSel("mt-season", s)}</div>
-    <div class="pill-tabs" id="mt-tabs">${comps.map(c=>`<button class="pill${c===ST.comp?" on":""}" data-c="${esc(c)}">${c==="すべて"?"ALL":esc(c)}</button>`).join("")}</div>
-    ${r.n?`<div class="chips"><div class="chip"><span>試合</span><b>${r.n}</b></div><div class="chip"><span>勝-分-敗</span><b>${r.w}<small>勝</small>${r.d}<small>分</small>${r.l}<small>敗</small></b></div>
-      <div class="chip"><span>得点</span><b>${r.gf}</b></div><div class="chip"><span>失点</span><b>${r.ga}</b></div><div class="chip"><span>無失点</span><b>${r.cs}</b></div></div>`:""}
-    ${L.length?`<div class="mlist">${L.map(m=>{ const S=sides(m);
-      return `<a class="mrow" href="#match/${m.id}">
-        <div class="mrow-d">${dateEN(m.date)}<span>${esc(m.comp)}<br>${esc(m.round)}</span></div>
-        <div class="mrow-t r"><span>${esc(S.home)}</span>${logo(S.home)}</div>
-        <div class="mrow-s">${m.played?`${S.hs}-${S.as}${m.pk?`<small>PK ${m.ha==="A"?`${m.pk.b}-${m.pk.a}`:`${m.pk.a}-${m.pk.b}`}</small>`:""}`:`<span class="vs">VS</span>`}</div>
-        <div class="mrow-t">${logo(S.away)}<span>${esc(S.away)}</span></div>
-        <div class="mrow-r"><span class="ha ${m.ha}">${m.ha==="H"?"HOME":m.ha==="A"?"AWAY":"N"}</span> <span class="res ${resCls(m)}">${m.played?(m.draw&&!m.pk?"D":m.res):"NEXT"}</span></div></a>`; }).join("")}</div>`
-      :empty("試合シートに入れると、ここに試合が並びます。")}</div>`;
-}
-function bMatch(){ bindSel("mt-season", v=>{ ST.season=v; render(); }); document.querySelectorAll("#mt-tabs .pill").forEach(b=>b.onclick=()=>{ ST.comp=b.dataset.c; render(); }); }
-
-/* 試合のスタッツ（FC27「スタッツ」画面の並び）。[項目, 単位, 小数, 少ないほうが良い, 計算式] */
-const tv = (m,s,h) => teamVal(m,s,h);
-const tTkl = (m,s) => tv(m,s,"タックル") ?? ((tv(m,s,"スタンディングタックル")!=null||tv(m,s,"スライディングタックル")!=null) ? (tv(m,s,"スタンディングタックル")||0)+(tv(m,s,"スライディングタックル")||0) : null);
-const tTklW = (m,s) => tv(m,s,"タックル成功") ?? ((tv(m,s,"スタンディングタックル成功")!=null||tv(m,s,"スライディングタックル成功")!=null) ? (tv(m,s,"スタンディングタックル成功")||0)+(tv(m,s,"スライディングタックル成功")||0) : null);
-const MS = [
-  ["概要", [["ボール奪取時間","秒",1,1],["シュート"],["ゴール期待値","",2],["パス"],["タックル","",0,0,tTkl],["タックル成功","",0,0,tTklW],["インターセプト"],["セーブ"],
-    ["ファウル","",0,1],["オフサイド","",0,1],["コーナーキック"],["フリーキック"],["PK"],["警告","",0,1],["退場","",0,1],
-    ["守備ライン突破（間）"],["守備ライン突破（外）"],["守備ライン突破（上）"],["守備ライン突破の試み"]]],
-  ["シュート", [["枠内シュート"],["枠外シュート"],["ブロックされたシュート"],["シュート精度","%",1,0,(m,s)=>rate(tv(m,s,"枠内シュート"),tv(m,s,"シュート"))],
-    ["通常シュート"],["フィネスシュート"],["ヘディングシュート"],["パワーシュート"],["ボレーシュート"],["チップシュート"],["セットプレーのシュート"],
-    ["ボックス内シュート"],["ボックス外シュート"],["ニアサイドへのシュート"],["ファーサイドへのシュート"]]],
-  ["パス", [["パス成功"],["パス成功率","%",1,0,(m,s)=>rate(tv(m,s,"パス成功"),tv(m,s,"パス"))],["パスカットされた","",0,1],["オフサイドのパス","",0,1],["その他のパス"],
-    ["グラウンダーパス"],["ロブパス"],["スルーパス"],["ロブスルーパス"],["クロス"],["セットプレーのパス"],
-    ["キーパス"],["ダイレクトパス"],["パス&ゴー"],["サイドを使ったパス"],["ブレイクアウェイのパス"]]],
-  ["守備", [["スタンディングタックル"],["スタンディングタックル成功"],["スライディングタックル"],["スライディングタックル成功"],["タックル成功率","%",1,0,(m,s)=>rate(tTklW(m,s),tTkl(m,s))],
-    ["ブロック"],["クリア"],["オフェンスデュエル勝利"],["ディフェンスデュエル勝利"],["空中戦勝利"],["突破された回数","",0,1],["PK献上","",0,1]]]
-];
-const msVal = (m,side,it) => it[4] ? it[4](m,side) : teamVal(m,side,it[0]);
-const hasStats = m => teamVal(m,"me","ボール支配率")!=null || MS.some(([,L])=>L.some(it=>msVal(m,"me",it)!=null||msVal(m,"opp",it)!=null));
-
-function vMatchDetail(arg){
-  const [id, tab]=String(arg).split("/");
-  const m=D.matches.find(x=>x.id===+id); if(!m) return `${band("MATCH","試合")}<div class="wrap">${empty("試合が見つかりません。")}</div>`;
-  if(tab) ST.mtab=tab;
-  const S=sides(m), hasLu=m.lu.me.length||m.lu.opp.length, hasEv=m.ev.length;
-  const T=[["sum","SUMMARY","概要",true],["stats","STATS","スタッツ",hasStats(m)],["lineup","LINE-UP","出場選手",hasLu],["timeline","TIMELINE","経過",hasEv]];
-  if(!T.find(t=>t[0]===ST.mtab && t[3])) ST.mtab="sum";
-  const goalsOf = side => side==="me" ? m.scorers.map(x=>`${esc(x.name)}${x.n>1?` ×${x.n}`:""}`)
-    : m.ev.filter(e=>e.side==="opp"&&isGoal(e)).map(e=>`${esc(e.player)} ${esc(e.min)}'`)
-      .concat(m.lu.opp.filter(l=>l.g&&!m.ev.some(e=>e.side==="opp"&&isGoal(e))).map(l=>`${esc(l.name)}${l.g>1?` ×${l.g}`:""}`));
-  const pv=D.matches.find(x=>x.id===m.id-1), nx=D.matches.find(x=>x.id===m.id+1);
-  let body="";
-  if(ST.mtab==="stats") body=tabStats(m,S); else if(ST.mtab==="lineup") body=tabLineup(m,S); else if(ST.mtab==="timeline") body=tabTimeline(m,S); else body=tabSummary(m);
-  return `<section class="mh"><div class="mh-in">
-      <div class="mh-comp">${esc(compRound(m))}</div><div class="mh-date">${m.date?`${fmtD(m.date)} ${WDE[m.date.getDay()]}`:""}　<span class="ha ${m.ha}" style="color:#fff">${m.ha==="H"?"HOME":m.ha==="A"?"AWAY":"NEUTRAL"}</span></div>
-      <div class="mh-board"><div class="mh-team">${logo(S.home)}${esc(S.home)}</div>
-        <div class="mh-score">${m.played?`${S.hs}-${S.as}${m.pk?`<small>PK ${m.ha==="A"?`${m.pk.b} - ${m.pk.a}`:`${m.pk.a} - ${m.pk.b}`}</small>`:""}`:`<span style="font-size:.5em;font-style:italic;opacity:.6">VS</span>`}</div>
-        <div class="mh-team">${logo(S.away)}${esc(S.away)}</div></div>
-      ${m.played?`<div class="mh-res"><span class="res ${resCls(m)}">${resEN(m)}</span></div>
-      <div class="mh-goals"><ul class="r">${goalsOf(S.hSide).map(x=>`<li>${x} ⚽</li>`).join("")}</ul><ul>${goalsOf(S.aSide).map(x=>`<li>⚽ ${x}</li>`).join("")}</ul></div>`:""}
-    </div></section>
-    ${m.played?`<nav class="mtabs"><div class="mtabs-in">${T.map(([k,en,jp,ok])=>`<button data-t="${k}"${k===ST.mtab?' class="on"':""}${ok?"":" disabled"}>${en}<small>${jp}</small></button>`).join("")}</div></nav>`:""}
-    <div class="wrap" style="max-width:1000px">
-      <div class="crumb"><a href="#home">HOME</a> › <a href="#match">MATCH</a></div>
-      ${m.played?body:empty("これからの試合です。結果を入れると、ここに詳しい記録が出ます。")}
-      <div class="pager">${pv?`<a href="#match/${pv.id}"><small>‹ PREV</small>${fmtMD(pv.date)} vs ${esc(pv.opp)}</a>`:"<span></span>"}${nx?`<a class="nx" href="#match/${nx.id}"><small>NEXT ›</small>${fmtMD(nx.date)} vs ${esc(nx.opp)}</a>`:""}</div>
-    </div>`;
-}
-function bMatchDetail(){ document.querySelectorAll(".mtabs button").forEach(b=>b.onclick=()=>{ if(b.disabled) return; ST.mtab=b.dataset.t;
-  const id=parseHash().arg.split("/")[0]; history.replaceState(null,"",`#match/${id}${ST.mtab==="sum"?"":"/"+ST.mtab}`); render(); });
-  document.querySelectorAll("#lu-side .pill").forEach(b=>b.onclick=()=>{ ST.luSide=b.dataset.s; render(); });
-  document.querySelectorAll("#lu-grp .tab").forEach(b=>b.onclick=()=>{ ST.luGrp=b.dataset.g; render(); }); }
-
-function tabSummary(m){
-  const list=(L)=> L.length? `<ul>${L.map(x=>`<li><a href="#player/${encodeURIComponent(x.name)}">${esc(x.name)}</a>${x.n>1?` ×${x.n}`:""}</li>`).join("")}</ul>` : `<p style="color:var(--ink3);font-size:13px">なし</p>`;
-  return `<div class="box-grid">
-      <div class="box"><h3>GOAL<small>得点者</small></h3>${list(m.scorers)}</div>
-      <div class="box"><h3>ASSIST<small>アシスト</small></h3>${list(m.assists)}</div>
-      ${m.mom?`<a class="box mom" href="#player/${encodeURIComponent(m.mom)}">${face(m.mom)}<div><h3 style="margin-bottom:2px">MAN OF THE MATCH</h3><b>${esc(m.mom)}</b></div></a>`:""}
-      ${m.att?`<div class="box"><h3>ATTENDANCE<small>入場者数</small></h3><b class="en" style="font-size:36px;font-weight:800">${nf(m.att)}</b> 人</div>`:""}
-    </div>
-    ${m.memo?`<div class="memo">${esc(m.memo)}</div>`:""}
-    ${hasStats(m)?`<div style="margin-top:28px">${tabStats(m, sides(m), true)}</div>`:""}`;
-}
-function cmpRow(label, a, b, u, d, low){
-  if(a==null && b==null) return "";
-  const x=a||0, y=b||0, mx=Math.max(x,y,0.0001);
-  const better = low ? (x<y?"h":y<x?"a":"") : (x>y?"h":y>x?"a":"");
-  const pctLike = u==="%";
-  const wa = pctLike ? Math.min(100,x) : x/mx*100, wb = pctLike ? Math.min(100,y) : y/mx*100;
-  const f = v => v==null ? "-" : fmtV(v,d)+(u==="%"?"%":"");
-  return `<div class="cmp"><div class="cmp-v${better==="h"?" win":""}">${f(a)}</div>
-    <div class="cmp-m"><span>${label}${u&&u!=="%"?`（${u}）`:""}</span><div class="cmp-bar"><i><b style="width:${wa}%"></b></i><i><b style="width:${wb}%"></b></i></div></div>
-    <div class="cmp-v r${better==="a"?" win":""}">${f(b)}</div></div>`;
-}
-function tabStats(m,S,short){
-  const H=S.hSide, A=S.aSide;
-  const poss=[teamVal(m,H,"ボール支配率"), teamVal(m,A,"ボール支配率")];
-  const head=`<div class="cmp-head"><div>${logo(S.home)} ${esc(S.home)}${m.form[H]?` <span class="form-tag">${esc(m.form[H])}</span>`:""}</div><div></div><div class="r">${m.form[A]?`<span class="form-tag">${esc(m.form[A])}</span> `:""}${esc(S.away)} ${logo(S.away)}</div></div>`;
-  const posHtml = (poss[0]!=null||poss[1]!=null) ? `<div class="poss"><div class="poss-bar"><i style="width:${poss[0]??(100-(poss[1]||0))}%"><b>${fmtV(poss[0]??(100-poss[1]),0)}%</b></i><i><b>${fmtV(poss[1]??(100-poss[0]),0)}%</b></i></div><span>ボール支配率</span></div>` : "";
-  const groups = short ? [MS[0]] : MS;
-  const body = groups.map(([g,L])=>{ const rows=L.map(it=>cmpRow(it[0], msVal(m,H,it), msVal(m,A,it), it[1]||"", it[2]||0, it[3])).join("");
-    return rows ? `<div class="sub-h">${esc(g)}</div>${rows}` : ""; }).join("");
-  if(!body && !posHtml) return empty("チームスタッツか出場選手のシートに入れると、ここに比較が出ます。");
-  return `${head}${posHtml}${body}${short?`<p style="margin-top:16px"><a class="btn" href="#match/${m.id}/stats">ALL STATS ›</a></p>`:""}`;
-}
-/* フォーメーションに合わせて、先発11人をピッチに並べる */
-function placeXI(L, form){
-  const st=L.filter(l=>l.role==="先発");
-  if(!st.length) return [];
-  const gk=st.filter(l=>posGroup(l.pos)==="GK"), out=st.filter(l=>posGroup(l.pos)!=="GK")
-    .map((l,i)=>({l,i,d:POS_DEPTH[l.pos]!=null?POS_DEPTH[l.pos]:2.5,lat:POS_LAT(l.pos)})).sort((a,b)=>a.d-b.d || a.i-b.i);
-  let rows=[];
-  const cnt=String(form||"").split("-").map(Number).filter(n=>n>0);
-  if(cnt.length && cnt.reduce((a,b)=>a+b,0)===out.length){ let k=0; cnt.forEach(c=>{ rows.push(out.slice(k,k+c)); k+=c; }); }
-  else { const g={}; out.forEach(o=>{ const b=Math.round(o.d); (g[b]=g[b]||[]).push(o); }); rows=Object.keys(g).sort().map(k=>g[k]); }
-  const P=[]; gk.forEach((l,j)=>P.push({l,x:50+(j-(gk.length-1)/2)*20,y:90}));
-  const n=rows.length;
-  rows.forEach((row,ri)=>{ const y= n===1? 45 : 72 - ri*(58/(n-1));
-    row.sort((a,b)=>a.lat-b.lat || a.i-b.i).forEach((o,j)=>P.push({l:o.l, x: 10 + 80*(j+.5)/row.length, y, w: 78/row.length})); });
-  return P;
-}
-/* 名前を省略せず、「・」や空白のところで折り返す */
-const brk = s => esc(s).replace(/([・･\s])/g,"$1<wbr>");
-function pitchHtml(L, form, side, m){
-  const P=placeXI(L, form);
-  if(!P.length) return "";
-  return `<div class="pitch"><div class="arc"></div>${P.map(({l,x,y,w})=>{
-    const off = m.ev.some(e=>e.side===side&&e.kind==="交代"&&same(e.rel,l.name)) || (l.min!=null && l.min<90 && l.role==="先発");
-    const ic=`${l.g?"⚽".repeat(Math.min(l.g,3)):""}${l.yc?'<i class="ico-y"></i>':""}${l.rc?'<i class="ico-r"></i>':""}`;
-    const inner=`<div class="pp-s">${l.no??""}${off?'<span class="pp-off" title="交代">▼</span>':""}${ic?`<span class="pp-i">${ic}</span>`:""}</div><span class="pp-n">${brk(side==="me"?surname(l.name):l.name)}</span>`;
-    return `<div class="pp ${side==="opp"?"opp":""} ${posGroup(l.pos)==="GK"?"gk":""}" style="left:${x}%;top:${y}%;width:${Math.min(24,w||24).toFixed(1)}%">${side==="me"?`<a href="#player/${encodeURIComponent(l.name)}">${inner}</a>`:inner}</div>`; }).join("")}</div>`;
-}
-/* 出場選手の表（FC27「パフォーマンス」の分類で切り替え） */
-const luTkl = l => l.s["タックル"] ?? ((l.s["スタンディングタックル"]!=null||l.s["スライディングタックル"]!=null) ? (l.s["スタンディングタックル"]||0)+(l.s["スライディングタックル"]||0) : null);
-const LU_GRP = [
-  ["概要", [["評価","",1],["出場時間","分"],["得点"],["アシスト"],["シュート"],["シュート精度","%",0,l=>rate(l.s["枠内シュート"],l.s["シュート"])],["パス"],["パス成功率","%",0,l=>rate(l.s["パス成功"],l.s["パス"])],
-    ["ドリブル"],["ドリブル成功率","%",0,l=>rate(l.s["ドリブル成功"],l.s["ドリブル"])],["タックル","",0,luTkl],["オフサイド"],["ファウル"],["ボール奪取"],["ボールロスト"],["走行距離","km",1],["スプリント距離","km",2],["警告"],["退場"]]],
-  ["ポゼッション", [["ボール保持率","%",1],["ドリブル成功"],["ドリブル距離","km",2],["タックルされた回数"],["獲得CK"],["被ファウル"],["獲得PK"],["ダミーからのアシスト"],
-    ["抜き去り"],["スキルムーブで抜き去り"],["股抜き"],["縦への突破"]]],
-  ["シュート", [["PKを除くゴール"],["PKを除くゴール期待値","",2],["枠内シュート"],["枠外シュート"],["ブロックされたシュート"],["FKゴール"],["PKゴール"],["シュートからのアシスト"],
-    ["通常シュート"],["フィネスシュート"],["ヘディングシュート"],["パワーシュート"],["ボレーシュート"],["チップシュート"],["セットプレーのシュート"]]],
-  ["パス", [["期待アシスト","",2],["セカンドアシスト"],["キーパス"],["パスで抜いた人数"],["パス成功"],["パスカットされた"],["オフサイドのパス"],["クロス"],["クロス成功"],["ブロックされたクロス"],
-    ["プレッシャー下のパス"],["プレッシャー下のパス成功"],["グラウンダーパス"],["ロブパス"],["スルーパス"],["ロブスルーパス"],["セットプレーのパス"]]],
-  ["守備", [["スタンディングタックル"],["スタンディングタックル成功"],["スライディングタックル"],["スライディングタックル成功"],["インターセプト"],["ブロック"],["クリア"],["オフサイド誘発"],
-    ["オフェンスデュエル"],["オフェンスデュエル勝利"],["ディフェンスデュエル"],["ディフェンスデュエル勝利"],["空中戦"],["空中戦勝利"],["突破された回数"],["PK献上"],["オウンゴール"]]],
-  ["GK", [["被シュート"],["被枠内シュート"],["セーブ"],["失点"],["セーブ率","%",0,l=>rate(l.s["セーブ"],l.s["被枠内シュート"])],["パンチング"],["飛び出してのセーブ"],["PKセーブ"],["PK失点"],
-    ["通常シュートをセーブ"],["フィネスシュートをセーブ"],["ヘディングをセーブ"],["パワーシュートをセーブ"],["ボレーをセーブ"],["チップをセーブ"],["セットプレーをセーブ"]]]
-];
-function tabLineup(m,S){
-  const col = side => { const L=m.lu[side], club= side==="me"?clubName():m.opp, form=m.form[side];
-    if(!L.length) return `<div><div class="lu-h">${logo(club)}<span>${esc(club)}</span></div>${empty("出場選手シートに入れると表示されます。")}</div>`;
-    const subs=L.filter(l=>l.role==="途中出場"), bench=L.filter(l=>l.role==="ベンチ");
-    const nm=l=> side==="me"?`<a href="#player/${encodeURIComponent(l.name)}">${esc(l.name)}</a>`:esc(l.name);
-    const offFor = l => { const e=m.ev.find(e=>e.side===side&&e.kind==="交代"&&same(e.player,l.name)); return e ? `${esc(e.min)}' OUT ${esc(e.rel)}` : (l.min!=null?`${l.min}分`:""); };
-    return `<div><div class="lu-h">${logo(club)}<span>${esc(club)}</span>${form?`<span class="form-tag">${esc(form)}</span>`:""}</div>
-      ${pitchHtml(L, form, side, m)}
-      ${subs.length?`<div class="subs"><h4>SUBSTITUTES <small style="font-family:'Noto Sans JP';font-size:11px;font-weight:500">途中出場</small></h4><ul>${subs.map(l=>`<li><span class="no">${l.no??""}</span>${nm(l)}<small style="color:var(--ink3)">${esc(l.pos)}　${offFor(l)}</small></li>`).join("")}</ul></div>`:""}
-      ${bench.length?`<div class="subs"><h4>BENCH <small style="font-family:'Noto Sans JP';font-size:11px;font-weight:500">ベンチ</small></h4><ul>${bench.map(l=>`<li><span class="no">${l.no??""}</span>${nm(l)}<small style="color:var(--ink3)">${esc(l.pos)}</small></li>`).join("")}</ul></div>`:""}</div>`; };
-  const side=ST.luSide==="opp"?"opp":"me";
-  const grps=LU_GRP.filter(([,C])=>m.lu[side].some(l=>C.some(c=>(c[3]?c[3](l):l.s[c[0]])!=null)));
-  const g=grps.find(x=>x[0]===ST.luGrp)||grps[0];
-  let L=m.lu[side].filter(l=>l.role!=="ベンチ");
-  if(g && g[0]==="GK") L=L.filter(l=>posGroup(l.pos)==="GK");
-  const cols= g ? g[1].filter(c=>L.some(l=>(c[3]?c[3](l):l.s[c[0]])!=null)) : [];
-  const cell=(l,c)=>{ const v=c[3]?c[3](l):l.s[c[0]]; if(v==null) return ""; if(c[0]==="警告") return v?'<i class="ico-y"></i>':""; if(c[0]==="退場") return v?'<i class="ico-r"></i>':""; return fmtV(v,c[2]||0)+(c[1]==="%"?"%":""); };
-  return `<div class="lu-grid">${col(S.hSide)}${col(S.aSide)}</div>
-    <div class="sub-h">PLAYER STATS<small>選手ごとの記録</small></div>
-    <div class="pill-tabs" id="lu-side"><button class="pill${side==="me"?" on":""}" data-s="me">${esc(clubName())}</button><button class="pill${side==="opp"?" on":""}" data-s="opp">${esc(m.opp)}</button></div>
-    ${g?`<div class="tabs" id="lu-grp">${grps.map(([k])=>`<button class="tab${k===g[0]?" on":""}" data-g="${k}">${k}</button>`).join("")}</div>
-      <div class="tw"><table class="t"><thead><tr><th class="l">名前</th><th>#</th><th>POS</th>${cols.map(c=>`<th>${c[0]}${c[1]&&c[1]!=="%"?`<br><small>${c[1]}</small>`:""}</th>`).join("")}</tr></thead><tbody>
-      ${L.slice().sort((a,b)=>({"先発":0,"途中出場":1}[a.role]??2)-({"先発":0,"途中出場":1}[b.role]??2) || (POS_DEPTH[a.pos]??5)-(POS_DEPTH[b.pos]??5)).map(l=>`<tr><th class="l">${side==="me"?`<a href="#player/${encodeURIComponent(l.name)}">${esc(l.name)}</a>`:esc(l.name)}${l.role==="途中出場"?' <small style="color:var(--ink3)">途中</small>':""}${same(l.name,m.mom)&&side==="me"?' <span class="cat">MOM</span>':""}</th><td class="num">${l.no??""}</td><td>${esc(l.pos)}</td>${cols.map(c=>`<td class="num">${cell(l,c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`
-      : empty("出場選手シートに入れると表示されます。")}`;
-}
-function tabTimeline(m,S){
-  const kcls = k => isGoal({kind:k})?"goal" : k==="警告"?"y" : k==="退場"?"r" : k==="交代"?"sub" : "";
-  const ev=m.ev; let ht=false;
-  const rows=[];
-  ev.forEach(e=>{
-    if(!ht && e.mn>45.99 && ev.some(x=>x.mn<=45.99)){ rows.push(`<div class="tl-ht"><span>HALF TIME</span></div>`); ht=true; }
-    const isHome = (e.side===S.hSide);
-    const who = e.side==="me" ? (e.player?pLink(e.player):"") : (e.player?`<b>${esc(e.player)}</b>`:"");
-    const sub = e.kind==="交代" ? (e.rel?`<small>OUT ${esc(e.rel)}</small>`:"") : isGoal(e) ? `<small>${[e.body, e.rel?`アシスト ${esc(e.rel)}`:""].filter(Boolean).join("・")}</small>` : "";
-    const txt=`<span class="tl-k ${kcls(e.kind)}">${esc(e.kind)}</span>${who}${sub}${e.note?`<small>${esc(e.note)}</small>`:""}`;
-    rows.push(`<div class="tl-r"><div class="tl-e me">${isHome?txt:""}</div><div class="tl-m">${esc(e.min)}'</div><div class="tl-e">${isHome?"":txt}</div></div>`);
-  });
-  return `<div class="cmp-head"><div>${logo(S.home)} ${esc(S.home)}</div><div></div><div class="r">${esc(S.away)} ${logo(S.away)}</div></div><div class="tl">${rows.join("")}<div class="tl-ht"><span>FULL TIME</span></div></div>`;
-}
-
-/* ---------- PLAYERS ---------- */
-function squad(s){
-  let rows=seasonRows(s).map(r=>({...r, prof:profile(r.name)}));
-  /* 選手シートにいて、まだ出場していない選手も並べる */
-  D.players.forEach(p=>{ if(!rows.some(r=>same(r.name,p.name)) && !D.trans.some(t=>same(t.name,p.name)&&trDir(t.kind)==="out"&&(!s||t.season<=s))) rows.push({name:p.name,pos:p.pos,no:null,prof:p,apps:0}); });
-  return {rows, note:""};
-}
-function vPlayers(){
-  const s=ST.season, {rows, note}=squad(s);
-  const by={}; rows.forEach(r=>{ const g=posGroup((r.prof&&r.prof.pos)||r.pos); (by[g]=by[g]||[]).push(r); });
-  Object.values(by).forEach(L=>L.sort((a,b)=>(a.no??999)-(b.no??999) || a.name.localeCompare(b.name,"ja")));
-  return `${band("PLAYERS","選手一覧")}<div class="wrap">
-    <div class="toolbar">${seasonSel("pl-season", s)}</div>
-    ${rows.length? GROUPS.filter(([g])=>by[g]).map(([g,en,jp])=>`<div class="pos-h"><b>${en}</b><small>${jp}</small></div>
-      <div class="pgrid">${by[g].map(r=>`<a class="pcard" href="#player/${encodeURIComponent(r.name)}"><div class="pic">${face(r.name)}
-        ${r.no!=null?`<span class="no">${r.no}</span>`:""}</div>
-        <div class="pos">${esc((r.prof&&r.prof.pos)||r.pos||"")}</div><b>${esc(r.name)}</b><small>${r.apps?`${r.apps}試合 ${r.g||0}得点`:"出場なし"}</small></a>`).join("")}</div>`).join("")
-      : empty("選手シート・出場選手シートに入れると、ここに選手が並びます。")}
-    ${note?`<p class="note">${esc(note)}</p>`:""}</div>`;
-}
-function bPlayers(){ bindSel("pl-season", v=>{ ST.season=v; render(); }); }
-function vPlayerDetail(name){
-  name=fullName(name);
-  const P=profile(name), L=seasonsOfPlayer(name), last=L[L.length-1];
-  const log=D.lineups.filter(l=>l.side==="me" && same(l.name,name) && l.m && l.m.played).sort((a,b)=>a.m.id-b.m.id);
-  const mg=D.played.filter(m=>m.scorers.some(x=>same(x.name,name)) || m.assists.some(x=>same(x.name,name)) || same(m.mom,name));
-  const T=D.trans.filter(t=>same(t.name,name));
-  if(!P && !L.length && !mg.length && !T.length && !log.length) return `${band("PLAYERS","選手")}<div class="wrap">${empty("選手が見つかりません。")}</div>`;
-  const pos=(P&&P.pos)||(last&&last.pos)||"";
-  const prof=[["国籍",P&&P.nat],["生年月日",P&&P.birth?`${fmtD(P.birth)}（${ageAt(P.birth,ST.season||D.seasonList[0])}歳）`:P&&P.birthS],
-    ["利き足",P&&P.foot],["身長",P&&P.height?`${P.height}cm`:""]].filter(([,v])=>v!=null&&v!=="");
-  /* 表示するシーズン（通算も選べる） */
-  const seasons=L.map(r=>r.season);
-  const ps = ST.pSeason!=null && (ST.pSeason==="" || seasons.includes(ST.pSeason)) ? ST.pSeason : (last?last.season:"");
-  const Tt = ps ? L.find(r=>r.season===ps) : luAgg("").find(r=>same(r.name,name));
-  const isGK=posGroup(pos)==="GK";
-  const groups = Tt ? PM.filter(([g])=> g!=="GK" || isGK).map(([g,Ls])=>{
-      const items=Ls.map(x=>({k:x[0],f:x[1],u:x[2]||"",d:x[3]||0,avg:!!x[4]})).filter(M=>{ const v=M.f(Tt); return v!=null && (v!==0 || ["得点","アシスト","出場試合数"].includes(M.k)); });
-      if(!items.length) return "";
-      return `<div class="pstat"><h3>${esc(g)}</h3><dl>${items.map(M=>{ const v=M.f(Tt), a=M.avg?avgOf(Tt,M):null;
-        return `<div><dt>${esc(M.k)}</dt><dd>${fmtV(v,M.d)}<small>${esc(M.u)}</small>${a!=null&&Tt.apps>1?`<em>1試合平均 ${fmtV(a, M.d||1)}</em>`:""}</dd></div>`; }).join("")}</dl></div>`; }).join("") : "";
-  return `<section class="pd" data-no="${last&&last.no!=null?last.no:""}"><div class="pd-in">
-      <div class="pd-pic">${face(name)}</div>
-      <div><div class="pd-pos">${esc(pos)}${pos?` / ${esc({GK:"GOALKEEPER",DF:"DEFENDER",MF:"MIDFIELDER",FW:"FORWARD"}[posGroup(pos)]||"")}`:""}</div>
-        ${last&&last.no!=null?`<div class="pd-no">${last.no}</div>`:""}<h1 class="pd-name">${esc(name)}</h1>
-        ${prof.length?`<dl class="pd-prof">${prof.map(([k,v])=>`<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>`:""}
-        ${P&&P.memo?`<p class="pd-memo">${esc(P.memo)}</p>`:""}</div></div></section>
-  <div class="wrap" style="max-width:1100px">
-    <div class="crumb"><a href="#home">HOME</a> › <a href="#players">PLAYERS</a></div>
-    <div class="sub-h" style="margin-top:0">STATS<small>選手スタッツ</small></div>
-    ${L.length?`<div class="toolbar"><select class="sel" id="pd-season">${L.slice().reverse().map(r=>`<option value="${esc(r.season)}"${r.season===ps?" selected":""}>${esc(r.season)}シーズン</option>`).join("")}${L.length>1?`<option value=""${ps===""?" selected":""}>通算</option>`:""}</select></div>
-      <div class="pstats">${groups}</div>`
-      : mg.length? "" : empty("出場選手シートに入れると、FC27と同じ項目のスタッツが出ます。")}
-    ${L.length>1?`<div class="sub-h">BY SEASON<small>シーズン別</small></div><div class="tw"><table class="t"><thead><tr><th>シーズン</th><th>背番号</th><th>出場</th><th>出場時間</th><th>得点</th><th>アシスト</th><th>シュート</th>${isGK?"<th>失点</th><th>無失点</th>":""}<th>警告</th><th>退場</th></tr></thead>
-      <tbody>${L.map(r=>`<tr><th>${esc(r.season)}</th><td class="num">${r.no??""}</td><td class="num">${r.apps}</td><td class="num">${nf(r.min)}</td><td class="num">${r.g}</td><td class="num">${r.a}</td><td class="num">${r["シュート"]??""}</td>${isGK?`<td class="num">${r["失点"]??""}</td><td class="num">${r.cs}</td>`:""}<td class="num">${r.yc}</td><td class="num">${r.rc}</td></tr>`).join("")}</tbody></table></div>`:""}
-    ${log.length?`<div class="sub-h">MATCH LOG<small>出場した試合</small></div><div class="tw"><table class="t"><thead><tr><th>日付</th><th class="l">相手</th><th>結果</th><th>出場</th><th>時間</th><th>得点</th><th>アシスト</th><th>シュート</th><th>パス成功率</th>${isGK?"<th>セーブ</th>":""}<th>評価</th></tr></thead><tbody>
-      ${log.slice().reverse().map(l=>`<tr><td>${fmtMD(l.m.date)}</td><td class="l"><a href="#match/${l.m.id}/lineup"><div class="t-club">${logo(l.m.opp)}${esc(l.m.opp)}</div></a></td><td><span class="res ${resCls(l.m)}" style="font-size:11px">${l.m.gf}-${l.m.ga}</span></td>
-        <td>${l.role==="先発"?"先発":l.role==="途中出場"?"途中":"ベンチ"}</td><td class="num">${l.min??""}</td><td class="num">${l.g||""}</td><td class="num">${l.a||""}</td><td class="num">${l.s["シュート"]??""}</td>
-        <td class="num">${l.s["パス"]?fmtV(rate(l.s["パス成功"],l.s["パス"]),1)+"%":""}</td>${isGK?`<td class="num">${l.s["セーブ"]??""}</td>`:""}<td class="num">${l.s["評価"]!=null?fmtV(l.s["評価"],1):""}</td></tr>`).join("")}</tbody></table></div>`
-    : mg.length?`<div class="sub-h">HIGHLIGHTS<small>活躍した試合</small></div><div class="mlist">${mg.slice().reverse().map(m=>{ const S=sides(m);
-        const g=sum(m.scorers.filter(x=>same(x.name,name)),x=>x.n), a=sum(m.assists.filter(x=>same(x.name,name)),x=>x.n);
-        return `<a class="mrow" href="#match/${m.id}"><div class="mrow-d">${dateEN(m.date)}<span>${esc(m.comp)}</span></div>
-          <div class="mrow-t r"><span>${esc(S.home)}</span>${logo(S.home)}</div><div class="mrow-s">${S.hs}-${S.as}</div><div class="mrow-t">${logo(S.away)}<span>${esc(S.away)}</span></div>
-          <div class="mrow-r" style="font-size:12px;font-weight:700">${[g?`⚽×${g}`:"", a?`A×${a}`:"", same(m.mom,name)?"MOM":""].filter(Boolean).join(" ")}</div></a>`; }).join("")}</div>`:""}
-    ${T.length?`<div class="sub-h">TRANSFER<small>移籍の記録</small></div><div class="tr-list">${T.map(trRow).join("")}</div>`:""}</div>`;
-}
-function bPlayerDetail(){ bindSel("pd-season", v=>{ ST.pSeason=v; render(); }); }
-
-/* ---------- STATS（FC27の項目でランキング） ---------- */
-/* チームの指標：[項目, 計算, 単位, 小数, 1試合平均も] （m=試合の配列、me/op=自分/相手の値の合計） */
-function teamTot(L, side, h){ const v=L.map(m=>teamVal(m,side,h)).filter(x=>x!=null); return v.length ? {s:v.reduce((a,b)=>a+b,0), n:v.length} : null; }
-function teamMetrics(L){
-  const me=h=>teamTot(L,"me",h), op=h=>teamTot(L,"opp",h), r=record(L);
-  const out=[];
-  const add=(g,k,tot,u,d,avg)=>{ if(tot==null) return; out.push({g,k,v:tot.s!=null?tot.s:tot, n:tot.n, u, d, avg}); };
-  const pct=(g,k,a,b)=>{ if(a&&b&&b.s) out.push({g,k,v:a.s/b.s*100,u:"%",d:1}); };
-  const val=(x)=> x ? x : null;
-  const po=me("ボール支配率"); if(po) out.push({g:"概要",k:"平均ボール支配率",v:po.s/po.n,u:"%",d:1});
-  const rt=me("ボール奪取時間"); if(rt) out.push({g:"概要",k:"平均ボール奪取時間",v:rt.s/rt.n,u:"秒",d:1});
-  add("概要","得点",{s:r.gf,n:r.n},"点",0,1); add("概要","失点",{s:r.ga,n:r.n},"点",0,1); out.push({g:"概要",k:"クリーンシート",v:r.cs,u:"試合"});
-  add("概要","ゴール期待値",val(me("ゴール期待値")),"",2,1); add("概要","被ゴール期待値",val(op("ゴール期待値")),"",2,1);
-  const xg=me("ゴール期待値"); if(xg) out.push({g:"概要",k:"得点とゴール期待値の差",v:r.gf-xg.s,u:"",d:2});
-  ["コーナーキック","フリーキック","PK","オフサイド","ファウル"].forEach(h=>add("概要",h,val(me(h)),/キック|PK/.test(h)?"本":"回",0,1));
-  add("概要","警告",val(me("警告")),"枚"); add("概要","退場",val(me("退場")),"回");
-  ["守備ライン突破（間）","守備ライン突破（外）","守備ライン突破（上）","守備ライン突破の試み"].forEach(h=>add("概要",h,val(me(h)),"回",0,1));
-  const sh=me("シュート"), on=me("枠内シュート");
-  add("シュート","シュート",val(sh),"本",0,1); add("シュート","被シュート",val(op("シュート")),"本",0,1);
-  add("シュート","枠内シュート",val(on),"本",0,1); pct("シュート","シュート精度",on,sh);
-  if(sh&&sh.s) out.push({g:"シュート",k:"シュート決定率",v:r.gf/sh.s*100,u:"%",d:1});
-  ["枠外シュート","ブロックされたシュート","ボックス内シュート","ボックス外シュート","ニアサイドへのシュート","ファーサイドへのシュート",
-   "通常シュート","フィネスシュート","ヘディングシュート","パワーシュート","ボレーシュート","チップシュート","セットプレーのシュート"].forEach(h=>add("シュート",h,val(me(h)),"本",0,1));
-  const ps=me("パス"), pc=me("パス成功");
-  add("パス","パス",val(ps),"本",0,1); add("パス","パス成功",val(pc),"本",0,1); pct("パス","パス成功率",pc,ps);
-  ["パスカットされた","オフサイドのパス","グラウンダーパス","ロブパス","スルーパス","ロブスルーパス","クロス","セットプレーのパス",
-   "キーパス","ダイレクトパス","パス&ゴー","サイドを使ったパス","ブレイクアウェイのパス"].forEach(h=>add("パス",h,val(me(h)),"本",0,1));
-  const tk=me("タックル"), tw=me("タックル成功");
-  add("守備","タックル",val(tk),"回",0,1); pct("守備","タックル成功率",tw,tk);
-  const st=me("スタンディングタックル"), stw=me("スタンディングタックル成功"), sl=me("スライディングタックル"), slw=me("スライディングタックル成功");
-  add("守備","スタンディングタックル",val(st),"回",0,1); pct("守備","スタンディングタックル成功率",stw,st);
-  add("守備","スライディングタックル",val(sl),"回",0,1); pct("守備","スライディングタックル成功率",slw,sl);
-  ["インターセプト","ブロック","クリア","セーブ","オフェンスデュエル勝利","ディフェンスデュエル勝利","空中戦勝利","突破された回数","PK献上"].forEach(h=>add("守備",h,val(me(h)),"回",0,1));
+  const po = avg("ボール支配率"); if (po) add("概要", "平均ボール支配率", po.avg, "%", 1, `${po.n}試合`);
+  const xg = avg("ゴール期待値"); if (xg) add("攻撃", "1試合平均ゴール期待値", xg.avg, "", 2, `合計 ${fmtN(xg.tot, 1)}`);
+  const sh = avg("シュート"); if (sh) add("攻撃", "1試合平均シュート", sh.avg, "", 1, `合計 ${fmtN(sh.tot)}`);
+  const on = ratio(L, "me", "枠内シュート", "シュート"); add("攻撃", "枠内シュート率", on, "%", 1);
+  if (sh && sh.tot) { const g = sum(L.filter(m => tv(m, "me", "シュート") != null), m => m.gf); add("攻撃", "シュート決定率", g / sh.tot * 100, "%", 1); }
+  if (xg) { const g = sum(L.filter(m => tv(m, "me", "ゴール期待値") != null), m => m.gf); add("攻撃", "得点 − ゴール期待値", g - xg.tot, "", 1); }
+  const bc = avg("ボックス内シュート"); if (bc) add("攻撃", "1試合平均ボックス内シュート", bc.avg, "", 1);
+  const ck = avg("コーナーキック"); if (ck) add("攻撃", "1試合平均コーナーキック", ck.avg, "", 1);
+  const ps = avg("パス"); if (ps) add("パス", "1試合平均パス", ps.avg, "", 0);
+  add("パス", "パス成功率", ratio(L, "me", "パス成功", "パス"), "%", 1);
+  const kp = avg("キーパス"); if (kp) add("パス", "1試合平均キーパス", kp.avg, "", 1);
+  const cr = avg("クロス"); if (cr) add("パス", "1試合平均クロス", cr.avg, "", 1);
+  const tp = avg("スルーパス"); if (tp) add("パス", "1試合平均スルーパス", tp.avg, "", 1);
+  add("パス", "ドリブル成功率", ratio(L, "me", "ドリブル成功", "ドリブル"), "%", 1);
+  const xga = avg("ゴール期待値", "opp"); if (xga) add("守備", "1試合平均被ゴール期待値", xga.avg, "", 2);
+  const sha = avg("シュート", "opp"); if (sha) add("守備", "1試合平均被シュート", sha.avg, "", 1);
+  const rt_ = avg("ボール奪取時間"); if (rt_) add("守備", "平均ボール奪取時間", rt_.avg, "秒", 1);
+  const tk = avg("タックル"); if (tk) add("守備", "1試合平均タックル", tk.avg, "", 1);
+  add("守備", "タックル成功率", ratio(L, "me", "タックル成功", "タックル"), "%", 1);
+  const ic = avg("インターセプト"); if (ic) add("守備", "1試合平均インターセプト", ic.avg, "", 1);
+  const cl = avg("クリア"); if (cl) add("守備", "1試合平均クリア", cl.avg, "", 1);
+  const sv = avg("セーブ"); if (sv) add("守備", "1試合平均セーブ", sv.avg, "", 1);
+  const fo = avg("ファウル"); if (fo) add("規律", "1試合平均ファウル", fo.avg, "", 1);
+  const yc = avg("警告"); if (yc) add("規律", "警告", yc.tot, "枚", 0);
+  const rc = avg("退場"); if (rc) add("規律", "退場", rc.tot, "回", 0);
+  const of = avg("オフサイド"); if (of) add("規律", "1試合平均オフサイド", of.avg, "", 1);
   return out;
-
 }
-function vStats(){
-  const s=ST.stSeason;
-  const rows=statRowsFor(s);
-  const fm=fromMatches(s); const mm={}; fm.forEach(x=>mm[nameKey(x.name)]=x.mom);
-  rows.forEach(r=>{ if(r.mom==null) r.mom=mm[nameKey(r.name)]||0; });
-  const avail=PM_ALL.filter(M=>rows.some(r=>{ const v=M.f(r); return v!=null && v!==0; }));
-  if(!avail.find(M=>M.k===ST.rk)) ST.rk=(avail.find(M=>M.k==="得点")||avail[0]||{k:"得点"}).k;
-  const M=PM_ALL.find(x=>x.k===ST.rk) || PM_ALL.find(x=>x.k==="得点");
-  let R=rows.map(r=>({r, v:M.f(r)})).filter(x=>x.v!=null && x.v!==0);
-  if(M.base){ const mx=Math.max(0,...rows.map(r=>M.base(r)||0)); const need=Math.max(1, Math.round(mx*0.3)); R=R.filter(x=>(M.base(x.r)||0)>=need); }
-  R.sort((a,b)=>b.v-a.v); R=R.slice(0,20);
-  const L=ofSeason(s||null), TM=teamMetrics(L), tg={}; TM.forEach(x=>(tg[x.g]=tg[x.g]||[]).push(x));
-  const quick=["得点","アシスト","平均評価","シュート","キーパス","ボール奪取","走行距離"].filter(k=>avail.some(a=>a.k===k));
-  return `${band("STATS","記録・ランキング")}<div class="wrap" style="max-width:1000px">
-    <div class="toolbar">${seasonSel("st-season", s, true)}</div>
-    <div class="sub-h" style="margin-top:0">PLAYERS<small>選手ランキング</small></div>
-    ${avail.length?`<div class="pill-tabs" id="st-quick">${quick.map(k=>`<button class="pill${k===M.k?" on":""}" data-k="${esc(k)}">${esc(k)}</button>`).join("")}</div>
-      <div class="toolbar"><select class="sel" id="st-item" aria-label="項目を選ぶ">${PM.map(([g,Ls])=>{ const o=Ls.filter(x=>avail.some(a=>a.k===x[0])); return o.length?`<optgroup label="${esc(g)}">${o.map(x=>`<option${x[0]===M.k?" selected":""}>${esc(x[0])}</option>`).join("")}</optgroup>`:""; }).join("")}</select></div>
-      <div class="rk">${R.map((x,i)=>`<a class="rk-r" href="#player/${encodeURIComponent(x.r.name)}"><div class="rk-n">${i+1}</div>${face(x.r.name)}
-        <div><b>${esc(x.r.name)}</b><small>${esc((profile(x.r.name)||{}).pos||x.r.pos||"")}${x.r.apps?`・${x.r.apps}試合`:""}</small></div>
-        <div class="rk-v">${fmtV(x.v,M.d)}<small>${esc(M.u)}</small></div></a>`).join("")||empty("該当する選手がいません。")}</div>
-      <p class="note">${M.base?"※ 試行数が少ない選手は除いています。":""}${rows.some(r=>r._n)?"出場選手シートから集計":"試合シートの得点者・アシスト・MOMから集計"}</p>`
-      : empty("出場選手シートか、試合シートの得点者を入れると、ランキングが出ます。")}
-    ${L.length?`<div class="sub-h">TEAM<small>チームスタッツ</small></div>
-      <div class="chips"><div class="chip"><span>試合</span><b>${L.length}</b></div><div class="chip"><span>勝-分-敗</span><b>${record(L).w}<small>勝</small>${record(L).d}<small>分</small>${record(L).l}<small>敗</small></b></div></div>
-      ${Object.keys(tg).map(g=>`<div class="tw" style="margin-bottom:14px"><table class="t"><thead><tr><th class="l">${esc(g)}</th><th>合計</th><th>1試合平均</th></tr></thead><tbody>
-        ${tg[g].map(x=>`<tr><th class="l">${esc(x.k)}</th><td class="num">${fmtV(x.v,x.d)}<small> ${esc(x.u)}</small></td><td class="num">${x.avg&&x.n?fmtV(x.v/x.n, Math.max(1,x.d)):""}</td></tr>`).join("")}</tbody></table></div>`).join("")}`:""}</div>`;
-}
-function bStats(){ bindSel("st-season", v=>{ ST.stSeason=v; render(); }); bindSel("st-item", v=>{ ST.rk=v; render(); });
-  document.querySelectorAll("#st-quick .pill").forEach(b=>b.onclick=()=>{ ST.rk=b.dataset.k; render(); }); }
-
-/* ---------- TRANSFER ---------- */
-function trRow(t){
-  const dir=trDir(t.kind);
-  return `<div class="tr">${face(t.name)}
-    <div style="min-width:0"><span class="tr-k ${dir}">${esc(t.kind)}</span><a href="#player/${encodeURIComponent(t.name)}"><b>${esc(t.name)}</b></a>
-      <div class="tr-c">${t.club?`${dir==="out"?"→":"←"} ${logo(t.club)}<span>${esc(t.club)}</span>`:""}<span class="en" style="color:var(--ink3);font-weight:600">${fmtD(t.date)}</span></div>
-      ${t.memo?`<div class="tr-c">${esc(t.memo)}</div>`:""}</div>
-    <div class="tr-f">${t.fee?money(t.fee):""}<small>${esc(t.season)}</small></div></div>`;
-}
-function vTransfer(){
-  const s=ST.trSeason;
-  const T=D.trans.filter(t=>!s||t.season===s).sort((a,b)=>(b.date?b.date:0)-(a.date?a.date:0));
-  const In=T.filter(t=>trDir(t.kind)==="in"), Out=T.filter(t=>trDir(t.kind)==="out"), Etc=T.filter(t=>trDir(t.kind)==="etc");
-  const spend=sum(In,t=>t.fee), earn=sum(Out,t=>t.fee), net=earn-spend;
-  const top=D.trans.filter(t=>t.fee).sort((a,b)=>b.fee-a.fee).slice(0,5);
-  return `${band("TRANSFER","移籍情報")}<div class="wrap narrow">
-    <div class="toolbar">${seasonSel("tr-season", s, true)}</div>
-    ${T.length?`<div class="chips"><div class="chip"><span>支出</span><b>${nf(spend)}</b><span>${esc(unit())}</span></div><div class="chip"><span>収入</span><b>${nf(earn)}</b><span>${esc(unit())}</span></div>
-      <div class="chip"><span>収支</span><b style="color:${net>=0?"var(--win)":"var(--lose)"}">${net>0?"+":net<0?"−":""}${nf(Math.abs(net))}</b><span>${esc(unit())}</span></div></div>`:""}
-    <div class="sub-h" style="margin-top:0">IN<small>加入 ${In.length?`${In.length}人`:""}</small></div>${In.length?`<div class="tr-list">${In.map(trRow).join("")}</div>`:empty("加入はまだありません。")}
-    <div class="sub-h">OUT<small>退団 ${Out.length?`${Out.length}人`:""}</small></div>${Out.length?`<div class="tr-list">${Out.map(trRow).join("")}</div>`:empty("退団はまだありません。")}
-    ${Etc.length?`<div class="sub-h">CONTRACT<small>契約更新など</small></div><div class="tr-list">${Etc.map(trRow).join("")}</div>`:""}
-    ${!s&&top.length?`<div class="sub-h">RECORD<small>歴代の高額移籍</small></div><div class="tr-list">${top.map(trRow).join("")}</div>`:""}</div>`;
-}
-function bTransfer(){ bindSel("tr-season", v=>{ ST.trSeason=v; render(); }); }
-
-/* ---------- CLUB（歴史・順位表） ---------- */
-function standing(season, comp, mini){
-  const seasons=[...new Set(D.table.map(r=>r.season))].sort().reverse();
-  const ts= season && seasons.includes(season) ? season : seasons[0];
-  if(!ts) return "";
-  const comps=[...new Set(D.table.filter(r=>r.season===ts).map(r=>r.comp))];
-  const tc= comps.includes(comp) ? comp : comps[0];
-  let tb=D.table.filter(r=>r.season===ts && r.comp===tc).sort((a,b)=>(a.rank||99)-(b.rank||99));
-  if(mini){ const i=tb.findIndex(r=>isMe(r.club)); const a=Math.max(0, Math.min((i<0?0:i)-2, tb.length-5)); tb=tb.slice(a, a+5); }
-  return `${mini?`<p style="font-size:12px;color:var(--ink2);margin:-8px 0 10px;font-weight:700">${esc(ts)} ${esc(tc)}</p>`:""}
-    <div class="tw"><table class="t"><thead><tr><th>順位</th><th class="l">クラブ</th><th>試合</th><th>勝</th><th>分</th><th>負</th><th>得点</th><th>失点</th><th>得失点</th><th>勝点</th></tr></thead><tbody>
-    ${tb.map(r=>{ const me=isMe(r.club), nm=me?clubName():r.club; return `<tr class="${me?"me":""}"><th class="num">${r.rank??""}</th><td class="l"><div class="t-club">${logo(nm)}${esc(nm)}</div></td>
-      <td class="num">${r.p??""}</td><td class="num">${r.w??""}</td><td class="num">${r.d??""}</td><td class="num">${r.l??""}</td><td class="num">${r.gf??""}</td><td class="num">${r.ga??""}</td>
-      <td class="num">${r.gf!=null&&r.ga!=null?(r.gf-r.ga>0?"+":"")+(r.gf-r.ga):""}</td><td class="num"><b>${r.pts??""}</b></td></tr>`; }).join("")}</tbody></table></div>`;
-}
-function vHistory(){
-  const titles=[]; D.seasons.forEach(S=>{ if(/^1$/.test(S.rank)) titles.push([S.league||"リーグ",S.season]);
-    [["国内カップ",S.cup],["リーグカップ",S.lcup],["国際大会",S.intl]].forEach(([k,v])=>{ if(/^優勝/.test(v||"")) titles.push([k,S.season]); }); });
-  const tc={}; titles.forEach(([k,s])=>(tc[k]=tc[k]||[]).push(s));
-  const seasons=[...D.seasonList].sort();
-  const tSeasons=[...new Set(D.table.map(r=>r.season))].sort().reverse();
-  const ts=ST.tblSeason && tSeasons.includes(ST.tblSeason) ? ST.tblSeason : tSeasons[0];
-  const comps=[...new Set(D.table.filter(r=>r.season===ts).map(r=>r.comp))];
-  const info=[["クラブ名",clubName()],["ホームスタジアム",D.conf["ホームスタジアム"]],["監督",D.conf["監督名"]],["最初のシーズン",D.conf["最初のシーズン"]]].filter(([,v])=>v);
-  return `${band("CLUB","クラブ情報・歴史")}<div class="wrap" style="max-width:1000px">
-    ${info.length?`<dl class="club-info">${info.map(([k,v])=>`<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>`:""}
-    <div class="sub-h">TITLES<small>獲得タイトル</small></div>
-    ${Object.keys(tc).length?`<div class="ti-grid">${Object.keys(tc).map(k=>`<div class="ti"><b>${tc[k].length}<small>回</small></b><div>${esc(k)}</div><p>${esc(tc[k].join("、"))}</p></div>`).join("")}</div>`:empty("まだタイトルはありません。")}
-    <div class="sub-h">HISTORY<small>歴代成績</small></div>
-    ${seasons.length?`<div class="tw"><table class="t"><thead><tr><th>シーズン</th><th class="l">リーグ</th><th>順位</th><th>勝-分-敗</th><th>得失点</th><th>国内カップ</th><th>リーグカップ</th><th>国際大会</th><th class="l">主将</th></tr></thead><tbody>
-      ${seasons.map(s=>{ const S=seasonInfo(s)||{}, r=record(ofSeason(s)), rk=myRank(s);
-        return `<tr><th>${esc(s)}</th><td class="l">${esc(S.league||leagueName(s))}</td><td class="num${rk==="1"?" gold":""}">${esc(rk)}</td><td>${r.n?`${r.w}-${r.d}-${r.l}`:""}</td><td>${r.n?`${r.gf}-${r.ga}`:""}</td>
-          <td${/^優勝/.test(S.cup||"")?' class="gold"':""}>${esc(S.cup||"")}</td><td${/^優勝/.test(S.lcup||"")?' class="gold"':""}>${esc(S.lcup||"")}</td><td${/^優勝/.test(S.intl||"")?' class="gold"':""}>${esc(S.intl||"")}</td>
-          <td class="l">${S.cap?`<a href="#player/${encodeURIComponent(S.cap)}">${esc(S.cap)}</a>`:""}</td></tr>`; }).join("")}</tbody></table></div>`:empty("まだシーズンの記録がありません。")}
-    ${D.seasons.filter(S=>S.comment).length?`<div style="margin-top:16px;display:grid;gap:10px">${D.seasons.filter(S=>S.comment).slice().reverse().map(S=>`<div class="memo" style="margin:0"><b class="en" style="font-size:16px">${esc(S.season)}</b><br>${esc(S.comment)}</div>`).join("")}</div>`:""}
-    <div class="sub-h">STANDINGS<small>順位表</small></div>
-    ${ts?`<div class="toolbar"><select class="sel" id="hs-season">${tSeasons.map(s=>`<option${s===ts?" selected":""}>${esc(s)}</option>`).join("")}</select>
-      ${comps.length>1?`<select class="sel" id="hs-comp">${comps.map(c=>`<option${c===ST.tblComp?" selected":""}>${esc(c)}</option>`).join("")}</select>`:""}</div>${standing(ts, ST.tblComp)}`
-      : empty("順位表シートに入れると、ここに最終順位表が出ます。")}</div>`;
-}
-function bHistory(){ bindSel("hs-season", v=>{ ST.tblSeason=v; ST.tblComp=null; render(); }); bindSel("hs-comp", v=>{ ST.tblComp=v; render(); }); }
 
 /* =====================================================================
-   ルーティング・メニュー
+   グラフ（SVG）・ツールチップ
    ===================================================================== */
-const ROUTES = {
-  home:     [vHome, bHome, "HOME"],
-  news:     [vNews, bNews, "NEWS", vNewsDetail],
-  match:    [vMatch, bMatch, "MATCH", vMatchDetail, bMatchDetail],
-  players:  [vPlayers, bPlayers, "PLAYERS"],
-  player:   [null, null, "PLAYERS", vPlayerDetail, bPlayerDetail],
-  stats:    [vStats, bStats, "STATS"],
-  transfer: [vTransfer, bTransfer, "TRANSFER"],
-  history:  [vHistory, bHistory, "CLUB"]
-};
-function parseHash(){ const h=decodeURIComponent((location.hash||"").replace(/^#/,"")); const i=h.indexOf("/"); return i<0 ? {page:h||"home", arg:null} : {page:h.slice(0,i), arg:h.slice(i+1)}; }
-let lastKey="";
-function render(){
-  let {page,arg}=parseHash(); if(!ROUTES[page]) { page="home"; arg=null; }
-  const R=ROUTES[page];
-  const nav = page==="player" ? "players" : page;
-  document.querySelectorAll(".hd-nav a, .drawer-nav a").forEach(a=>a.classList.toggle("on", (a.dataset.nav||a.getAttribute("href").slice(1))===nav));
-  const view=$("view");
-  if(!D.loaded){ view.innerHTML=`<div class="wrap"><div class="loading">読み込み中…</div></div>`; return; }
-  if(D.err){ view.innerHTML=`<div class="wrap">${empty(D.err)}</div>`; return; }
-  const detail = arg!=null && R[3];
-  const key=page+"/"+(arg||"").split("/")[0];
-  if(page==="match" && detail && key!==lastKey && !String(arg).includes("/")) ST.mtab="sum";
-  view.innerHTML = detail ? R[3](arg) : (R[0]?R[0]():"");
-  if(detail && R[4]) R[4](); else if(!detail && R[1]) R[1]();
-  let title=R[2];
-  if(detail){ const h=view.querySelector(".nd-head h1,.pd-name,.mh-comp"); if(h) title=h.textContent.trim(); }
-  document.title = page==="home" ? `${clubName()} オフィシャルサイト` : `${title} | ${clubName()}`;
-  if(key!==lastKey){ toTop(); lastKey=key; }
+function ratingChart(items) {   /* items: [{m, r}] 試合ごとの評価 */
+  if (!items.length) return "";
+  const W = 640, H = 170, pl = 26, pr = 6, pt = 10, pb = 22, n = items.length;
+  const bw = Math.min(26, (W - pl - pr) / n - 4), step = (W - pl - pr) / n;
+  const y = v => pt + (1 - (v - 4) / 6) * (H - pt - pb);
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="試合ごとの評価">`;
+  [5, 6, 7, 8, 9, 10].forEach(v => { s += `<line class="gl" x1="${pl}" x2="${W - pr}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${pl - 6}" y="${y(v) + 3}" text-anchor="end">${v}</text>`; });
+  const col = { r9: "#1478c8", r8: "#1f9e57", r7: "#5b9e2c", r6: "#c98314", r5: "#c9393f" };
+  items.forEach((it, i) => {
+    const x = pl + i * step + (step - bw) / 2, v = Math.max(4.2, it.r), yy = y(v), h = y(4) - yy;
+    s += `<path d="M${x},${y(4)} V${yy + 4} Q${x},${yy} ${x + 4},${yy} H${x + bw - 4} Q${x + bw},${yy} ${x + bw},${yy + 4} V${y(4)} Z" fill="${col[rtCls(it.r)]}"/>`;
+    if (n <= 24 || i % Math.ceil(n / 24) === 0) s += `<text class="ax" x="${x + bw / 2}" y="${H - 6}" text-anchor="middle">${fmtMD(it.m.date)}</text>`;
+    s += `<rect class="hit" x="${pl + i * step}" y="${pt}" width="${step}" height="${H - pt - pb}" data-tip="${esc(`<b>${fmtD(it.m.date)} vs ${it.m.opp}</b><br>${scoreTxt(it.m)}（${{ W: "勝", D: "分", L: "敗" }[it.m.res]}）・評価 <b>${fmtN(it.r, 1)}</b>`)}" data-href="#/match/${it.m.id}"/>`;
+  });
+  return s + `</svg>`;
 }
-/* ページの一番上へ。iPhoneのSafariは描き替え直後の命令を無視することがあるので、描画のあとにもう一度戻す */
-function toTop(){
-  const go=()=>{ window.scrollTo(0,0); document.documentElement.scrollTop=0; document.body.scrollTop=0; };
-  go(); requestAnimationFrame(go); setTimeout(go,60); setTimeout(go,250);
+function lineChart(series, opt) {  /* series: [{name, color, dash, pts:[{x:Date, v, tip}]}] */
+  const all = series.flatMap(s => s.pts); if (all.length < 2) return "";
+  const W = 640, H = 200, pl = 30, pr = 118, pt = 12, pb = 24;
+  const xs = all.map(p => +p.x), x0 = Math.min(...xs), x1 = Math.max(...xs) || x0 + 1;
+  let lo = Math.min(...all.map(p => p.v)), hi = Math.max(...all.map(p => p.v)); lo = Math.floor((lo - 2) / 5) * 5; hi = Math.ceil((hi + 1) / 5) * 5;
+  const X = v => pl + (x1 === x0 ? 0.5 : (v - x0) / (x1 - x0)) * (W - pl - pr), Y = v => pt + (1 - (v - lo) / (hi - lo)) * (H - pt - pb);
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(opt.label)}">`;
+  for (let v = lo; v <= hi; v += 5) s += `<line class="gl" x1="${pl}" x2="${W - pr}" y1="${Y(v)}" y2="${Y(v)}"/><text class="ax" x="${pl - 6}" y="${Y(v) + 3}" text-anchor="end">${v}</text>`;
+  const ticks = [...new Set(all.map(p => fmtD(p.x)))].map(t => all.find(p => fmtD(p.x) === t).x);
+  ticks.forEach((t, i) => { if (ticks.length <= 6 || i % Math.ceil(ticks.length / 6) === 0) s += `<text class="ax" x="${X(+t)}" y="${H - 6}" text-anchor="middle">${t.getFullYear()}/${t.getMonth() + 1}</text>`; });
+  series.forEach(sr => {
+    if (!sr.pts.length) return;
+    s += `<polyline fill="none" stroke="${sr.color}" stroke-width="2" ${sr.dash ? 'stroke-dasharray="5 4"' : ""} stroke-linejoin="round" points="${sr.pts.map(p => `${X(+p.x)},${Y(p.v)}`).join(" ")}"/>`;
+    sr.pts.forEach(p => s += `<circle cx="${X(+p.x)}" cy="${Y(p.v)}" r="4" fill="${sr.color}" stroke="var(--card)" stroke-width="2"/><circle class="hit" cx="${X(+p.x)}" cy="${Y(p.v)}" r="12" data-tip="${esc(p.tip)}"/>`);
+    const lp = sr.pts[sr.pts.length - 1];
+    s += `<text x="${X(+lp.x) + 9}" y="${Y(lp.v) + 4}" fill="var(--tx)" font-size="12" font-weight="700">${esc(sr.name)} ${lp.v}</text>`;
+  });
+  return s + `</svg>`;
 }
-if("scrollRestoration" in history) history.scrollRestoration="manual";
-function setMenu(open){
-  const btn=$("menu-btn"), dr=$("drawer");
-  btn.setAttribute("aria-expanded", open?"true":"false"); btn.setAttribute("aria-label", open?"メニューを閉じる":"メニューを開く");
-  dr.hidden=!open; document.body.classList.toggle("lock", open);
+function bindTips(root) {
+  const tip = $("tip");
+  root.querySelectorAll("[data-tip]").forEach(el => {
+    const show = e => { tip.innerHTML = el.dataset.tip; tip.hidden = false; move(e); };
+    const move = e => { const x = (e.touches ? e.touches[0] : e).clientX, y = (e.touches ? e.touches[0] : e).clientY; const w = tip.offsetWidth;
+      tip.style.left = Math.min(window.innerWidth - w - 8, Math.max(8, x - w / 2)) + "px"; tip.style.top = (y - tip.offsetHeight - 14) + "px"; };
+    el.addEventListener("mouseenter", show); el.addEventListener("mousemove", move); el.addEventListener("mouseleave", () => tip.hidden = true);
+    el.addEventListener("click", e => { if (el.dataset.href) location.hash = el.dataset.href; else show(e); });
+  });
 }
-$("menu-btn").onclick=()=>setMenu($("drawer").hidden);
-$("drawer-sns").innerHTML=$("ft-sns").innerHTML;
-document.addEventListener("keydown", e=>{ if(e.key==="Escape") setMenu(false); });
-matchMedia("(min-width:961px)").addEventListener("change", e=>{ if(e.matches) setMenu(false); });
-window.addEventListener("hashchange", ()=>{ setMenu(false); render(); });
-$("ft-year").textContent=new Date().getFullYear();
-render();
-loadAll().catch(e=>{ console.error(e); D.err="読み込み中にエラーが起きました。"; D.loaded=true; }).finally(render);
+
+/* =====================================================================
+   パーツ
+   ===================================================================== */
+function matchRow(m) {
+  const right = m.played ? `<span class="res ${m.res}">${m.gf} - ${m.ga}</span>${m.pk ? `<span class="pk">PK ${m.pk.a}-${m.pk.b}</span>` : ""}`
+    : `<span style="color:var(--tx3);font-size:12px">${esc(m.memo || "予定")}</span>`;
+  return `<a class="mrow" href="#/match/${m.id}">
+    <div class="d"><b>${fmtMD(m.date)}</b>${m.date ? WD[m.date.getDay()] : ""}</div>
+    <div class="t">${logo(m.opp)}<div><b><span class="ha">${m.ha}</span>${esc(m.opp)}</b><small>${esc(roundTxt(m))}</small></div></div>
+    <div class="s">${right}</div></a>`;
+}
+function standing(season, comp, mini) {
+  const comps = [...new Set(D.table.filter(r => r.season === season).map(r => r.comp))];
+  const c = comp && comps.includes(comp) ? comp : comps[0];
+  const T = D.table.filter(r => r.season === season && r.comp === c).sort((a, b) => (a.rank ?? 99) - (b.rank ?? 99));
+  if (!T.length) return null;
+  let rows = T;
+  if (mini) { const i = T.findIndex(r => isMe(r.club)); const a = Math.max(0, Math.min(T.length - 5, i - 2)); rows = i < 0 ? T.slice(0, 5) : T.slice(a, a + 5); }
+  return { comp: c, comps, html: `<div class="tw"><table class="t"><thead><tr><th class="pos">#</th><th class="l">クラブ</th><th>試合</th>${mini ? "" : "<th>勝</th><th>分</th><th>負</th><th>得点</th><th>失点</th>"}<th>得失</th><th>勝点</th></tr></thead><tbody>
+    ${rows.map(r => `<tr class="${isMe(r.club) ? "me" : ""}"><td class="pos">${r.rank ?? ""}</td><td class="club"><div>${logo(r.club, "sm")}<span>${esc(r.club)}</span></div></td><td>${r.p ?? ""}</td>
+      ${mini ? "" : `<td>${r.w ?? ""}</td><td>${r.d ?? ""}</td><td>${r.l ?? ""}</td><td>${r.gf ?? ""}</td><td>${r.ga ?? ""}</td>`}
+      <td>${r.gf != null && r.ga != null ? (r.gf - r.ga > 0 ? "+" : "") + (r.gf - r.ga) : ""}</td><td><b>${r.pts ?? ""}</b></td></tr>`).join("")}</tbody></table></div>` };
+}
+function statCard(M, P, season) {
+  const R = ranked(P, M); if (!R.length) return "";
+  return `<div class="card scard"><div class="card-h">${esc(M.k)}</div>
+    ${R.slice(0, 3).map((x, i) => `<a class="srow${i === 0 ? " first" : ""}" href="#/player/${encodeURIComponent(x.p.name)}">${face(x.p.name)}
+      <div class="nm"><b>${esc(x.p.name)}</b><small>${esc(x.p.pos || "")}${x.p.apps ? `・${x.p.apps}試合` : ""}</small></div><span class="val">${fmtN(x.v, M.d)}${M.u === "%" ? "%" : ""}</span></a>`).join("")}
+    ${R.length > 3 ? `<a class="all" href="#/stats/${encodeURIComponent(M.k)}">すべて見る（${R.length}人）</a>` : ""}</div>`;
+}
+const seasonLabel = s => s || "全シーズン";
+
+/* =====================================================================
+   ページ
+   ===================================================================== */
+function vHome() {
+  const s = ST.season, L = ofSeason(s), r = record(L), M = D.matches.filter(m => !s || m.season === s);
+  const next = D.matches.find(m => !m.played && (!s || m.season === s)) || D.matches.find(m => !m.played);
+  const last5 = L.slice(-5);
+  const P = playerAgg(L);
+  const st = standing(s, null, true);
+  const myRank = (D.table.find(t => t.season === s && isMe(t.club)) || {}).rank;
+  const lastM = L[L.length - 1];
+  const nextHtml = next ? (() => { const h = homeAway(next); return `<div class="card"><div class="card-h">次の試合<small>${esc(roundTxt(next))}</small></div>
+      <a class="next" href="#/match/${next.id}" style="display:block"><div class="next-meta">${fmtDW(next.date)}${next.memo ? "・" + esc(next.memo) : ""}</div>
+      <div class="vs"><div class="side">${logo(h.home, "lg")}<span>${esc(h.home)}</span></div><div class="mid"><b>vs</b><small>${next.ha === "N" ? "中立地" : next.ha === "H" ? "ホーム" : "アウェイ"}</small></div><div class="side">${logo(h.away, "lg")}<span>${esc(h.away)}</span></div></div></a></div>`; })() : "";
+  const lastHtml = lastM ? `<div class="card"><div class="card-h">前の試合<small>${esc(roundTxt(lastM))}</small></div><a class="next" href="#/match/${lastM.id}" style="display:block">
+      <div class="next-meta">${fmtDW(lastM.date)}</div><div class="vs"><div class="side">${logo(homeAway(lastM).home, "lg")}<span>${esc(homeAway(lastM).home)}</span></div>
+      <div class="mid"><b class="tnum">${scoreTxt(lastM)}</b><small>試合終了${lastM.pk ? `（PK ${lastM.pk.a}-${lastM.pk.b}）` : ""}</small></div>
+      <div class="side">${logo(homeAway(lastM).away, "lg")}<span>${esc(homeAway(lastM).away)}</span></div></div></a></div>` : "";
+  const top = [PM[0], PM[1], PM[3]].map(Mx => { const x = ranked(P, Mx)[0]; return x ? { M: Mx, x } : null; }).filter(Boolean);
+  return `<div class="wrap">${D.err ? `<div class="err">${esc(D.err)}</div>` : ""}
+  <div class="grid"><div class="col">
+    ${nextHtml}
+    ${last5.length ? `<div class="card"><div class="card-h">フォーム<small>直近${last5.length}試合</small></div><div class="form">${last5.map(m => `<a href="#/match/${m.id}" title="${esc(m.opp)}">${logo(m.opp)}<span class="res ${m.res}">${m.gf}-${m.ga}</span></a>`).join("")}</div></div>` : ""}
+    <div class="card"><div class="card-h">${esc(seasonLabel(s))} の成績<small>${r.n}試合</small></div>
+      ${r.n ? `<div class="tile-grid">
+        <div class="tile"><span>勝・分・敗</span><b>${r.w}<small>勝</small> ${r.d}<small>分</small> ${r.l}<small>敗</small></b></div>
+        <div class="tile"><span>得点</span><b>${r.gf}</b><em>1試合 ${fmtN(r.gf / r.n, 2)}</em></div>
+        <div class="tile"><span>失点</span><b>${r.ga}</b><em>1試合 ${fmtN(r.ga / r.n, 2)}</em></div>
+        <div class="tile"><span>クリーンシート</span><b>${r.cs}</b></div>
+        ${myRank ? `<div class="tile"><span>リーグ順位</span><b>${myRank}<small>位</small></b></div>` : ""}
+        ${(() => { const po = teamAvg(L, "me", "ボール支配率"); return po ? `<div class="tile"><span>平均ボール支配率</span><b>${fmtN(po.avg, 1)}<small>%</small></b></div>` : ""; })()}
+      </div>` : empty("まだ試合がありません。試合シートに結果を入れるとここに出ます。")}</div>
+    ${M.length ? `<div class="card mlist"><div class="card-h">試合<a class="more" href="#/matches">すべて見る</a></div>
+      ${[...L.slice(-3), ...M.filter(m => !m.played).slice(0, 2)].map(matchRow).join("")}</div>` : ""}
+  </div><div class="col">
+    ${lastHtml}
+    ${st ? `<div class="card"><div class="card-h">${esc(st.comp)}<a class="more" href="#/table">順位表</a></div>${st.html}</div>` : ""}
+    ${top.length ? `<div class="card"><div class="card-h">チームのトップ選手<a class="more" href="#/stats">スタッツ</a></div>
+      ${top.map(({ M: Mx, x }) => `<a class="srow" href="#/player/${encodeURIComponent(x.p.name)}">${face(x.p.name)}<div class="nm"><b>${esc(x.p.name)}</b><small>${esc(Mx.k)}</small></div>
+        ${Mx.rating ? rt(x.v) : `<span class="val">${fmtN(x.v, Mx.d)}</span>`}</a>`).join("")}<div style="height:8px"></div></div>` : ""}
+  </div></div></div>`;
+}
+
+function vMatches() {
+  const s = ST.season, M = D.matches.filter(m => !s || m.season === s);
+  const comps = ["すべて", ...new Set(M.map(m => m.comp))];
+  if (!comps.includes(ST.comp)) ST.comp = "すべて";
+  const L = M.filter(m => ST.comp === "すべて" || m.comp === ST.comp);
+  const groups = {}; L.forEach(m => { const k = m.date ? `${m.date.getFullYear()}年${m.date.getMonth() + 1}月` : "日付なし"; (groups[k] = groups[k] || []).push(m); });
+  const r = record(L.filter(m => m.played));
+  return `<div class="wrap" style="max-width:820px"><h1 class="h1">試合日程・結果</h1>
+    <div class="pills" id="comp-pills">${comps.map(c => `<button class="pill${c === ST.comp ? " on" : ""}" data-c="${esc(c)}">${esc(c)}</button>`).join("")}</div>
+    ${r.n ? `<p class="note" style="margin:-4px 0 12px">${r.n}試合 ${r.w}勝${r.d}分${r.l}敗・得点${r.gf} 失点${r.ga}</p>` : ""}
+    <div class="card mlist">${Object.keys(groups).map(g => `<div class="mh">${esc(g)}</div>${groups[g].map(matchRow).join("")}`).join("") || empty("試合がありません。")}</div></div>`;
+}
+function bMatches() { document.querySelectorAll("#comp-pills .pill").forEach(b => b.onclick = () => { ST.comp = b.dataset.c; render(); }); }
+
+/* ---- 試合詳細 ---- */
+const CMP = [
+  ["主要スタッツ", [["ゴール期待値", 2], ["シュート", 0], ["枠内シュート", 0], ["パス", 0], ["パス成功率", 0, "%"], ["タックル", 0], ["ファウル", 0, "", true], ["コーナーキック", 0], ["警告", 0, "", true], ["退場", 0, "", true]]],
+  ["シュート", [["シュート", 0], ["枠内シュート", 0], ["枠外シュート", 0], ["ブロックされたシュート", 0], ["ボックス内シュート", 0], ["ゴール期待値", 2]]],
+  ["パス", [["パス", 0], ["パス成功", 0], ["パス成功率", 0, "%"], ["キーパス", 0], ["クロス", 0], ["スルーパス", 0]]],
+  ["守備", [["タックル", 0], ["タックル成功", 0], ["タックル成功率", 0, "%"], ["インターセプト", 0], ["ブロック", 0], ["クリア", 0], ["空中戦勝利", 0], ["セーブ", 0], ["ボール奪取時間", 1, "秒", true]]],
+  ["その他", [["ドリブル", 0], ["ドリブル成功", 0], ["ドリブル成功率", 0, "%"], ["オフサイド", 0, "", true], ["フリーキック", 0], ["PK", 0], ["走行距離", 1, "km"]]]
+];
+function cmpRow(label, a, b, d, u, low) {
+  if (a == null && b == null) return "";
+  const better = a == null || b == null || a === b ? 0 : ((a > b) !== !!low ? 1 : 2);
+  const tot = (a || 0) + (b || 0), pa = tot ? (a || 0) / tot * 100 : 0, pb = tot ? (b || 0) / tot * 100 : 0;
+  const f = v => v == null ? "-" : fmtN(v, d) + (u === "%" ? "%" : "");
+  return `<div class="crow"><div class="v me${better === 1 ? " win" : ""}"><b>${f(a)}</b></div><div class="lab">${esc(label)}${u && u !== "%" ? `（${u}）` : ""}</div>
+    <div class="v r op${better === 2 ? " win" : ""}"><b>${f(b)}</b></div>
+    <div class="bars"><span><i style="width:${pa}%"></i></span><span><i style="width:${pb}%"></i></span></div></div>`;
+}
+function vMatch(id) {
+  const m = D.matches.find(x => x.id === parseInt(id, 10)); if (!m) return `<div class="wrap">${empty("試合が見つかりません。")}</div>`;
+  const h = homeAway(m);
+  const tabs = [["facts", "概要"], ["stats", "スタッツ"], ["lineup", "ラインナップ"]];
+  if (!["facts", "stats", "lineup"].includes(ST.mtab)) ST.mtab = "facts";
+  const sideGoals = side => {
+    if (side === "me") return m.scorers.map(x => `${esc(x.name)}${x.n > 1 ? ` ×${x.n}` : ""}`).join("<br>");
+    return m.ev.filter(e => e.side === "opp" && isGoal(e)).map(e => `${esc(e.player)} ${esc(e.min)}'`).join("<br>");
+  };
+  const meGoalsByEv = m.ev.filter(e => e.side === "me" && isGoal(e));
+  const myG = meGoalsByEv.length ? meGoalsByEv.map(e => `${esc(e.player)} ${esc(e.min)}'${e.kind === "PKゴール" ? "（PK）" : ""}`).join("<br>") : sideGoals("me");
+  const hG = h.hs === "me" ? myG : sideGoals("opp"), aG = h.as === "me" ? myG : sideGoals("opp");
+  let body = "";
+  if (ST.mtab === "facts") body = matchFacts(m, h);
+  else if (ST.mtab === "stats") body = matchStats(m, h, false);
+  else body = matchLineup(m);
+  return `<div class="wrap" style="max-width:860px"><div class="card">
+    <div class="mhead"><div class="meta">${esc(roundTxt(m))}・${fmtDW(m.date)}${m.stadium ? "・" + esc(m.stadium) : ""}</div>
+      <div class="vs"><a class="side" href="${h.hs === "me" ? "#/" : "javascript:void 0"}">${logo(h.home, "lg")}<span>${esc(h.home)}</span></a>
+        <div class="mid">${m.played ? `<span class="score">${m.ha === "A" ? m.ga : m.gf} - ${m.ha === "A" ? m.gf : m.ga}</span><span class="ft">試合終了${m.pk ? `・PK ${m.ha === "A" ? m.pk.b + "-" + m.pk.a : m.pk.a + "-" + m.pk.b}` : ""}</span>` : `<b>vs</b><small>${esc(m.memo || "未開催")}</small>`}</div>
+        <a class="side" href="${h.as === "me" ? "#/" : "javascript:void 0"}">${logo(h.away, "lg")}<span>${esc(h.away)}</span></a></div>
+      ${m.played && (hG || aG) ? `<div class="scorers"><div>${hG}</div><div class="ball">⚽</div><div>${aG}</div></div>` : ""}</div>
+    ${m.played ? `<nav class="mtabs" id="mtabs">${tabs.map(([k, t]) => `<a href="javascript:void 0" data-t="${k}" class="${ST.mtab === k ? "on" : ""}">${t}</a>`).join("")}</nav>` : ""}
+  </div>${m.played ? `<div class="card" style="margin-top:16px">${body}</div>` : ""}
+  <p style="margin-top:14px"><a class="pill" href="#/matches">← 試合一覧</a></p></div>`;
+}
+function bMatch() { document.querySelectorAll("#mtabs a").forEach(a => a.onclick = () => { ST.mtab = a.dataset.t; render(); }); }
+function matchFacts(m, h) {
+  const evs = m.ev.filter(e => e.kind !== "その他" || e.note);
+  const icon = e => isGoal(e) ? `<span class="ic">⚽</span>` : e.kind === "警告" ? `<i class="cardY"></i>` : e.kind === "退場" ? `<i class="cardR"></i>` : e.kind === "交代" ? `<span class="ic">⇄</span>` : `<span class="ic">•</span>`;
+  const evTxt = e => {
+    const nm = e.side === "me" ? pLink(e.player) : esc(e.player);
+    const sub = e.kind === "交代" ? `<small>OUT ${esc(e.rel)}</small>` : isGoal(e) && e.rel ? `<small>アシスト ${esc(e.rel)}</small>` : e.kind === "オウンゴール" ? "<small>オウンゴール</small>" : e.kind === "PKゴール" ? "<small>PK</small>" : e.note ? `<small>${esc(e.note)}</small>` : "";
+    return `${nm}${sub}`;
+  };
+  let half = false;
+  const tl = evs.map(e => {
+    let pre = ""; if (!half && e.mn > 45.99 && e.mn < 999) { half = true; pre = `<div class="ev-ht">ハーフタイム</div>`; }
+    const left = (e.side === "me") === (h.hs === "me");
+    return pre + `<div class="ev"><div class="l">${left ? evTxt(e) + icon(e) : ""}</div><div class="m">${esc(e.min)}${e.min ? "'" : ""}</div><div>${left ? "" : icon(e) + evTxt(e)}</div></div>`;
+  }).join("");
+  const mom = m.mom ? (() => { const l = m.lu.find(x => same(x.name, m.mom)); return `<div class="card-h">マン・オブ・ザ・マッチ</div><a class="srow" href="#/player/${encodeURIComponent(m.mom)}" style="padding-bottom:14px">${face(m.mom)}<div class="nm"><b>${esc(m.mom)}</b><small>${esc(l ? l.pos : "")}${m.momAuto ? "・評価が最も高い選手" : ""}</small></div>${l ? rt(l.rating) : ""}</a>`; })() : "";
+  const stats = matchStats(m, h, true);
+  return `${mom}${tl ? `<div class="card-h" style="border-top:1px solid var(--line)">試合経過</div>${tl}` : ""}
+    ${stats ? `<div style="border-top:1px solid var(--line)">${stats}</div>` : ""}${m.memo ? `<p class="note" style="padding:0 16px 16px">${esc(m.memo)}</p>` : ""}
+    ${!mom && !tl && !stats ? empty("試合経過・チームスタッツ・出場選手のシートに入れると、ここに詳しく出ます。") : ""}`;
+}
+function matchStats(m, h, short) {
+  const H = h.hs, A = h.as;
+  const pa = tv(m, H, "ボール支配率"), pb = tv(m, A, "ボール支配率");
+  const groups = short ? [CMP[0]] : CMP;
+  const body = groups.map(([g, L]) => { const rows = L.map(([k, d, u, low]) => cmpRow(k, tv(m, H, k), tv(m, A, k), d, u, low)).join(""); return rows ? `<div class="cmp-sec"><h3>${esc(g)}</h3>${rows}</div>` : ""; }).join("");
+  if (!body && pa == null && pb == null) return short ? "" : empty("チームスタッツか出場選手のシートに入れると、ここに比較が出ます。");
+  const poss = (pa != null || pb != null) ? (() => { const a = pa ?? 100 - pb, b = pb ?? 100 - pa; return `<div class="cmp-sec"><h3>ボール支配率</h3><div class="poss"><div style="flex:${a}">${fmtN(a)}%</div><div style="flex:${b}">${fmtN(b)}%</div></div></div>`; })() : "";
+  const fm = k => m.form[k] ? `<small style="color:var(--tx3);font-weight:500">${esc(m.form[k])}</small>` : "";
+  return `${short ? `<div class="card-h">主要スタッツ<a class="more" href="javascript:void 0" onclick="ST.mtab='stats';render()">すべて見る</a></div>` : ""}
+    <div class="cmpw${H === "opp" ? " sw" : ""}"><div class="cmp-legend" ${short ? "" : 'style="padding-top:14px"'}><span><i style="background:var(--cl)"></i>${esc(H === "me" ? shortName() : m.opp)} ${fm(H)}</span><span>${fm(A)} ${esc(A === "me" ? shortName() : m.opp)}<i style="background:var(--cr)"></i></span></div>
+    ${poss}${body}</div>`;
+}
+const POSXY = { GK: [50, 91], SW: [50, 82], RB: [86, 72], RCB: [66, 78], CB: [50, 79], LCB: [34, 78], LB: [14, 72], RWB: [88, 60], LWB: [12, 60],
+  CDM: [50, 64], RDM: [66, 64], LDM: [34, 64], CM: [50, 52], RCM: [70, 53], LCM: [30, 53], RM: [88, 46], LM: [12, 46], CAM: [50, 38], RAM: [70, 38], LAM: [30, 38],
+  RW: [84, 24], LW: [16, 24], RF: [66, 20], LF: [34, 20], CF: [50, 22], ST: [50, 15], RS: [64, 15], LS: [36, 15] };
+function matchLineup(m) {
+  const XI = m.lu.filter(l => l.role === "先発"), subs = m.lu.filter(l => l.role !== "先発");
+  if (!m.lu.length) return empty("出場選手シートに入れると、スタメンと評価が出ます。");
+  const used = {};
+  const pos = l => { const p = POSXY[l.pos] || POSXY[{ GK: "GK", DF: "CB", MF: "CM", FW: "ST" }[l.pos]] || [50, 50]; const k = p.join(); used[k] = (used[k] || 0) + 1; return [p[0] + (used[k] - 1) * 16 * (used[k] % 2 ? 1 : -1), p[1]]; };
+  const gIcon = l => (l.s["得点"] ? "⚽".repeat(Math.min(3, l.s["得点"])) : "");
+  const pitch = XI.length ? `<div class="pitch">${XI.map(l => { const [x, y] = pos(l); return `<a class="pl" href="#/player/${encodeURIComponent(l.name)}" style="left:${x}%;top:${y}%">${face(l.name)}${rt(l.rating)}<span class="gl">${gIcon(l)}</span><span>${l.no != null ? l.no + " " : ""}${esc(l.name)}</span></a>`; }).join("")}</div>` : "";
+  const row = l => `<a class="prow" href="#/player/${encodeURIComponent(l.name)}"><span class="no">${l.no ?? ""}</span>${face(l.name)}<div class="nm"><b>${esc(l.name)}</b><small>${esc(l.pos)}${l.s["出場時間"] != null ? `・${l.s["出場時間"]}分` : ""}${l.s["得点"] ? `・${l.s["得点"]}得点` : ""}${l.s["アシスト"] ? `・${l.s["アシスト"]}アシスト` : ""}</small></div>${rt(l.rating)}</a>`;
+  return `<div class="card-h">スタメン<small>${esc(m.form.me || "")}</small></div>${pitch}
+    ${subs.length ? `<div class="card-h" style="border-top:1px solid var(--line)">途中出場</div>${subs.map(row).join("")}` : ""}
+    <div class="card-h" style="border-top:1px solid var(--line)">全選手の評価</div>${[...m.lu].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)).map(row).join("")}`;
+}
+
+function vTable() {
+  const s = ST.season || D.seasonList[0];
+  const st = standing(s, ST.tcomp, false);
+  return `<div class="wrap" style="max-width:860px"><h1 class="h1">順位表</h1>
+    ${st && st.comps.length > 1 ? `<div class="pills" id="tcomp">${st.comps.map(c => `<button class="pill${c === st.comp ? " on" : ""}" data-c="${esc(c)}">${esc(c)}</button>`).join("")}</div>` : ""}
+    <div class="card">${st ? `<div class="card-h">${esc(st.comp)}<small>${esc(s)}</small></div>${st.html}` : empty("順位表シートに入れると、ここに出ます。（シーズンを選び直すと別のシーズンも見られます）")}</div>
+    ${seasonHistoryCard()}</div>`;
+}
+function bTable() { document.querySelectorAll("#tcomp .pill").forEach(b => b.onclick = () => { ST.tcomp = b.dataset.c; render(); }); }
+
+function vStats(arg) {
+  const s = ST.season, L = ofSeason(s), P = playerAgg(L);
+  if (arg) {
+    const M = PM.find(x => x.k === arg); if (!M) return `<div class="wrap">${empty("項目が見つかりません。")}</div>`;
+    const R = ranked(P, M);
+    return `<div class="wrap" style="max-width:720px"><h1 class="h1">${esc(M.k)}<small style="font-size:13px;color:var(--tx3);font-weight:500;margin-left:8px">${esc(seasonLabel(s))}</small></h1>
+      <div class="card rank-full">${R.map((x, i) => `<a class="srow${i === 0 ? " first" : ""}" href="#/player/${encodeURIComponent(x.p.name)}"><span class="rk">${i + 1}</span>${face(x.p.name)}
+        <div class="nm"><b>${esc(x.p.name)}</b><small>${esc(x.p.pos || "")}・${x.p.apps}試合${x.p.min ? `・${fmtN(x.p.min)}分` : ""}</small></div><span class="val">${fmtN(x.v, M.d)}${M.u === "%" ? "%" : ""}</span></a>`).join("") || empty("該当する選手がいません。")}</div>
+      ${M.base ? `<p class="note">※ 出場や試行が少ない選手は除いています。</p>` : ""}<p style="margin-top:14px"><a class="pill" href="#/stats">← スタッツ</a></p></div>`;
+  }
+  const cards = PM.map(M => statCard(M, P, s)).filter(Boolean);
+  const TM = teamMetrics(L), tg = {}; TM.forEach(x => (tg[x.g] = tg[x.g] || []).push(x));
+  return `<div class="wrap"><h1 class="h1">スタッツ<small style="font-size:13px;color:var(--tx3);font-weight:500;margin-left:8px">${esc(seasonLabel(s))}</small></h1>
+    <div class="sub-h">選手スタッツ</div>
+    ${cards.length ? `<div class="sgrid">${cards.join("")}</div>` : `<div class="card">${empty("試合シートの得点者や、出場選手シートを入れるとランキングが出ます。")}</div>`}
+    <div class="sub-h">チームスタッツ</div>
+    ${TM.length ? Object.keys(tg).map(g => `<div class="card" style="margin-bottom:16px"><div class="card-h">${esc(g)}</div><div class="tile-grid">
+      ${tg[g].map(x => `<div class="tile"><span>${esc(x.k)}</span><b>${fmtN(x.v, x.d)}${x.u ? `<small>${esc(x.u)}</small>` : ""}</b>${x.sub ? `<em>${esc(x.sub)}</em>` : ""}</div>`).join("")}</div></div>`).join("")
+      : `<div class="card">${empty("試合の結果を入れるとチームスタッツが出ます。")}</div>`}
+    <p class="note">成功率・平均などはサイトが計算しています。チームスタッツシートが空欄の試合は、出場選手の合計を使っています。</p></div>`;
+}
+
+const POSCAT = p => /GK/.test(p) ? "GK" : /(CB|LB|RB|WB|SW)/.test(p) ? "DF" : /(ST|CF|LW|RW|LF|RF|LS|RS)/.test(p) ? "FW" : p ? "MF" : "他";
+function vSquad() {
+  const s = ST.season, P = playerAgg(ofSeason(s)), byN = {}; P.forEach(p => byN[nameKey(p.name)] = p);
+  let list = D.players.filter(p => !/退団/.test(p.status));
+  if (!list.length) list = P.map(p => ({ name: p.name, pos: p.pos || "", status: "在籍" }));
+  const G = { GK: [], DF: [], MF: [], FW: [], 他: [] };
+  list.forEach(p => G[POSCAT(p.pos)].push(p));
+  const lbl = { GK: "ゴールキーパー", DF: "ディフェンダー", MF: "ミッドフィールダー", FW: "フォワード", 他: "その他" };
+  const sec = k => G[k].length ? `<div class="card" style="margin-bottom:16px"><div class="card-h">${lbl[k]}<small>${G[k].length}人</small></div><div class="tw"><table class="t">
+    <thead><tr><th class="l" style="padding-left:16px">選手</th><th>年齢</th><th>総合</th><th>出場</th><th>得点</th><th>アシスト</th><th>評価</th></tr></thead><tbody>
+    ${G[k].sort((a, b) => (a.no ?? 999) - (b.no ?? 999)).map(p => { const a = byN[nameKey(p.name)] || {}; return `<tr><td class="club" style="padding-left:16px">${pLink(p.name, `${face(p.name)}<span><b style="font-weight:600">${esc(p.name)}</b><br><small style="color:var(--tx3)">${p.no != null ? "#" + p.no + "・" : ""}${esc(p.pos || "")}${/レンタル/.test(p.status) ? "・レンタル中" : ""}</small></span>`)}</td>
+      <td>${age(p.birth) ?? ""}</td><td>${p.ovr != null ? `<b>${p.ovr}</b>${p.pot ? `<small style="color:var(--tx3)">/${p.pot}</small>` : ""}` : ""}</td><td>${a.apps || 0}</td><td>${a.g || 0}</td><td>${a.a || 0}</td><td>${rt(a.rating)}</td></tr>`; }).join("")}</tbody></table></div></div>` : "";
+  return `<div class="wrap" style="max-width:900px"><h1 class="h1">選手<small style="font-size:13px;color:var(--tx3);font-weight:500;margin-left:8px">成績は${esc(seasonLabel(s))}</small></h1>
+    ${["GK", "DF", "MF", "FW", "他"].map(sec).join("") || `<div class="card">${empty("選手シートに入れると、ここに出ます。")}</div>`}
+    ${(() => { const out = D.players.filter(p => /退団/.test(p.status)); return out.length ? `<div class="card"><div class="card-h">過去に在籍した選手</div>${out.map(p => `<a class="prow" href="#/player/${encodeURIComponent(p.name)}"><span class="no"></span>${face(p.name)}<div class="nm"><b>${esc(p.name)}</b><small>${esc(p.pos)}${p.memo ? "・" + esc(p.memo) : ""}</small></div></a>`).join("")}</div>` : ""; })()}</div>`;
+}
+
+function vPlayer(name) {
+  const p = prof(name) || { name, pos: "" };
+  const s = ST.season, Ls = ofSeason(s), all = playerAgg(D.played).find(x => same(x.name, name));
+  const a = playerAgg(Ls).find(x => same(x.name, name));
+  const G = D.growth.filter(g => same(g.name, name));
+  const lastG = G[G.length - 1] || {};
+  const ovr = p.ovr ?? lastG.ovr, pot = p.pot ?? lastG.pot, val = p.value ?? lastG.value;
+  const info = [["国籍", p.nat], ["年齢", age(p.birth) != null ? age(p.birth) + "歳" : ""], ["生年月日", fmtD(p.birth)], ["身長", p.height ? p.height + "cm" : ""], ["利き足", p.foot],
+    ["市場価値", money(val)], ["加入", p.joined], ["在籍", p.status]].filter(x => x[1]);
+  const tiles = a ? [["出場", a.apps, "試合"], ["得点", a.g], ["アシスト", a.a], ["平均評価", a.rating != null ? fmtN(a.rating, 2) : null], ["出場時間", a.has["出場時間"] ? fmtN(a.min) : null, "分"], ["MOM", a.mom, "回"],
+    ["ゴール期待値", a.s["ゴール期待値"] != null ? fmtN(a.s["ゴール期待値"], 2) : null], ["シュート", a.s["シュート"]], ["キーパス", a.s["キーパス"]],
+    ["パス成功率", a.s["パス"] ? fmtN(a.s["パス成功"] / a.s["パス"] * 100, 1) : null, "%"], ["ドリブル成功", a.s["ドリブル成功"]], ["タックル成功", a.s["タックル成功"]],
+    ["インターセプト", a.s["インターセプト"]], ["セーブ", a.s["セーブ"]], ["クリーンシート", /GK/.test(a.pos || p.pos) ? a.cs : null], ["警告", a.yc || null], ["退場", a.rc || null]].filter(x => x[1] != null && x[1] !== "") : [];
+  const ratings = a ? a.list.filter(x => x.l.rating != null).map(x => ({ m: x.m, r: x.l.rating })) : [];
+  const ovrChart = G.length >= 2 ? lineChart([
+    { name: "総合値", color: "var(--me)", pts: G.filter(g => g.ovr != null && g.date).map(g => ({ x: g.date, v: g.ovr, tip: `<b>${fmtD(g.date)}</b><br>総合値 ${g.ovr}${g.pot ? ` / ポテンシャル ${g.pot}` : ""}${g.value ? `<br>市場価値 ${money(g.value)}` : ""}` })) },
+    { name: "ポテンシャル", color: "var(--opp)", dash: true, pts: G.filter(g => g.pot != null && g.date).map(g => ({ x: g.date, v: g.pot, tip: `<b>${fmtD(g.date)}</b><br>ポテンシャル ${g.pot}` })) }
+  ], { label: "総合値とポテンシャルの推移" }) : "";
+  /* シーズン別 */
+  const bySeason = D.seasonList.map(se => ({ se, x: playerAgg(ofSeason(se)).find(q => same(q.name, name)) })).filter(o => o.x);
+  const matches = a ? [...a.list].reverse() : [];
+  const tr = D.trans.filter(t => same(t.name, name));
+  return `<div class="wrap" style="max-width:900px"><div class="card"><div class="phead">${face(name, "lg")}
+      <div><h1>${esc(name)}</h1><div class="tags">${p.no != null ? `<span class="tag">#${p.no}</span>` : ""}${p.pos ? `<span class="tag">${esc(p.pos)}</span>` : ""}<span class="tag">${logo(clubName(), "sm").replace('class="logo sm', 'style="display:inline-block;vertical-align:-5px;margin-right:4px" class="logo sm')}${esc(clubName())}</span></div></div>
+      ${ovr != null || pot != null ? `<div class="ovr">${ovr != null ? `<div><b>${ovr}</b><span>総合値</span></div>` : ""}${pot != null ? `<div><b>${pot}</b><span>ポテンシャル</span></div>` : ""}</div>` : ""}</div>
+    ${info.length ? `<div class="info">${info.map(([k, v]) => `<div><span>${k}</span><b>${esc(v)}</b></div>`).join("")}</div>` : ""}</div>
+    ${p.memo ? `<p class="note">${esc(p.memo)}</p>` : ""}
+    <div class="sub-h">${esc(seasonLabel(s))} の成績</div>
+    <div class="card">${tiles.length ? `<div class="tile-grid">${tiles.map(([k, v, u]) => `<div class="tile"><span>${k}</span><b>${typeof v === "number" ? fmtN(v) : esc(v)}${u ? `<small>${u}</small>` : ""}</b></div>`).join("")}</div>` : empty("このシーズンの出場記録はありません。")}</div>
+    ${ratings.length ? `<div class="card" style="margin-top:16px"><div class="card-h">試合ごとの評価<small>${ratings.length}試合・平均 ${fmtN(a.rating, 2)}</small></div><div class="chart">${ratingChart(ratings.slice(-30))}</div></div>` : ""}
+    ${ovrChart ? `<div class="card" style="margin-top:16px"><div class="card-h">総合値の推移<small>能力推移シートから</small></div><div class="chart">${ovrChart}</div>
+      <p class="note" style="padding:0 16px 14px;margin:0">実線＝総合値、点線＝ポテンシャル</p></div>` : ""}
+    ${matches.length ? `<div class="card mlist" style="margin-top:16px"><div class="card-h">試合<small>${esc(seasonLabel(s))}</small></div>
+      ${matches.slice(0, 40).map(({ m, l }) => `<a class="mrow" href="#/match/${m.id}"><div class="d"><b>${fmtMD(m.date)}</b>${esc(m.comp)}</div>
+        <div class="t">${logo(m.opp)}<div><b>${esc(m.opp)} <span class="res ${m.res}" style="min-width:auto;height:20px;font-size:12px;margin-left:6px">${m.gf}-${m.ga}</span></b>
+        <small>${esc(l.pos)}${l.s["出場時間"] != null ? `・${l.s["出場時間"]}分` : l.role !== "先発" ? "・途中出場" : ""}${l.s["得点"] ? `・⚽${l.s["得点"]}` : ""}${l.s["アシスト"] ? `・A${l.s["アシスト"]}` : ""}</small></div></div>
+        <div class="s">${rt(l.rating)}</div></a>`).join("")}</div>` : ""}
+    ${bySeason.length ? `<div class="card" style="margin-top:16px"><div class="card-h">シーズン別の成績</div><div class="tw"><table class="t"><thead><tr><th class="l" style="padding-left:16px">シーズン</th><th>出場</th><th>得点</th><th>アシスト</th><th>評価</th><th>MOM</th></tr></thead><tbody>
+      ${bySeason.map(({ se, x }) => `<tr><td class="l" style="padding-left:16px">${esc(se)}</td><td>${x.apps}</td><td>${x.g}</td><td>${x.a}</td><td>${rt(x.rating)}</td><td>${x.mom}</td></tr>`).join("")}
+      ${all && bySeason.length > 1 ? `<tr><td class="l" style="padding-left:16px"><b>通算</b></td><td><b>${all.apps}</b></td><td><b>${all.g}</b></td><td><b>${all.a}</b></td><td>${rt(all.rating)}</td><td><b>${all.mom}</b></td></tr>` : ""}</tbody></table></div></div>` : ""}
+    ${tr.length ? `<div class="card" style="margin-top:16px"><div class="card-h">移籍歴</div>${tr.map(trRow).join("")}</div>` : ""}
+    <p style="margin-top:14px"><a class="pill" href="#/squad">← 選手一覧</a></p></div>`;
+}
+
+const IN_KINDS = /^(加入|レンタル加入|レンタル復帰|ユース昇格)$/, OUT_KINDS = /^(退団|レンタル移籍)$/;
+function trRow(t) {
+  const cls = IN_KINDS.test(t.kind) ? "in" : OUT_KINDS.test(t.kind) ? "out" : "etc";
+  const from = cls === "in" ? (t.club ? `${t.club} から` : "") : cls === "out" ? (t.club ? `${t.club} へ` : "") : t.club;
+  return `<div class="trow"><a class="who" href="#/player/${encodeURIComponent(t.name)}">${face(t.name)}<div><b><span class="kind ${cls}">${esc(t.kind)}</span>${esc(t.name)}</b>
+    <small>${[t.pos, t.age != null ? t.age + "歳" : "", from, t.memo].filter(Boolean).map(esc).join("・")}</small></div></a>
+    <div class="fee">${t.fee != null ? money(t.fee) : cls === "etc" ? "" : "<span style='color:var(--tx3);font-weight:500'>-</span>"}<small>${fmtD(t.date)}</small></div></div>`;
+}
+function vTransfers() {
+  const s = ST.season, T = D.trans.filter(t => !s || t.season === s).sort((a, b) => (b.date || 0) - (a.date || 0));
+  const ins = T.filter(t => IN_KINDS.test(t.kind)), outs = T.filter(t => OUT_KINDS.test(t.kind)), etc = T.filter(t => !IN_KINDS.test(t.kind) && !OUT_KINDS.test(t.kind));
+  const spend = sum(ins, t => t.fee), income = sum(outs, t => t.fee);
+  return `<div class="wrap" style="max-width:820px"><h1 class="h1">移籍<small style="font-size:13px;color:var(--tx3);font-weight:500;margin-left:8px">${esc(seasonLabel(s))}</small></h1>
+    ${T.length ? `<div class="card" style="margin-bottom:16px"><div class="tile-grid">
+      <div class="tile"><span>支出</span><b>${money(spend) || 0}</b><em>${ins.length}人加入</em></div>
+      <div class="tile"><span>収入</span><b>${money(income) || 0}</b><em>${outs.length}人退団</em></div>
+      <div class="tile"><span>収支</span><b>${(income - spend >= 0 ? "+" : "") + (money(income - spend) || 0)}</b></div></div></div>` : ""}
+    ${ins.length ? `<div class="card" style="margin-bottom:16px"><div class="card-h">加入</div>${ins.map(trRow).join("")}</div>` : ""}
+    ${outs.length ? `<div class="card" style="margin-bottom:16px"><div class="card-h">退団</div>${outs.map(trRow).join("")}</div>` : ""}
+    ${etc.length ? `<div class="card" style="margin-bottom:16px"><div class="card-h">その他</div>${etc.map(trRow).join("")}</div>` : ""}
+    ${T.length ? "" : `<div class="card">${empty("移籍シートに入れると、ここに出ます。")}</div>`}</div>`;
+}
+
+function seasonHistoryCard() {
+  if (!D.seasons.length) return "";
+  return `<div class="card" style="margin-top:16px"><div class="card-h">シーズンごとの順位</div>${[...D.seasons].sort((a, b) => a.season < b.season ? 1 : -1).map(x => {
+    const r = record(ofSeason(x.season));
+    return `<div class="season-card"><div><b class="s">${esc(x.season)}</b><small>${esc(x.league)}</small></div>
+      <div>${x.titles ? `<div>🏆 ${esc(x.titles)}</div>` : ""}<small>${r.n ? `${r.n}試合 ${r.w}勝${r.d}分${r.l}敗` : ""}${x.cap ? `・主将 ${esc(x.cap)}` : ""}</small>${x.comment ? `<small>${esc(x.comment)}</small>` : ""}</div>
+      <div class="rk">${x.rank != null ? `${x.rank}<small>位</small>` : "<small>-</small>"}</div></div>`; }).join("")}</div>`;
+}
+function vHistory() {
+  const titles = [];
+  D.seasons.forEach(x => String(x.titles || "").split(/[、,，\/／]/).map(t => t.trim()).filter(Boolean).forEach(t => titles.push({ t, s: x.season })));
+  const tc = {}; titles.forEach(x => (tc[x.t] = tc[x.t] || []).push(x.s));
+  const all = record(D.played), P = playerAgg(D.played);
+  const big = [...D.played].sort((a, b) => (b.gf - b.ga) - (a.gf - a.ga) || b.gf - a.gf)[0];
+  const top = (k, n = 5) => ranked(P, PM.find(x => x.k === k)).slice(0, n);
+  const list = (k, u) => top(k).map((x, i) => `<a class="srow${i === 0 ? " first" : ""}" href="#/player/${encodeURIComponent(x.p.name)}"><span class="rk">${i + 1}</span>${face(x.p.name)}<div class="nm"><b>${esc(x.p.name)}</b><small>${x.p.apps}試合</small></div><span class="val">${fmtN(x.v)}</span></a>`).join("");
+  return `<div class="wrap"><h1 class="h1">クラブの歴史</h1><div class="grid"><div class="col">
+    <div class="card"><div class="card-h">${esc(clubName())} の通算成績</div>${all.n ? `<div class="tile-grid">
+      <div class="tile"><span>試合</span><b>${all.n}</b></div><div class="tile"><span>勝・分・敗</span><b>${all.w}<small>勝</small> ${all.d}<small>分</small> ${all.l}<small>敗</small></b></div>
+      <div class="tile"><span>得点</span><b>${all.gf}</b></div><div class="tile"><span>失点</span><b>${all.ga}</b></div>
+      <div class="tile"><span>勝率</span><b>${fmtN(all.w / all.n * 100, 1)}<small>%</small></b></div>
+      ${big ? `<div class="tile"><span>最大得点差の勝利</span><b>${big.gf}-${big.ga}</b><em>${esc(big.opp)}・${fmtD(big.date)}</em></div>` : ""}</div>` : empty("試合を入れると通算成績が出ます。")}
+      ${D.conf["監督名"] || D.conf["ホームスタジアム"] ? `<div class="info">${[["監督", D.conf["監督名"]], ["ホーム", D.conf["ホームスタジアム"]], ["リーグ", D.conf["リーグ"]], ["最初のシーズン", D.conf["最初のシーズン"]]].filter(x => x[1]).map(([k, v]) => `<div><span>${k}</span><b>${esc(v)}</b></div>`).join("")}</div>` : ""}</div>
+    ${seasonHistoryCard()}
+  </div><div class="col">
+    <div class="card"><div class="card-h">タイトル<small>${titles.length}個</small></div>${Object.keys(tc).map(t => `<div class="trophy"><span class="cup">🏆</span><div><b>${esc(t)}</b><small style="display:block;color:var(--tx3);font-size:12px">${tc[t].length}回（${tc[t].map(esc).join("、")}）</small></div></div>`).join("") || empty("シーズンシートの「獲得タイトル」に入れると出ます。")}</div>
+    ${P.length ? `<div class="card scard"><div class="card-h">通算得点</div>${list("得点")}<div style="height:6px"></div></div>
+    <div class="card scard"><div class="card-h">通算アシスト</div>${list("アシスト")}<div style="height:6px"></div></div>
+    <div class="card scard"><div class="card-h">通算出場</div>${list("出場")}<div style="height:6px"></div></div>` : ""}
+  </div></div></div>`;
+}
+
+/* =====================================================================
+   ルーター
+   ===================================================================== */
+function parseHash() { const h = decodeURIComponent((location.hash || "").replace(/^#\/?/, "")); const [page, ...rest] = h.split("/").filter(Boolean); return { page: page || "home", arg: rest.join("/") || null }; }
+function fillSeason() {
+  const sel = $("season");
+  sel.innerHTML = D.seasonList.map(s => `<option value="${esc(s)}"${s === ST.season ? " selected" : ""}>${esc(s)}</option>`).join("") + `<option value=""${!ST.season ? " selected" : ""}>全シーズン</option>`;
+  sel.onchange = () => { ST.season = sel.value; render(); };
+}
+function render() {
+  const { page, arg } = parseHash();
+  const V = { home: vHome, matches: vMatches, match: vMatch, table: vTable, stats: vStats, squad: vSquad, player: vPlayer, transfers: vTransfers, history: vHistory };
+  const B = { matches: bMatches, match: bMatch, table: bTable };
+  const view = $("view");
+  view.innerHTML = (DEMO ? `<div class="demo-band">サンプル表示（架空のデータ）です。URLの「?demo」を消すと、スプレッドシートの記録が表示されます。</div>` : "") + (V[page] || vHome)(arg);
+  (B[page] || (() => { }))();
+  bindTips(view);
+  const navKey = { match: "matches", player: "squad" }[page] || page;
+  document.querySelectorAll("#tabs a").forEach(a => a.classList.toggle("on", a.dataset.p === navKey));
+  fillSeason();
+}
+let lastPage = "";
+window.addEventListener("hashchange", () => { const p = location.hash; if (!/^#\/match\//.test(p)) ST.mtab = "facts"; if (p !== lastPage) window.scrollTo(0, 0); lastPage = p; render(); });
+
+(async function init() {
+  try { await loadAll(); } catch (e) { console.error(e); D.err = "データの読み込みでエラーが起きました。"; }
+  document.title = `${clubName()} ― キャリアモード記録`;
+  $("brand-name").textContent = clubName(); $("foot-name").textContent = clubName();
+  $("brand-sub").textContent = [D.conf["リーグ"], "CAREER MODE"].filter(Boolean).join("・");
+  $("brand-logo").innerHTML = logo(clubName());
+  render();
+})();
