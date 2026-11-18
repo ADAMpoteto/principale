@@ -19,7 +19,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=27i1">
+<link rel="stylesheet" href="style.css?v=27j1">
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
 <body>
@@ -31,13 +31,12 @@
       <span class="brand-txt"><b id="brand-name">Principale</b><small id="brand-sub">Associate Football Club</small></span>
     </a>
     <nav class="tabs" id="tabs">
-      <a href="#/" data-p="home"><b>TOP</b><small>トップ</small></a>
-      <a href="#/matches" data-p="matches"><b>MATCHES</b><small>試合日程・結果</small></a>
-      <a href="#/table" data-p="table"><b>STANDINGS</b><small>順位表</small></a>
-      <a href="#/stats" data-p="stats"><b>STATS</b><small>記録</small></a>
-      <a href="#/squad" data-p="squad"><b>PLAYERS</b><small>選手・スタッフ</small></a>
-      <a href="#/transfers" data-p="transfers"><b>TRANSFERS</b><small>移籍情報</small></a>
-      <a href="#/club" data-p="club"><b>CLUB</b><small>クラブ</small></a>
+      <div class="ni"><a href="#/news" data-p="news"><b>NEWS</b><small>ニュース</small></a></div>
+      <div class="ni"><a href="#/matches" data-p="matches"><b>MATCH</b><small>試合</small></a>
+        <div class="dd"><a href="#/matches">試合日程・結果</a><a href="#/table">順位表</a><a href="#/stats">記録</a></div></div>
+      <div class="ni"><a href="#/squad" data-p="squad"><b>TEAM</b><small>チーム</small></a>
+        <div class="dd"><a href="#/squad">選手</a><a href="#/transfers">移籍情報</a></div></div>
+      <div class="ni"><a href="#/club" data-p="club"><b>CLUB</b><small>クラブ</small></a></div>
     </nav>
     <button class="menu-btn" id="menu-btn" aria-label="メニュー" aria-expanded="false"><i></i><i></i><i></i></button>
   </div>
@@ -49,14 +48,16 @@
   <div class="foot-in">
     <a class="foot-brand" href="#/"><span id="foot-logo"></span><b id="foot-name">Principale</b></a>
     <nav>
-      <a href="#/">TOP</a><a href="#/matches">MATCHES</a><a href="#/table">STANDINGS</a><a href="#/stats">STATS</a>
-      <a href="#/squad">PLAYERS</a><a href="#/transfers">TRANSFERS</a><a href="#/club">CLUB</a>
+      <div><b>NEWS</b><a href="#/news">ニュース</a></div>
+      <div><b>MATCH</b><a href="#/matches">試合日程・結果</a><a href="#/table">順位表</a><a href="#/stats">記録</a></div>
+      <div><b>TEAM</b><a href="#/squad">選手</a><a href="#/transfers">移籍情報</a></div>
+      <div><b>CLUB</b><a href="#/club">クラブ</a></div>
     </nav>
   </div>
   <div class="copy">© <span id="copy-year">2024</span> <span id="copy-name">Principale</span>. All Rights Reserved.</div>
 </footer>
 
 <div class="tip" id="tip" role="tooltip" hidden></div>
-<script src="app.js?v=27i1"></script>
+<script src="app.js?v=27j1"></script>
 </body>
 </html>
