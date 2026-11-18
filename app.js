@@ -880,31 +880,6 @@ function vTransfers() {
     ${T.length ? "" : `<div class="panel">${empty("このシーズンの移籍はありません。")}</div>`}</div>`;
 }
 
-/* リーグの格（イングランド。数字が小さいほど上） */
-function tier(lg) { const s = String(lg || ""); return /プレミア/.test(s) ? 1 : /チャンピオンシップ/.test(s) ? 2 : /リーグ\s*1$/.test(s) ? 3 : /リーグ\s*2$/.test(s) ? 4 : null; }
-function vHistory() {
-  const founded = D.conf["創設年"];
-  const S = [...new Set([...D.seasons.map(x => x.season), ...D.seasonList])].filter(Boolean).sort();
-  const items = [];
-  if (founded) items.push(`<li class="tl-item tl-found"><div class="tl-y">${esc(founded)}</div><div class="tl-body"><div class="tl-head">${logo(clubName(), "md")}<b>${esc(clubName())} 創設</b></div></div></li>`);
-  let prevLg = null;
-  S.forEach(se => {
-    const x = D.seasons.find(y => y.season === se) || { season: se };
-    const lg = x.league || D.conf["リーグ"] || "", r = record(ofSeason(se));
-    const live = D.matches.some(m => m.season === se && !m.played);
-    const t1 = tier(prevLg), t2 = tier(lg);
-    const move = prevLg && lg && prevLg !== lg ? (t1 && t2 ? (t2 < t1 ? `<span class="mv up">昇格</span>` : `<span class="mv down">降格</span>`) : "") : "";
-    const titles = String(x.titles || "").split(/[、,，\/／]/).map(t => t.trim()).filter(Boolean);
-    const youth = D.trans.filter(t => t.kind === "ユース昇格" && t.season === se);
-    items.push(`<li class="tl-item"><div class="tl-y">${esc(se)}</div><div class="tl-body">
-      <div class="tl-head"><b>${esc(lg)}</b>${move}${x.rank != null ? `<span class="tl-rk">${x.rank}<small>位${live ? "（暫定）" : ""}</small></span>` : ""}</div>
-      ${titles.length ? `<div class="tl-cup">${titles.map(t => `<span>${ICON.cup}${esc(t)} 優勝</span>`).join("")}</div>` : ""}
-      <p class="tl-meta">${[r.n ? `${r.n}試合 ${r.w}勝${r.d}分${r.l}敗 得点${r.gf} 失点${r.ga}` : "", x.cap ? `主将：${esc(x.cap)}` : "", youth.length ? `ユースから${youth.length}人昇格` : ""].filter(Boolean).join("　")}</p>
-      ${x.comment ? `<p class="tl-cm">${esc(x.comment)}</p>` : ""}</div></li>`);
-    prevLg = lg;
-  });
-  return band("HISTORY", "クラブの歴史") + `<div class="wrap narrow">${items.length ? `<ol class="tl">${items.reverse().join("")}</ol>` : `<div class="panel">${empty("記録はまだありません。")}</div>`}</div>`;
-}
 function vClub() {
   const titles = [];
   D.seasons.forEach(x => String(x.titles || "").split(/[、,，\/／]/).map(t => t.trim()).filter(Boolean).forEach(t => titles.push({ t, s: x.season })));
@@ -919,12 +894,6 @@ function vClub() {
     ${all.n ? sec("ALL-TIME", "通算成績") + `<div class="tiles"><div class="tile"><span>試合</span><b>${all.n}</b></div><div class="tile"><span>成績</span><b class="rec">${all.w}<small>勝</small>${all.d}<small>分</small>${all.l}<small>敗</small></b></div>
       <div class="tile"><span>得点</span><b>${all.gf}</b></div><div class="tile"><span>失点</span><b>${all.ga}</b></div><div class="tile"><span>勝率</span><b>${fmtN(all.w / all.n * 100, 1)}<small>%</small></b></div>
       ${big ? `<div class="tile"><span>最多得点差勝利</span><b>${big.gf}-${big.ga}</b><em>${esc(big.opp)}　${dotY(big.date)}</em></div>` : ""}</div>` : ""}
-    ${(() => { const Y = {};
-      D.trans.filter(t => t.kind === "ユース昇格").forEach(t => (Y[t.season || "-"] = Y[t.season || "-"] || []).push({ name: t.name, pos: t.pos }));
-      D.players.filter(p => /ユース/.test(p.origin || "") && !D.trans.some(t => t.kind === "ユース昇格" && same(t.name, p.name))).forEach(p => (Y[p.joined || "-"] = Y[p.joined || "-"] || []).push({ name: p.name, pos: p.pos }));
-      const ks = Object.keys(Y).sort().reverse(); if (!ks.length) return "";
-      return sec("ACADEMY GRADUATES", "ユースからトップチームへ昇格した選手") + `<div class="hist">${ks.map(k => `<div class="hist-row acad-row"><div><div class="s">${esc(k)}</div><small>${Y[k].length}人</small></div>
-        <div class="acad-list">${Y[k].map(x => `<a href="#/player/${encodeURIComponent(x.name)}">${face(x.name)}<span><b>${flag()}${esc(x.name)}</b><small>${esc(x.pos || "")}</small></span></a>`).join("")}</div></div>`).join("")}</div>`; })()}
     ${recs.length ? sec("RECORDS", "通算記録") + `<div class="sgrid">${recs.join("")}</div>` : ""}</div>`;
 }
 
@@ -938,7 +907,7 @@ function fillSeason() {
 }
 function render() {
   const { page, arg } = parseHash();
-  const V = { home: vHome, news: vNews, matches: vMatches, match: vMatch, table: vTable, stats: vStats, squad: vSquad, player: vPlayer, transfers: vTransfers, history: vHistory, club: vClub };
+  const V = { home: vHome, news: vNews, matches: vMatches, match: vMatch, table: vTable, stats: vStats, squad: vSquad, player: vPlayer, transfers: vTransfers, club: vClub, history: vClub };
   const B = { news: bNews, matches: bMatches, match: bMatch, table: bTable };
   const view = $("view");
   view.innerHTML = (V[page] || vHome)(arg);
