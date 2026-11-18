@@ -703,3 +703,29 @@ h3.sub:first-of-type{margin-top:0}
 .hist em.sc{background:transparent;color:var(--tx3);border:1px solid var(--line)}
 .prof.p4{grid-template-columns:repeat(var(--n,4),minmax(0,1fr))}
 @media (max-width:700px){.prof.p4{grid-template-columns:repeat(2,minmax(0,1fr))}.prof.p4>div:last-child:nth-child(odd){grid-column:1/-1}}
+
+/* ===== 移籍・昇格・契約のサムネイル（クラブ発表画像風） ===== */
+.nt-x{display:block;padding:0;background:radial-gradient(120% 140% at 85% 30%,#2b5a80 0%,#1c2833 55%,#121a22 100%)}
+.nt-x::before{content:"";position:absolute;inset:0;right:auto;width:auto;transform:none;opacity:1;
+  background:repeating-linear-gradient(115deg,rgba(124,192,232,0) 0 7cqw,rgba(124,192,232,.06) 7cqw 9cqw)}
+.nt-x::after{content:"";position:absolute;left:0;right:0;bottom:0;height:35%;background:linear-gradient(transparent,rgba(10,16,22,.75));z-index:1}
+.nt-x>*{position:absolute}
+.nx-bg{left:-8cqw;top:-10cqw;width:62cqw;height:62cqw;opacity:.09;filter:grayscale(1) brightness(2)}
+.nx-bg .logo{width:100%;height:100%;font-size:14cqw}
+.nt-x .face{right:2cqw;bottom:0;top:5%;width:44cqw;height:auto;max-height:none;object-fit:contain;object-position:bottom;z-index:2;filter:drop-shadow(0 0 3cqw rgba(0,0,0,.45))}
+.nt-x .face.ph{top:16%;width:40cqw;background-size:90% auto}
+.nx-t{left:6cqw;top:0;bottom:0;width:56cqw;display:flex;flex-direction:column;justify-content:center;z-index:3;color:#fff}
+.nx-tag{align-self:flex-start;background:#bc002d;font-family:var(--en);font-weight:700;font-size:3cqw;letter-spacing:.12em;padding:.4cqw 1.6cqw;margin-bottom:1.6cqw;white-space:nowrap}
+.nt-x:not(.is-acad) .nx-tag{background:var(--blue)}
+.nx-h{font-family:var(--en);font-weight:800;font-style:normal;font-size:13.5cqw;line-height:.86;letter-spacing:.02em;white-space:nowrap;
+  color:transparent;-webkit-text-stroke:.45cqw var(--sky);text-shadow:.9cqw .9cqw 0 rgba(124,192,232,.18)}
+.is-out .nx-h{-webkit-text-stroke-color:#fff;text-shadow:.9cqw .9cqw 0 rgba(255,255,255,.14)}
+.nx-n{font-family:var(--en);font-weight:800;font-size:5.6cqw;letter-spacing:.06em;text-transform:uppercase;color:var(--sky);margin-top:2.4cqw;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.is-out .nx-n{color:#fff}
+.nx-j{font-size:3cqw;font-weight:700;color:rgba(255,255,255,.75);margin-top:1cqw}
+.nx-c{display:flex;align-items:center;gap:1.4cqw;margin-top:3cqw;font-family:var(--en);font-weight:800;font-style:italic;font-size:3.4cqw;letter-spacing:.08em;text-transform:uppercase}
+.nx-c .logo{width:6cqw;height:6cqw;font-size:2cqw}
+.nx-t{z-index:1}
+.nt-x .face{z-index:2}
+.nt-x .face.ph{border-radius:0;background-color:transparent;color:transparent;font-size:0;border:0;aspect-ratio:auto;height:auto;top:14%;
+  background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20100%20125%22%3E%3Cg%20fill%3D%22%23fff%22%20fill-opacity%3D%22.3%22%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2242%22%20r%3D%2221%22/%3E%3Cpath%20d%3D%22M8%20125c0-28%2018-46%2042-46s42%2018%2042%2046z%22/%3E%3C/g%3E%3C/svg%3E") center bottom/86% auto no-repeat}
