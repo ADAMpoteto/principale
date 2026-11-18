@@ -476,12 +476,14 @@ function ratingChart(items) {   /* items: [{m, r}] 試合ごとの評価 */
 }
 function lineChart(series, opt) {  /* series: [{name, color, dash, pts:[{x:Date, v, tip}]}] */
   const all = series.flatMap(s => s.pts); if (all.length < 2) return "";
-  const W = 640, H = 200, pl = 30, pr = 118, pt = 12, pb = 24;
+  const fm = opt.fmt || (v => v), W = 640, H = 200, pl = opt.fmt ? 52 : 30, pr = 118, pt = 12, pb = 24;
   const xs = all.map(p => +p.x), x0 = Math.min(...xs), x1 = Math.max(...xs) || x0 + 1;
-  let lo = Math.min(...all.map(p => p.v)), hi = Math.max(...all.map(p => p.v)); lo = Math.floor((lo - 2) / 5) * 5; hi = Math.ceil((hi + 1) / 5) * 5;
+  let lo = Math.min(...all.map(p => p.v)), hi = Math.max(...all.map(p => p.v)); let st = 5;
+  if (opt.fmt) { const r = (hi - lo) || hi || 1, m = Math.pow(10, Math.floor(Math.log10(r / 4))); st = [1, 2, 2.5, 5, 10].map(k => k * m).find(k => r / k <= 5); lo = Math.max(0, Math.floor(lo / st) * st - (hi === lo ? st : 0)); hi = Math.ceil(hi / st) * st + (hi === lo ? st : 0); }
+  else { lo = Math.floor((lo - 2) / 5) * 5; hi = Math.ceil((hi + 1) / 5) * 5; }
   const X = v => pl + (x1 === x0 ? 0.5 : (v - x0) / (x1 - x0)) * (W - pl - pr), Y = v => pt + (1 - (v - lo) / (hi - lo)) * (H - pt - pb);
   let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(opt.label)}">`;
-  for (let v = lo; v <= hi; v += 5) s += `<line class="gl" x1="${pl}" x2="${W - pr}" y1="${Y(v)}" y2="${Y(v)}"/><text class="ax" x="${pl - 6}" y="${Y(v) + 3}" text-anchor="end">${v}</text>`;
+  for (let v = lo; v <= hi + 1e-9; v += st) s += `<line class="gl" x1="${pl}" x2="${W - pr}" y1="${Y(v)}" y2="${Y(v)}"/><text class="ax" x="${pl - 6}" y="${Y(v) + 3}" text-anchor="end">${fm(v)}</text>`;
   const ticks = [...new Set(all.map(p => fmtD(p.x)))].map(t => all.find(p => fmtD(p.x) === t).x);
   ticks.forEach((t, i) => { if (ticks.length <= 6 || i % Math.ceil(ticks.length / 6) === 0) s += `<text class="ax" x="${X(+t)}" y="${H - 6}" text-anchor="middle">${t.getFullYear()}/${t.getMonth() + 1}</text>`; });
   series.forEach(sr => {
@@ -489,7 +491,7 @@ function lineChart(series, opt) {  /* series: [{name, color, dash, pts:[{x:Date,
     s += `<polyline fill="none" stroke="${sr.color}" stroke-width="2" ${sr.dash ? 'stroke-dasharray="5 4"' : ""} stroke-linejoin="round" points="${sr.pts.map(p => `${X(+p.x)},${Y(p.v)}`).join(" ")}"/>`;
     sr.pts.forEach(p => s += `<circle cx="${X(+p.x)}" cy="${Y(p.v)}" r="4" fill="${sr.color}" stroke="#fff" stroke-width="2"/><circle class="hit" cx="${X(+p.x)}" cy="${Y(p.v)}" r="12" data-tip="${esc(p.tip)}"/>`);
     const lp = sr.pts[sr.pts.length - 1];
-    s += `<text x="${X(+lp.x) + 9}" y="${Y(lp.v) + 4}" fill="#1c2833" font-size="12" font-weight="700">${esc(sr.name)} ${lp.v}</text>`;
+    s += `<text x="${X(+lp.x) + 9}" y="${Y(lp.v) + 4}" fill="#1c2833" font-size="12" font-weight="700">${esc(sr.name)} ${esc(fm(lp.v))}</text>`;
   });
   return s + `</svg>`;
 }
@@ -1011,6 +1013,8 @@ function vPlayer(name) {
     { name: "総合値", color: "#2E86C8", pts: G.filter(g => g.ovr != null && g.date).map(g => ({ x: g.date, v: g.ovr, tip: `<b>${fmtD(g.date)}</b><br>総合値 ${g.ovr}${g.pot ? ` / ポテンシャル ${g.pot}` : ""}${g.value ? `<br>市場価値 ${money(g.value)}` : ""}` })) },
     { name: "ポテンシャル", color: "#D9702A", dash: true, pts: G.filter(g => g.pot != null && g.date).map(g => ({ x: g.date, v: g.pot, tip: `<b>${fmtD(g.date)}</b><br>ポテンシャル ${g.pot}` })) }
   ], { label: "総合値とポテンシャルの推移" }) : "";
+  const GV = G.filter(g => g.value != null && g.date);
+  const valChart = GV.length >= 2 ? lineChart([{ name: "市場価値", color: "#2E86C8", pts: GV.map(g => ({ x: g.date, v: g.value, tip: `<b>${fmtD(g.date)}</b><br>市場価値 ${money(g.value)}` })) }], { label: "市場価値の推移", fmt: money }) : "";
   const bySeason = D.seasonList.map(se => ({ se, x: playerAgg(ofSeason(se)).find(q => same(q.name, name)) })).filter(o => o.x);
   const matches = a ? [...a.list].reverse() : [];
   const tr = D.trans.filter(t => same(t.name, name));
@@ -1025,7 +1029,8 @@ function vPlayer(name) {
     <h2 class="sec"><b>SEASON STATS</b><small>シーズン成績</small><span style="margin-left:auto">${seasonSel()}</span></h2>
     ${tiles.length ? `<div class="tiles">${tiles.map(([k, v, u]) => `<div class="tile"><span>${k}</span><b>${typeof v === "number" ? fmtN(v) : esc(v)}${u ? `<small>${u}</small>` : ""}</b></div>`).join("")}</div>` : `<div class="panel">${empty("このシーズンの出場はありません。")}</div>`}
     ${ratings.length ? sec("RATING", "試合ごとの評価") + `<div class="chart">${ratingChart(ratings.slice(-30))}</div>` : ""}
-    ${ovrChart ? sec("GROWTH", "総合値の推移") + `<div class="chart">${ovrChart}</div>` : ""}
+    ${ovrChart ? sec("GROWTH", "能力値の推移") + `<div class="chart">${ovrChart}</div>` : ""}
+    ${valChart ? sec("MARKET VALUE", "市場価値の推移") + `<div class="chart">${valChart}</div>` : ""}
     ${matches.length ? sec("MATCHES", "出場試合") + `<div class="panel">
       ${matches.slice(0, 40).map(({ m, l }) => `<a class="mrow" href="#/match/${m.id}"><div class="d"><b>${dotD(m.date)}</b><span>${esc(m.comp)}</span></div>
         <div class="t">${logo(m.opp, "md")}<div><small>${esc(l.pos)}${l.s["出場時間"] != null ? `　${l.s["出場時間"]}分` : l.role !== "先発" ? "　途中出場" : ""}${l.s["得点"] ? `　${l.s["得点"]}得点` : ""}${l.s["アシスト"] ? `　${l.s["アシスト"]}アシスト` : ""}</small>
