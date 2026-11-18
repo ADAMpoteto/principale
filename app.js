@@ -186,7 +186,7 @@ async function loadAll() {
   D.played = D.matches.filter(m => m.played);
 
   D.growth = got.gr.map(o => ({ date: pDate(F(o, "日付")), season: F(o, "シーズン"), name: F(o, "名前"), ovr: num(F(o, "総合値")), pot: num(F(o, "ポテンシャル")), value: num(F(o, "市場価値")) }))
-    .filter(g => g.name && (g.ovr != null || g.pot != null)).sort((a, b) => (a.date || 0) - (b.date || 0));
+    .filter(g => g.name && (g.ovr != null || g.pot != null || g.value != null)).sort((a, b) => (a.date || 0) - (b.date || 0));
   D.trans = got.tr.map((o, i) => ({ i, season: F(o, "シーズン"), date: pDate(F(o, "日付")), kind: F(o, "区分") || "加入", name: F(o, "名前"), pos: F(o, "ポジション").toUpperCase(),
     age: num(F(o, "年齢")), club: F(o, "相手クラブ"), fee: num(F(o, "移籍金")), memo: F(o, "メモ") })).filter(t => t.name);
   D.table = [];
@@ -1001,7 +1001,8 @@ function vPlayer(name) {
   const a = playerAgg(Ls).find(x => same(x.name, name));
   const G = D.growth.filter(g => same(g.name, name));
   const lastG = G[G.length - 1] || {};
-  const ovr = p.ovr ?? lastG.ovr, pot = p.pot ?? lastG.pot, val = p.value ?? lastG.value;
+  const lastV = [...G].reverse().find(g => g.value != null) || {};
+  const ovr = p.ovr ?? lastG.ovr, pot = p.pot ?? lastG.pot, val = p.value ?? lastV.value;
   const hw = [p.height ? p.height + "cm" : "", p.weight ? p.weight + "kg" : ""].filter(Boolean).join(" / ");
   const info = [["生年月日", p.birth ? `${fmtD(p.birth)}（${age(p.birth)}歳）` : ""], ["身長 / 体重", hw], ["利き足", p.foot], ["市場価値", money(val)]].filter(x => x[1]);
   const tiles = a ? [["出場", a.apps, "試合"], ["得点", a.g], ["アシスト", a.a], ["平均評価", a.rating != null ? fmtN(a.rating, 2) : null], ["出場時間", a.has["出場時間"] ? fmtN(a.min) : null, "分"], ["MOM", a.mom, "回"],
