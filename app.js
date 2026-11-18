@@ -601,7 +601,61 @@ function milestones() {
     Object.keys(MS_T).forEach(k => { hit(MS_T[k], T[k], T[k] + tx[k]).forEach(v => N.push({ id: `r-t${k}-${v}`, d: m.date, cat: "RECORD", m0: m, ms: { club: true, k, v, def: MS_T[k] },
       t: v === 1 && MS_T[k].first ? `${clubName()} ${MS_T[k].first}` : `${clubName()} 通算${v}${MS_T[k].u}達成` })); T[k] += tx[k]; });
   });
-  return N.concat(milestones2());
+  return N.concat(milestones2(), milestones3());
+}
+/* リーグの格（イングランド。数字が小さいほど上） */
+function tier(lg) { const s = String(lg || ""); return /プレミア/.test(s) ? 1 : /チャンピオンシップ/.test(s) ? 2 : /リーグ\s*1$/.test(s) ? 3 : /リーグ\s*2$/.test(s) ? 4 : null; }
+function leagueOfSeason(se) {
+  const t = D.table.filter(r => r.season === se && isMe(r.club)).sort((a, b) => b.p - a.p)[0]; if (t) return t.comp;
+  const s = D.seasons.find(x => x.season === se); if (s && s.league) return s.league;
+  const c = {}; D.matches.filter(m => m.season === se && tier(m.comp)).forEach(m => c[m.comp] = (c[m.comp] || 0) + 1);
+  return Object.keys(c).sort((a, b) => c[b] - c[a])[0] || "";
+}
+/* 最多得点差・連敗ストップ・1シーズンのクラブ記録・月間ベストプレーヤー・シーズン終了・昇格／優勝／降格 */
+function milestones3() {
+  const N = [], push = (m, id, t, ms, d) => N.push({ id, d: d || m.date, cat: "RECORD", m0: m, ms, t });
+  let bigM = 0, lose = 0; const best = { g: 0, a: 0 }, cur = {}; let curSe = null;
+  D.played.forEach(m => {
+    /* 最多得点差の勝利（4点差以上でクラブ記録を更新） */
+    const mg = m.gf - m.ga; if (m.res === "W" && mg >= 4 && mg > bigM) push(m, `r-big-${m.id}`, `${clubName()} クラブ史上最多得点差の勝利`, { club: true, big: `+${mg}`, en: "RECORD WIN", txt: `${clubName()}は${m.gf}-${m.ga}で勝利し、クラブ史上最多得点差（${mg}点差）の勝利を記録しました。` });
+    if (m.res === "W") bigM = Math.max(bigM, mg);
+    /* 連敗ストップ */
+    if (m.res === "L") lose++; else { if (lose >= 3) push(m, `r-ls-${m.id}`, `${clubName()} 連敗を${lose}でストップ`, { club: true, big: lose, en: "STREAK ENDED", txt: `${clubName()}は${m.res === "W" ? "勝利" : "引き分け"}で、連敗を${lose}で止めました。` }); lose = 0; }
+    /* 1シーズンのクラブ記録（ゴール・アシスト）。過去のシーズンの記録を超えたとき1回だけ */
+    if (m.season !== curSe) { Object.values(cur).forEach(p => { best.g = Math.max(best.g, p.g); best.a = Math.max(best.a, p.a); }); Object.keys(cur).forEach(k => delete cur[k]); curSe = m.season; }
+    [["g", m.scorers, "ゴール"], ["a", m.assists, "アシスト"]].forEach(([k, L, u]) => L.forEach(x => { if (/オウン/.test(x.name)) return; const key = nameKey(x.name), p = cur[key] || (cur[key] = { g: 0, a: 0, done: {} });
+      p[k] += x.n; if (best[k] > 0 && p[k] > best[k] && !p.done[k]) { p.done[k] = 1; push(m, `r-sr-${k}-${m.season}-${key}`, `${x.name}選手 クラブのシーズン最多${u}記録を更新`, { who: x.name, big: p[k], en: k === "g" ? "GOALS" : "ASSISTS", txt: `${x.name}選手が今シーズン${p[k]}${u}目を記録し、クラブの1シーズン最多${u}記録（${best[k]}）を更新しました。` }); } }));
+  });
+  /* 月間ベストプレーヤー（翌月の試合が入ったら） */
+  const byM = {}; D.played.forEach(m => { if (m.date) (byM[`${m.date.getFullYear()}-${pad(m.date.getMonth() + 1)}`] = byM[`${m.date.getFullYear()}-${pad(m.date.getMonth() + 1)}`] || []).push(m); });
+  const months = Object.keys(byM).sort();
+  months.slice(0, -1).forEach(k => { const L = byM[k], R = {};
+    L.forEach(m => m.lu.forEach(l => { if (l.rating == null) return; const r = R[nameKey(l.name)] || (R[nameKey(l.name)] = { name: l.name, s: 0, n: 0 }); r.s += l.rating; r.n++; }));
+    const need = Math.max(1, Math.ceil(L.length / 2)), top = Object.values(R).filter(r => r.n >= need).sort((a, b) => b.s / b.n - a.s / a.n)[0]; if (!top) return;
+    const last = L[L.length - 1], mo = parseInt(k.slice(5), 10);
+    push(last, `r-mvp-${k}`, `${mo}月の月間ベストプレーヤーに${top.name}選手`, { who: top.name, big: fmtN(top.s / top.n, 2), en: "MONTHLY MVP",
+      html: `<p>${mo}月の月間ベストプレーヤーに、${esc(top.name)}選手が選ばれました。${mo}月は${top.n}試合に出場し、平均評価は${fmtN(top.s / top.n, 2)}でした。</p><p class="nbtn"><a class="btn" href="#/player/${encodeURIComponent(top.name)}">PLAYER PROFILE</a></p>` }); });
+  /* シーズン終了のまとめと、昇格／優勝／降格（次のシーズンの試合が入ったら） */
+  const SS = [...new Set(D.matches.map(m => m.season).filter(Boolean))].sort();
+  SS.forEach((se, i) => {
+    const nx = SS[i + 1]; if (!nx) return;
+    const L = ofSeason(se); if (!L.length) return;
+    const last = L[L.length - 1], r = record(L), lg = leagueOfSeason(se), nlg = leagueOfSeason(nx);
+    const me = D.table.find(t => t.season === se && t.comp === lg && isMe(t.club));
+    const P = playerAgg(L), top = M => (ranked(P, M)[0] || {}).p, tg = top(PM[0]), ta = top(PM[1]), tr = top(PM[3]);
+    const t1 = tier(lg), t2 = tier(nlg);
+    const mv = t1 && t2 && t1 !== t2 ? (t2 < t1 ? "up" : "down") : "";
+    if (me && me.rank === 1) push(last, `r-ch-${se}`, `${lg} 優勝のお知らせ`, { club: true, big: "", en: "CHAMPIONS", html: `<p>${esc(clubName())}は、${esc(se)}シーズンの${esc(lg)}で優勝しました（${me.w}勝${me.d}分${me.l}敗・勝点${me.pts}）。</p><p class="nbtn"><a class="btn" href="#/table">STANDINGS</a></p>` });
+    if (mv) push(last, `r-mv-${se}`, mv === "up" ? `${nlg}への昇格が決定` : `${nlg}への降格が決定`, { club: true, big: "", en: mv === "up" ? "PROMOTED" : "RELEGATED",
+      html: `<p>${esc(clubName())}は、${esc(se)}シーズンの${esc(lg)}を${me ? me.rank + "位" : ""}で終え、${esc(nx)}シーズンは${esc(nlg)}で戦うことが決まりました。</p><p class="nbtn"><a class="btn" href="#/table">STANDINGS</a></p>` });
+    const li = (k, p, v) => p ? `<li><span>${k}</span><b>${esc(p.name)}</b>${v}</li>` : "";
+    push(last, `r-ss-${se}`, `【${se}シーズン】シーズン終了のお知らせ`, { club: true, big: "", en: "SEASON REVIEW",
+      html: `<p>${esc(clubName())}の${esc(se)}シーズンの全日程が終了しました。</p>
+        <ul class="srev">${me ? `<li><span>${esc(lg)}</span><b>${me.rank}位</b>勝点${me.pts}</li>` : ""}<li><span>公式戦</span><b>${r.n}試合 ${r.w}勝${r.d}分${r.l}敗</b>得点${r.gf} 失点${r.ga}</li>
+        ${li("チーム得点王", tg, `${ranked(P, PM[0])[0] ? ranked(P, PM[0])[0].v : ""}ゴール`)}${li("アシスト王", ta, `${ranked(P, PM[1])[0] ? ranked(P, PM[1])[0].v : ""}アシスト`)}${li("平均評価1位", tr, ranked(P, PM[3])[0] ? fmtN(ranked(P, PM[3])[0].v, 2) : "")}</ul>
+        <p>応援ありがとうございました。</p><p class="nbtn"><a class="btn" href="#/stats">STATS</a></p>` }, last.date);
+  });
+  return N;
 }
 /* ハットトリック・連勝／無敗・クラブ最年少・MOM */
 function ageTxt(birth, d) {
@@ -642,7 +696,8 @@ function buildNews() {
   const TT = { 加入: n => `${n}選手 加入のお知らせ`, レンタル加入: n => `${n}選手 期限付き移籍加入のお知らせ`, レンタル復帰: n => `${n}選手 期限付き移籍からの復帰のお知らせ`,
     ユース昇格: n => `${n}選手 トップチーム昇格のお知らせ`, 契約延長: n => `${n}選手 契約更新のお知らせ`,
     退団: (n, c) => c ? `${n}選手 ${c}へ完全移籍のお知らせ` : `${n}選手 退団のお知らせ`, レンタル移籍: (n, c) => `${n}選手 ${c ? c + "へ" : ""}期限付き移籍のお知らせ` };
-  D.trans.forEach(t => N.push({ id: "t" + t.i, d: t.date, cat: "TRANSFER", tr: t, t: (TT[t.kind] || (n => `${n}選手 ${t.kind}のお知らせ`))(t.name, t.club) }));
+  const YO = D.trans.filter(t => t.kind === "ユース昇格").sort((x, y) => (x.date || 0) - (y.date || 0) || x.i - y.i);
+  D.trans.forEach(t => N.push({ id: "t" + t.i, d: t.date, cat: "TRANSFER", tr: t, yno: t.kind === "ユース昇格" ? YO.indexOf(t) + 1 : 0, t: (TT[t.kind] || (n => `${n}選手 ${t.kind}のお知らせ`))(t.name, t.club) }));
   D.seasons.forEach(s => {
     const last = D.played.filter(m => m.season === s.season).pop();
     String(s.titles || "").split(/[、,，\/／]/).map(x => x.trim()).filter(Boolean).forEach((t, k) => N.push({ id: "c" + s.season + "-" + k, d: last && last.date, cat: "CLUB", title: t, season: s.season, top: 1, t: `${t} 優勝のお知らせ` }));
@@ -653,17 +708,18 @@ function buildNews() {
 /* サムネイル（画像の代わりに、試合ならエンブレムとスコア、移籍なら選手） */
 function newsThumb(n) {
   if (n.ms) { const s = n.ms;
-    return `<div class="nt nt-r${s.club ? " club" : ""}">${s.club ? logo(clubName(), "md") : face(s.who)}<div class="nt-w">${s.en ? `<span class="nt-num">${s.big}</span>${s.en}` : s.v === 1 && s.def.fe ? s.def.fe : `<span class="nt-num">${s.v}</span>${s.def.en}`}<small>${esc(s.club ? clubName() : s.who)}</small></div></div>`; }
+    return `<div class="nt nt-r${s.club ? " club" : ""}">${s.club ? logo(clubName(), "md") : face(s.who)}<div class="nt-w">${s.en ? `${s.big !== "" && s.big != null ? `<span class="nt-num">${s.big}</span>` : ""}${s.en}` : s.v === 1 && s.def.fe ? s.def.fe : `<span class="nt-num">${s.v}</span>${s.def.en}`}<small>${esc(s.club ? clubName() : s.who)}</small></div></div>`; }
   if (n.m) { const h = homeAway(n.m);
     return `<div class="nt nt-m"><div class="nt-c">${logo(h.home, "md")}</div><div class="nt-s">${n.kind === "result" ? scoreTxt(n.m) : "VS"}<small>${n.kind === "result" ? "RESULT" : dotD(n.m.date)}</small></div><div class="nt-c">${logo(h.away, "md")}</div></div>`; }
   if (n.tr) { const t = n.tr, w = { 加入: "WELCOME", レンタル加入: "WELCOME", ユース昇格: "ACADEMY", レンタル復帰: "RETURN", 退団: "THANK YOU", レンタル移籍: "LOAN", 契約延長: "RENEWAL" }[t.kind] || "NEWS";
-    return `<div class="nt nt-t${t.kind === "ユース昇格" ? " acad" : ""}">${face(t.name)}<div class="nt-w">${w}<small>${esc(t.name)}</small></div></div>`; }
+    return `<div class="nt nt-t${t.kind === "ユース昇格" ? " acad" : ""}">${face(t.name)}<div class="nt-w">${n.yno ? `<span class="nt-num">#${n.yno}</span>` : ""}${w}<small>${esc(t.name)}</small></div></div>`; }
   return `<div class="nt nt-c2">${ICON.cup}<div class="nt-w">CHAMPIONS<small>${esc(n.title || "")}</small></div></div>`;
 }
 const newsCard = n => `<a class="ncard" href="#/news/${encodeURIComponent(n.id)}">${newsThumb(n)}<div class="nb"><div class="nmeta"><time>${dotY(n.d)}</time><span class="cat c-${n.cat}">${NCAT[n.cat]}</span></div><b>${esc(n.t)}</b></div></a>`;
 const newsList = L => `<div class="news">${L.map(n => `<a href="#/news/${encodeURIComponent(n.id)}"><time>${dotY(n.d)}</time><span class="cat c-${n.cat}">${NCAT[n.cat]}</span><b>${esc(n.t)}</b></a>`).join("")}</div>`;
 function newsBody(n) {
   const P = s => `<p>${s}</p>`;
+  if (n.ms && n.ms.html) return n.ms.html;
   if (n.ms) { const s = n.ms, m = n.m0, d = m.date, when = `${d.getMonth() + 1}月${d.getDate()}日（${WD[d.getDay()]}）の${esc(roundTxt(m))} ${esc(m.opp)}戦`;
     const txt = s.txt ? `${when}で、${esc(s.txt)}` : s.club ? (s.v === 1 && s.def.first ? `${when}で、${esc(clubName())}は${s.def.first}を記録しました。` : `${when}で、${esc(clubName())}は公式戦通算${s.v}${s.def.u}を達成しました。`)
       : (s.v === 1 && s.def.first ? `${when}で、${esc(s.who)}選手が${s.def.first}${s.k === "apps" ? "を果たしました" : "を記録しました"}。` : `${when}で、${esc(s.who)}選手が公式戦通算${s.v}${s.def.u}を達成しました。`);
@@ -685,7 +741,7 @@ function newsBody(n) {
       レンタル移籍: `${who}が、${cl || "他クラブ"}へ期限付き移籍することが決まりましたので、お知らせいたします。`,
       レンタル復帰: `期限付き移籍中の${who}が、${cl ? cl + "から" : ""}復帰することになりましたので、お知らせいたします。`,
       契約延長: `${who}と契約を更新しましたので、お知らせいたします。`, 加入: `${who}が加入することが決まりましたので、お知らせいたします。` }[t.kind] || `${who}について、${esc(t.kind)}のお知らせです。`;
-    return P(tx) + (t.memo ? P(esc(t.memo)) : "") + `<p class="nbtn"><a class="btn" href="#/player/${encodeURIComponent(t.name)}">PLAYER PROFILE</a></p>`; }
+    return P(tx) + (n.yno ? P(`${esc(t.name)}選手は、クラブ史上${n.yno}人目のアカデミー出身のトップチーム選手となります。`) : "") + (t.memo ? P(esc(t.memo)) : "") + `<p class="nbtn"><a class="btn" href="#/player/${encodeURIComponent(t.name)}">PLAYER PROFILE</a></p>`; }
   return P(`${esc(n.season)}シーズン、${esc(clubName())}は${esc(n.title)}で優勝しました。`) + `<p class="nbtn"><a class="btn" href="#/club">CLUB</a></p>`;
 }
 function vNewsDetail(id) {
