@@ -121,7 +121,7 @@ async function loadAll() {
 
   D.players = got.pl.map(o => ({
     name: F(o, "名前"), no: num(F(o, "背番号")), pos: F(o, "ポジション").toUpperCase(), nat: F(o, "国籍"), birth: pDate(F(o, "生年月日")),
-    foot: F(o, "利き足"), height: num(F(o, "身長")), ovr: num(F(o, "総合値")), pot: num(F(o, "ポテンシャル")), value: num(F(o, "市場価値")),
+    foot: F(o, "利き足"), height: num(F(o, "身長")), weight: num(F(o, "体重")), ovr: num(F(o, "総合値")), pot: num(F(o, "ポテンシャル")), value: num(F(o, "市場価値")),
     joined: F(o, "加入"), origin: F(o, "出身"), status: F(o, "在籍") || "在籍", photo: F(o, "写真"), memo: F(o, "メモ")
   })).filter(p => p.name);
   /* 役職が入っている行はスタッフ */
@@ -999,7 +999,7 @@ function vPlayer(name) {
   const G = D.growth.filter(g => same(g.name, name));
   const lastG = G[G.length - 1] || {};
   const ovr = p.ovr ?? lastG.ovr, pot = p.pot ?? lastG.pot, val = p.value ?? lastG.value;
-  const info = [["ポジション", p.pos], ["生年月日", p.birth ? `${fmtD(p.birth)}（${age(p.birth)}歳）` : ""], ["国籍", p.nat], ["身長", p.height ? p.height + "cm" : ""], ["利き足", p.foot],
+  const info = [["ポジション", p.pos], ["生年月日", p.birth ? `${fmtD(p.birth)}（${age(p.birth)}歳）` : ""], ["国籍", p.nat], ["身長", p.height ? p.height + "cm" : ""], ["体重", p.weight ? p.weight + "kg" : ""], ["利き足", p.foot],
     ["市場価値", money(val)], ["加入", p.joined], ["出身", p.origin]].filter(x => x[1]);
   const tiles = a ? [["出場", a.apps, "試合"], ["得点", a.g], ["アシスト", a.a], ["平均評価", a.rating != null ? fmtN(a.rating, 2) : null], ["出場時間", a.has["出場時間"] ? fmtN(a.min) : null, "分"], ["MOM", a.mom, "回"],
     ["ゴール期待値", a.s["ゴール期待値"] != null ? fmtN(a.s["ゴール期待値"], 2) : null], ["シュート", a.s["シュート"]], ["キーパス", a.s["キーパス"]],
