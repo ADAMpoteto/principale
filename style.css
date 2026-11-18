@@ -647,3 +647,7 @@ div.prow:hover{background:var(--white)}
 .art-th .nt-w{font-size:9cqw}
 .nt-t .nt-w,.nt-r .nt-w{font-size:7cqw;overflow:hidden;text-overflow:clip}
 .nt-t .face,.nt-r .face{width:34cqw}
+
+/* 選手ページ写真：枠の高さが0になる不具合の修正 */
+.phero .photo{display:block;height:auto;align-self:stretch;justify-self:stretch}
+.phero .photo .face{position:absolute;left:0;top:0;right:0;bottom:0;width:100%;height:100%;max-width:none}
