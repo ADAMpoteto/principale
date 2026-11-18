@@ -1,7 +1,6 @@
 /* =====================================================================
    Principale ― 記録サイト
    データは Google スプレッドシート「Principale」から読み込みます。
-   サンプル表示：URLの最後に ?demo を付ける（demo フォルダの架空データ）
 
    ■ スプシのつなぎ方
      スプシを「ファイル → 共有 → ウェブに公開（ドキュメント全体）」しておく（済み）。
@@ -22,6 +21,7 @@ const SHEETS = {          // キー: [シート名, gid]
   gr:    ["能力推移", 8],
   tr:    ["移籍", 9],
   tb:    ["順位表", 10],
+  ox:    ["他クラブの試合", 13],
   ss:    ["シーズン", 11]
 };
 const DEFAULT_CLUB = "Principale";
@@ -182,6 +182,20 @@ async function loadAll() {
     age: num(F(o, "年齢")), club: F(o, "相手クラブ"), fee: num(F(o, "移籍金")), memo: F(o, "メモ") })).filter(t => t.name);
   D.table = got.tb.map(o => ({ season: F(o, "シーズン"), comp: F(o, "大会"), rank: num(F(o, "順位")), club: F(o, "クラブ"), p: num(F(o, "試合")), w: num(F(o, "勝")),
     d: num(F(o, "分")), l: num(F(o, "負")), gf: num(F(o, "得点")), ga: num(F(o, "失点")), pts: num(F(o, "勝点")) })).filter(r => r.club);
+  /* 他クラブの試合が入っている大会は、自分の試合と合わせて順位表を自動で計算する（順位表シートより優先） */
+  const ox = got.ox.map(o => ({ season: F(o, "シーズン"), comp: F(o, "大会"), home: F(o, "ホーム"), away: F(o, "アウェイ"), hg: num(F(o, "ホーム得点")), ag: num(F(o, "アウェイ得点")) }))
+    .filter(r => r.home && r.away && r.hg != null && r.ag != null);
+  [...new Set(ox.map(r => r.season + "\t" + r.comp))].forEach(k => {
+    const [season, comp] = k.split("\t"), T = {};
+    const add = (c, gf, ga) => { const t = T[nameKey(c)] || (T[nameKey(c)] = { club: c, p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0 }); t.p++; t.gf += gf; t.ga += ga; t[gf > ga ? "w" : gf < ga ? "l" : "d"]++; };
+    D.table.filter(r => r.season === season && r.comp === comp).forEach(r => { if (!T[nameKey(r.club)]) T[nameKey(r.club)] = { club: r.club, p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0 }; });
+    ox.filter(r => r.season === season && r.comp === comp).forEach(r => { add(r.home, r.hg, r.ag); add(r.away, r.ag, r.hg); });
+    D.played.filter(m => m.season === season && m.comp === comp).forEach(m => { add(clubName(), m.gf, m.ga); add(m.opp, m.ga, m.gf); });
+    const rows = Object.values(T).map(t => Object.assign(t, { season, comp, pts: t.w * 3 + t.d }));
+    rows.sort((a, b) => b.pts - a.pts || (b.gf - b.ga) - (a.gf - a.ga) || b.gf - a.gf || a.club.localeCompare(b.club, "ja"));
+    rows.forEach((r, i) => r.rank = i + 1);
+    D.table = D.table.filter(r => !(r.season === season && r.comp === comp)).concat(rows);
+  });
   D.seasons = got.ss.map(o => ({ season: F(o, "シーズン"), league: F(o, "リーグ"), rank: num(F(o, "リーグ順位")), titles: F(o, "獲得タイトル"), cap: F(o, "主将"), comment: F(o, "一言") })).filter(s => s.season);
 
   const ss = new Set([...D.matches, ...D.trans, ...D.table, ...D.seasons].map(x => x.season).filter(Boolean));
