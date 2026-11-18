@@ -120,7 +120,7 @@ async function loadAll() {
   const col = D.conf["テーマカラー"]; if (/^#[0-9a-f]{3,8}$/i.test(col || "")) document.documentElement.style.setProperty("--me", col);
 
   D.players = got.pl.map(o => ({
-    name: F(o, "名前"), roma: F(o, "ローマ字"), no: num(F(o, "背番号")), pos: F(o, "ポジション").toUpperCase(), nat: F(o, "国籍"), birth: pDate(F(o, "生年月日")),
+    name: F(o, "名前"), roma: F(o, "ローマ字"), pref: F(o, "出身地"), no: num(F(o, "背番号")), pos: F(o, "ポジション").toUpperCase(), nat: F(o, "国籍"), birth: pDate(F(o, "生年月日")),
     foot: F(o, "利き足"), height: num(F(o, "身長")), weight: num(F(o, "体重")), ovr: num(F(o, "総合値")), pot: num(F(o, "ポテンシャル")), value: num(F(o, "市場価値")),
     joined: F(o, "加入"), origin: F(o, "出身"), schools: [["小学", F(o, "小学"), 6, 6], ["中学", F(o, "中学"), 12, 3], ["高校", F(o, "高校"), 15, 3]], status: F(o, "在籍") || "在籍", photo: F(o, "写真"), memo: F(o, "メモ")
   })).filter(p => p.name);
@@ -185,8 +185,16 @@ async function loadAll() {
   });
   D.played = D.matches.filter(m => m.played);
 
-  D.growth = got.gr.map(o => ({ date: pDate(F(o, "日付")), season: F(o, "シーズン"), name: F(o, "名前"), ovr: num(F(o, "総合値")), pot: num(F(o, "ポテンシャル")), value: num(F(o, "市場価値")) }))
-    .filter(g => g.name && (g.ovr != null || g.pot != null || g.value != null)).sort((a, b) => (a.date || 0) - (b.date || 0));
+  /* 選手の推移：1シーズン1行、7月〜6月の列（「7月総合」「7月ポテ」「7月価値」）。日付列がある古い形にも対応 */
+  D.growth = [];
+  got.gr.forEach(o => {
+    const name = F(o, "名前"), season = F(o, "シーズン"); if (!name) return;
+    if (F(o, "日付")) { D.growth.push({ date: pDate(F(o, "日付")), season, name, ovr: num(F(o, "総合値")), pot: num(F(o, "ポテンシャル")), value: num(F(o, "市場価値")) }); return; }
+    const y = parseInt(season, 10); if (!y) return;
+    [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6].forEach(m => D.growth.push({ date: new Date(m >= 7 ? y : y + 1, m - 1, 1), season, name,
+      ovr: num(F(o, m + "月総合")), pot: num(F(o, m + "月ポテ")), value: num(F(o, m + "月価値")) }));
+  });
+  D.growth = D.growth.filter(g => g.ovr != null || g.pot != null || g.value != null).sort((a, b) => (a.date || 0) - (b.date || 0));
   D.trans = got.tr.map((o, i) => ({ i, season: F(o, "シーズン"), date: pDate(F(o, "日付")), kind: F(o, "区分") || "加入", name: F(o, "名前"), pos: F(o, "ポジション").toUpperCase(),
     age: num(F(o, "年齢")), club: F(o, "相手クラブ"), fee: num(F(o, "移籍金")), memo: F(o, "メモ") })).filter(t => t.name);
   D.table = [];
@@ -1004,7 +1012,7 @@ function vPlayer(name) {
   const lastV = [...G].reverse().find(g => g.value != null) || {};
   const ovr = p.ovr ?? lastG.ovr, pot = p.pot ?? lastG.pot, val = p.value ?? lastV.value;
   const hw = [p.height ? p.height + "cm" : "", p.weight ? p.weight + "kg" : ""].filter(Boolean).join(" / ");
-  const info = [["生年月日", p.birth ? `${fmtD(p.birth)}（${age(p.birth)}歳）` : ""], ["身長 / 体重", hw], ["利き足", p.foot], ["市場価値", money(val)]].filter(x => x[1]);
+  const info = [["生年月日", p.birth ? `${fmtD(p.birth)}（${age(p.birth)}歳）` : ""], ["出身地", p.pref], ["身長 / 体重", hw], ["利き足", p.foot], ["市場価値", money(val)]].filter(x => x[1]);
   const tiles = a ? [["出場", a.apps, "試合"], ["得点", a.g], ["アシスト", a.a], ["平均評価", a.rating != null ? fmtN(a.rating, 2) : null], ["出場時間", a.has["出場時間"] ? fmtN(a.min) : null, "分"], ["MOM", a.mom, "回"],
     ["ゴール期待値", a.s["ゴール期待値"] != null ? fmtN(a.s["ゴール期待値"], 2) : null], ["シュート", a.s["シュート"]], ["キーパス", a.s["キーパス"]],
     ["パス成功率", a.s["パス"] ? fmtN(a.s["パス成功"] / a.s["パス"] * 100, 1) : null, "%"], ["ドリブル成功", a.s["ドリブル成功"]], ["タックル成功", a.s["タックル成功"]],
@@ -1024,7 +1032,7 @@ function vPlayer(name) {
       ${isYouth(p) ? `<span class="acad-tag">ACADEMY GRADUATE</span>` : ""}
     </div><div class="photo">${face(name)}</div></div></section>
   <div class="wrap">
-    ${info.length ? sec("PROFILE", "プロフィール") + `<div class="prof p4">${info.map(([k, v]) => `<div><span>${k}</span><b>${esc(v)}</b></div>`).join("")}</div>` : ""}
+    ${info.length ? sec("PROFILE", "プロフィール") + `<div class="prof p4" style="--n:${info.length}">${info.map(([k, v]) => `<div><span>${k}</span><b>${esc(v)}</b></div>`).join("")}</div>` : ""}
     ${p.memo ? `<p style="color:var(--tx2);margin:12px 0 0">${esc(p.memo)}</p>` : ""}
     ${playerFirsts(all)}${playerTitles(p, name, bySeason)}${playerHistory(p, name, bySeason)}
     <h2 class="sec"><b>SEASON STATS</b><small>シーズン成績</small><span style="margin-left:auto">${seasonSel()}</span></h2>
