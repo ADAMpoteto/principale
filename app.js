@@ -841,7 +841,9 @@ function vHistory() {
   const big = [...D.played].sort((a, b) => (b.gf - b.ga) - (a.gf - a.ga) || b.gf - a.gf)[0];
   const info = [["クラブ名", clubName()], ["監督", D.conf["監督名"]], ["ホームスタジアム", D.conf["ホームスタジアム"]], ["リーグ", D.conf["リーグ"]], ["最初のシーズン", D.conf["最初のシーズン"]]].filter(x => x[1]);
   const recs = [[PM[0], "通算得点"], [PM[1], "通算アシスト"], [PM[5], "通算出場"]].map(([M, l]) => rkCard(M, P, l)).filter(Boolean);
+  const pol = Object.keys(D.conf).filter(k => /^方針\s*\d*$/.test(k)).sort((x, y) => (parseInt(x.replace(/\D/g, "")) || 0) - (parseInt(y.replace(/\D/g, "")) || 0)).map(k => D.conf[k]).filter(Boolean);
   return band("CLUB", "クラブ") + `<div class="wrap">
+    ${pol.length ? sec("PHILOSOPHY", "クラブの方針") + `<ol class="policy">${pol.map((p, i) => `<li><b>${pad(i + 1)}</b><span>${esc(p)}</span></li>`).join("")}</ol>` : ""}
     ${sec("PROFILE", "クラブ概要")}<div class="prof">${info.map(([k, v]) => `<div><span>${k}</span><b>${esc(v)}</b></div>`).join("")}</div>
     ${Object.keys(tc).length ? sec("TITLES", "獲得タイトル") + `<div class="trophies">${Object.keys(tc).map(t => `<div class="trophy">${ICON.cup}<b>${esc(t)}</b><small>${tc[t].map(esc).join("、")}</small><span class="cnt">${tc[t].length}</span></div>`).join("")}</div>` : ""}
     ${all.n ? sec("ALL-TIME", "通算成績") + `<div class="tiles"><div class="tile"><span>試合</span><b>${all.n}</b></div><div class="tile"><span>成績</span><b>${all.w}<small>勝</small>${all.d}<small>分</small>${all.l}<small>敗</small></b></div>
