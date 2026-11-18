@@ -1091,8 +1091,8 @@ function playerHistory(p, name, bySeason) {
   const promo = T.find(t => t.kind === "ユース昇格");
   /* 小学・中学・高校（年は生年月日から。早生まれは1年早く入学） */
   const y0 = p.birth ? p.birth.getFullYear() + ((p.birth.getMonth() < 3 || (p.birth.getMonth() === 3 && p.birth.getDate() === 1)) ? 0 : 1) : null;
-  (p.schools || []).forEach(([lb, v, a, n]) => { if (v) R.push({ p: y0 ? `${y0 + a}〜${y0 + a + n}` : lb, c: v, lg: "", note: lb, school: true }); });
-  if (/ユース/.test(p.origin || "") || promo) R.push({ p: `${y0 ? y0 + 15 : ""}〜${promo ? promo.season : p.joined || ""}`, c: me + " ユース", lg: me, note: "" });
+  (p.schools || []).forEach(([lb, v, a, n]) => { if (v) { const own = v.includes(me); R.push({ p: y0 ? `${y0 + a}〜${y0 + a + n}` : lb, c: v, lg: own ? me : "", note: own ? "" : lb, school: !own }); } });
+  if ((/ユース/.test(p.origin || "") || promo) && !(p.schools || []).some(x => x[0] === "高校" && x[1])) R.push({ p: `${y0 ? y0 + 15 : ""}〜${promo ? promo.season : p.joined || ""}`, c: me + " ユース", lg: me, note: "" });
   let cur = { p0: (promo && promo.season) || p.joined || (bySeason.length ? bySeason[bySeason.length - 1].se : ""), c: me, note: "" };
   const close = (to) => { if (cur) { R.push({ p: `${cur.p0}〜${to || ""}`, c: cur.c, note: cur.note }); cur = null; } };
   T.forEach(t => {
