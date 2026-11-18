@@ -18,12 +18,10 @@ const SHEETS = {          // キー: [シート名, gid]
   lu:    ["出場選手", 5],
   ev:    ["試合経過", 6],
   pl:    ["選手", 7],
-  gr:    ["能力推移", 8],
+  gr:    ["選手の推移", 8],
   tr:    ["移籍", 9],
-  ox:    ["他クラブの試合", 13],
   ss:    ["シーズン", 11],
-  cl:    ["クラブ", 14],
-  ln:    ["レンタル先での成績", 15]
+  li:    ["リスト", 12]
 };
 const DEFAULT_CLUB = "Principale";
 const DEMO = /[?&]demo\b/.test(location.search);
@@ -118,7 +116,7 @@ async function loadAll() {
   if (fails === keys.length) D.err = "データを読み込めませんでした。時間をおいて再読み込みしてください。";
 
   got.conf.forEach(o => { const k = F(o, "項目"), v = F(o, "値"); if (k) D.conf[k] = v; });
-  got.cl.forEach(o => { const n = F(o, "クラブ"); if (n) D.clubs[nameKey(n)] = { name: n, short: F(o, "略称"), country: F(o, "国"), league: F(o, "リーグ") }; });
+  got.li.forEach(o => { const n = F(o, "クラブ"); if (n) D.clubs[nameKey(n)] = { name: n, short: F(o, "略称"), country: F(o, "国"), league: F(o, "リーグ") }; });
   const col = D.conf["テーマカラー"]; if (/^#[0-9a-f]{3,8}$/i.test(col || "")) document.documentElement.style.setProperty("--me", col);
 
   D.players = got.pl.map(o => ({
@@ -127,12 +125,16 @@ async function loadAll() {
     joined: F(o, "加入"), origin: F(o, "出身"), status: F(o, "在籍") || "在籍", photo: F(o, "写真"), memo: F(o, "メモ")
   })).filter(p => p.name);
 
+  /* 試合シート：自分の試合と他クラブの試合が混ざっている（ホーム／アウェイ形式） */
+  const OX = [];
   D.matches = got.match.map((o, i) => {
-    const opp = F(o, "相手"); if (!opp) return null;
-    const gf = num(F(o, "得点")), ga = num(F(o, "失点")), played = gf != null && ga != null, pk = parsePK(F(o, "PK"));
+    const home = F(o, "ホーム"), away = F(o, "アウェイ"); if (!home || !away) return null;
+    const hg = num(F(o, "ホーム得点")), ag = num(F(o, "アウェイ得点")), pkr = parsePK(F(o, "PK")), date = pDate(F(o, "日付"));
+    if (!isMe(home) && !isMe(away)) { if (hg != null && ag != null) OX.push({ season: F(o, "シーズン"), date, comp: F(o, "大会"), home, away, hg, ag }); return null; }
+    const ha = isMe(home) ? "H" : "A", opp = ha === "H" ? away : home;
+    const gf = ha === "H" ? hg : ag, ga = ha === "H" ? ag : hg, played = gf != null && ga != null;
+    const pk = pkr ? (ha === "H" ? pkr : { a: pkr.b, b: pkr.a }) : null;
     const res = !played ? "U" : gf > ga ? "W" : gf < ga ? "L" : pk ? (pk.a > pk.b ? "W" : "L") : "D";
-    let ha = F(o, "H/A").toUpperCase(); ha = /^A/.test(ha) ? "A" : /^N/.test(ha) ? "N" : "H";
-    const date = pDate(F(o, "日付"));
     return { i, season: F(o, "シーズン"), date, key: dKey(date), comp: F(o, "大会") || "試合", round: F(o, "節・ラウンド"), ha, opp, gf, ga, pk, res, played,
       scorers: parseNames(F(o, "得点者")), assists: parseNames(F(o, "アシスト")), mom: F(o, "MOM"), stadium: F(o, "スタジアム"), att: num(F(o, "観客数")),
       memo: F(o, "メモ"), ts: {}, form: {}, lu: [], luOpp: [], ev: [] };
@@ -185,8 +187,7 @@ async function loadAll() {
     age: num(F(o, "年齢")), club: F(o, "相手クラブ"), fee: num(F(o, "移籍金")), memo: F(o, "メモ") })).filter(t => t.name);
   D.table = [];
   /* 他クラブの試合が入っている大会は、自分の試合と合わせて順位表を自動で計算する（順位表シートより優先） */
-  const ox = got.ox.map(o => ({ season: F(o, "シーズン"), date: pDate(F(o, "日付")), comp: F(o, "大会"), home: F(o, "ホーム"), away: F(o, "アウェイ"), hg: num(F(o, "ホーム得点")), ag: num(F(o, "アウェイ得点")) }))
-    .filter(r => r.home && r.away && r.hg != null && r.ag != null);
+  const ox = OX;
   [...new Set(ox.map(r => r.season + "\t" + r.comp))].forEach(k => {
     const [season, comp] = k.split("\t");
     /* 1試合＝{d, a, b, ga, gb}。自分の試合も同じ形にまとめる */
@@ -213,8 +214,9 @@ async function loadAll() {
 
   /* リーグ順位は自動（シーズンの「リーグ」の順位表から） */
   D.seasons.forEach(s => { const r = D.table.find(t => t.season === s.season && t.comp === (s.league || D.conf["リーグ"]) && isMe(t.club)); if (r) s.rank = r.rank; });
-  D.loans = got.ln.map(o => ({ season: F(o, "シーズン"), date: pDate(F(o, "更新日")), name: F(o, "名前"), club: F(o, "クラブ"), apps: num(F(o, "出場")), g: num(F(o, "得点")),
-    a: num(F(o, "アシスト")), rating: num(F(o, "平均評価")), memo: F(o, "メモ") })).filter(x => x.name).sort((x, y) => (x.date || 0) - (y.date || 0));
+  /* 選手の推移シート：レンタル先が入っている行は、レンタル先での成績 */
+  D.loans = got.gr.map(o => ({ season: F(o, "シーズン"), date: pDate(F(o, "日付")), name: F(o, "名前"), club: F(o, "レンタル先"), apps: num(F(o, "出場")), g: num(F(o, "得点")),
+    a: num(F(o, "アシスト")), rating: num(F(o, "平均評価")), memo: F(o, "メモ") })).filter(x => x.name && x.club).sort((x, y) => (x.date || 0) - (y.date || 0));
   const ss = new Set([...D.matches, ...D.trans, ...D.table, ...D.seasons, ...D.loans].map(x => x.season).filter(Boolean));
   if (!ss.size && D.conf["最初のシーズン"]) ss.add(D.conf["最初のシーズン"]);
   D.seasonList = [...ss].sort().reverse();
