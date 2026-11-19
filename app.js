@@ -1109,12 +1109,15 @@ function matchLineup(m) {
     }).join(""); };
   const pitch = `<div class="lpitch"><div class="lp-team"><span>${logo(club(h.hs), "sm")}${esc(club(h.hs))}<small>${esc(m.form[h.hs] || "")}</small></span><span><small>${esc(m.form[h.as] || "")}</small>${esc(club(h.as))}${logo(club(h.as), "sm")}</span></div>
     <div class="lp-field">${PITCH_SVG}${dots(h.hs, false)}${dots(h.as, true)}</div></div>`;
-  /* 一覧：ホームとアウェイを左右に並べる */
-  const row = l => link(l, `<span class="lr-pos">${esc(l.pos || "")}</span><span class="lr-no">${l.no ?? ""}</span>${face(l.name)}<span class="lr-nm">${esc(l.name)}${gIcon(l)}</span>${l.role === "途中出場" && l.s["出場時間"] != null ? `<span class="lr-in">IN ${l.s["出場時間"]}分</span>` : ""}`, "lr");
-  const col = (side, list) => `<div class="lcol">${list.length ? list.map(row).join("") : `<div class="lr none">-</div>`}</div>`;
-  const block = (title, sub, f) => { const a = f(h.hs), b = f(h.as); return a.length || b.length ? `<div class="lsec"><div class="lsec-h">${title}<small>${sub}</small></div><div class="lcols">${col(h.hs, a)}${col(h.as, b)}</div></div>` : ""; };
-  return pitch + `<div class="lcols lhead"><div>${logo(club(h.hs), "sm")}${esc(club(h.hs))}</div><div>${logo(club(h.as), "sm")}${esc(club(h.as))}</div></div>`
-    + block("SUBSTITUTES", "控え", side => [...L(side).filter(l => l.role !== "先発"), ...B(side)]);
+  /* 控え：ホームとアウェイを左右に並べる（途中出場→ベンチの順） */
+  const subEv = l => m.ev.find(e => e.kind === "交代" && e.side === l.side && same(e.player, l.name));
+  const row = l => { const used = l.role === "途中出場", e = used ? subEv(l) : null;
+    const info = used ? `<small class="sb-io">${ICON.sub}${e && e.rel ? `<span>OUT ${esc(e.rel)}</span>` : "<span>途中出場</span>"}</small>` : `<small class="sb-io off">出場なし</small>`;
+    const tag = used ? `<span class="sb-min">${e && e.min ? esc(String(e.min)).replace(/分$/, "") + "'" : l.s["出場時間"] != null ? l.s["出場時間"] + "分" : "IN"}</span>` : "";
+    return link(l, `<span class="sb-ph">${face(l.name)}${l.no != null ? `<em>${l.no}</em>` : ""}</span><span class="sb-tx"><span class="sb-nm"><i>${esc(l.pos || "")}</i>${esc(l.name)}${gIcon(l)}</span>${info}</span>${tag}`, "sb" + (used ? "" : " off")); };
+  const col = side => { const list = [...L(side).filter(l => l.role !== "先発"), ...B(side)];
+    return `<div class="sb-col"><div class="sb-h">${logo(club(side), "sm")}<b>${esc(club(side))}</b><small>${list.length}名</small></div>${list.length ? list.map(row).join("") : `<div class="sb-none">記録なし</div>`}</div>`; };
+  return pitch + `<div class="sb-sec"><div class="sb-title">SUBSTITUTES<small>控え</small></div><div class="sb-cols">${col(h.hs)}${col(h.as)}</div></div>`;
 }
 
 function vTable() {
