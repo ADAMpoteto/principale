@@ -909,3 +909,10 @@ h3.sub:first-of-type{margin-top:0}
 @media (max-width:700px){.hx-head{grid-template-columns:52px 1fr}.hx-pro{margin-left:60px}.hx-dl{grid-template-columns:52px 1fr;gap:5px 8px}}
 .hx.pro .hx-card{border-left-width:1px;box-shadow:inset 4px 0 0 var(--blue)}
 .nprof .nh{display:block;white-space:nowrap}
+/* 経歴が長いときは枠の中で折り返す（期間は途中で切らない） */
+.nprof dl{grid-template-columns:110px minmax(0,1fr)}
+.nprof dd{min-width:0;overflow-wrap:anywhere}
+.nprof .nh{white-space:normal}
+.nprof .nh i{font-style:normal;white-space:nowrap}
+@media (max-width:700px){.nprof dl{grid-template-columns:84px minmax(0,1fr)}}
+@media (max-width:700px){.nprof dl{grid-template-columns:90px minmax(0,1fr)}.nprof dt{white-space:nowrap;font-size:12px;padding:9px 8px}.nprof dd{padding:9px 10px}.nprof .nh{font-size:12px}}
