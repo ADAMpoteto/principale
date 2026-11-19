@@ -774,3 +774,27 @@ h3.sub:first-of-type{margin-top:0}
 .nprof dd small{margin-left:10px;font-family:var(--en);font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3)}
 @media (max-width:700px){.nprof dl{grid-template-columns:92px 1fr}.nprof dt,.nprof dd{padding:9px 10px;font-size:13px}}
 .nprof .nw{white-space:nowrap}
+
+/* ===== ROAD TO EFL（階段） ===== */
+.road{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:8px;align-items:end;height:300px;padding:16px 16px 12px;background:var(--white);border:1px solid var(--line)}
+.rd{display:flex;flex-direction:column;justify-content:flex-end;height:100%;min-width:0}
+.rd-bar{position:relative;background:linear-gradient(180deg,#2b5a80,var(--navy));color:#fff;display:flex;flex-direction:column;align-items:center;padding-top:10px;gap:6px}
+.rd.now .rd-bar{background:linear-gradient(180deg,var(--blue),#1d5f94)}
+.rd-bar b{font-family:var(--en);font-weight:800;font-style:italic;font-size:30px;line-height:1}
+.rd-bar b small{font-family:var(--font);font-style:normal;font-size:11px;margin-left:2px}
+.rd-c{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;background:#bc002d;padding:1px 6px;white-space:nowrap}
+.rd-c svg{width:11px;height:11px}
+.rd-c.pro{background:#fff;color:var(--blue);font-family:var(--en);letter-spacing:.1em}
+.rd-lg{font-size:11px;font-weight:700;color:var(--tx2);margin-top:8px;line-height:1.35;min-height:30px;word-break:break-all}
+.rd-se{font-family:var(--en);font-weight:700;font-size:14px;color:var(--tx3)}
+@media (max-width:700px){
+  .road{height:260px;gap:4px;padding:12px 8px 10px}
+  .rd-bar{padding-top:6px;gap:4px}.rd-bar b{font-size:20px}.rd-bar b small{font-size:9px}
+  .rd-c{font-size:8px;padding:1px 3px}.rd-c svg{display:none}
+  .rd-lg{font-size:8.5px;min-height:34px}.rd-se{font-size:10px}
+}
+.road{height:auto}
+.rd{height:auto}
+.rd-bar{flex:none;height:calc(var(--h) * 200px)}
+.rd-lg{min-height:44px}
+@media (max-width:700px){.road{height:auto}.rd-bar{height:calc(var(--h) * 170px)}.rd-lg{min-height:48px}}
