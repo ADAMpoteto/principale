@@ -148,7 +148,7 @@ async function loadAll() {
   D.players = D.players.filter(p => !roleOf[nameKey(p.name)]);
 
   /* 試合シート：自分の試合と他クラブの試合が混ざっている（ホーム／アウェイ形式） */
-  const OX = [];
+  const OX = []; D.ox = OX;
   D.matches = got.match.map((o, i) => {
     const home = F(o, "ホーム"), away = F(o, "アウェイ"); if (!home || !away) return null;
     const hg = num(F(o, "ホーム得点")), ag = num(F(o, "アウェイ得点")), pkr = parsePK(F(o, "PK")), date = pDate(F(o, "日付"));
@@ -977,7 +977,7 @@ function vMatch(id) {
   let body = "";
   if (m.played) body = ST.mtab === "facts" ? matchFacts(m, h) : ST.mtab === "stats" ? matchStats(m, h, false) : matchLineup(m);
   /* 試合前でもスタメンが入っていれば表示 */
-  else body = (m.lu.length || m.luOpp.length ? `<div class="ph">LINE-UP<small>メンバー</small></div>${matchLineup(m)}` : "") + headToHead(m);
+  else body = matchPreview(m, h) + (m.lu.length || m.luOpp.length ? `<div class="ph">LINE-UP<small>メンバー</small></div>${matchLineup(m)}` : "") + headToHead(m);
   /* 得点者：ホームは右寄せ、アウェイは左寄せでスコアの下に */
   const gl = side => { const E = evGoals(side);
     if (E.length) return E.map(e => `<li>${ICON.ball}<span>${esc(e.player)}</span><em>${esc(e.min)}'${e.kind === "PKゴール" ? " PK" : e.kind === "オウンゴール" ? " OG" : ""}</em></li>`).join("");
@@ -985,10 +985,10 @@ function vMatch(id) {
   const hL = gl(h.hs), aL = gl(h.as);
   const team = (c, lab) => `<div class="mh-team">${logo(c, "xl")}<b>${clubName2(c)}</b><small>${lab}</small></div>`;
   const resLab = { W: "WIN", L: "LOSE", D: "DRAW" }[m.res];
-  const info = [["STADIUM", "スタジアム", venue(m)], ["WEATHER", "天気", m.weather ? `${WX[m.weather] || ""}${esc(m.weather)}` : ""], ["ATTENDANCE", "観客数", m.att ? fmtN(m.att) + "人" : ""]].filter(x => x[2]);
+  const info = [["KICK OFF", "キックオフ", m.played ? kickoff(m) : ""], ["STADIUM", "スタジアム", venue(m)], ["WEATHER", "天気", m.weather ? `${WX[m.weather] || ""}${esc(m.weather)}` : ""], ["ATTENDANCE", "観客数", m.att ? fmtN(m.att) + "人" : ""]].filter(x => x[2]);
   return `<section class="mh"><div class="mh-in">
-      <div class="mh-top">${compLogo(m.comp, "mh-cl")}<span class="mh-comp">${esc(m.comp)}</span>${m.round ? `<span class="mh-round">${esc(m.round)}</span>` : ""}</div>
-      <div class="mh-date">${dotY(m.date)} <small>${m.date ? WDE[m.date.getDay()] : ""}</small>${kickoff(m) ? ` <span>${esc(kickoff(m))} KICK OFF</span>` : ""}</div>
+      <div class="mh-top">${compLogo(m.comp, "mh-cl")}<div class="mh-cn">${esc(m.comp)}${m.round ? `<span>${esc(m.round)}</span>` : ""}</div></div>
+      <div class="mh-date">${dotY(m.date)}</div>
       <div class="mh-vs">${team(h.home, "HOME")}
         <div class="mh-c">${m.played ? `<div class="mh-score"><b>${m.ha === "A" ? m.ga : m.gf}</b><i></i><b>${m.ha === "A" ? m.gf : m.ga}</b></div>
           ${m.pk ? `<div class="mh-pk">PK ${m.ha === "A" ? m.pk.b + " - " + m.pk.a : m.pk.a + " - " + m.pk.b}</div>` : ""}
@@ -1004,6 +1004,42 @@ function vMatch(id) {
       return `<nav class="mnav">${lk(pv, "‹ 前の試合")}<a class="btn" href="#/matches">MATCHES</a>${lk(nx, "次の試合 ›")}</nav>`; })()}</div>`;
 }
 function bMatch() { document.querySelectorAll("#mtabs a").forEach(a => a.onclick = () => { ST.mtab = a.dataset.t; render(); }); }
+/* ある日より前の、そのクラブの直近の結果（自分の試合＋他クラブの試合） */
+function clubForm(club, before, n) {
+  const R = [];
+  if (isMe(club)) D.played.forEach(x => { if (x.date && x.date < before) R.push({ d: x.date, r: x.res }); });
+  else {
+    D.played.forEach(x => { if (same(x.opp, club) && x.date && x.date < before) R.push({ d: x.date, r: x.res === "W" ? "L" : x.res === "L" ? "W" : "D" }); });
+    (D.ox || []).forEach(x => { if (!x.date || x.date >= before) return; const f = same(x.home, club) ? [x.hg, x.ag] : same(x.away, club) ? [x.ag, x.hg] : null;
+      if (f) R.push({ d: x.date, r: f[0] > f[1] ? "W" : f[0] < f[1] ? "L" : "D" }); });
+  }
+  return R.sort((a, b) => b.d - a.d).slice(0, n || 5).reverse().map(x => x.r);
+}
+/* 試合前のプレビュー：順位・直近5試合・得失点の比較と注目選手 */
+function matchPreview(m, h) {
+  const lg = leagueOfSeason(m.season) || m.comp;
+  const T = D.table.filter(r => r.season === m.season && r.comp === lg), row = c => T.find(r => isMe(c) ? isMe(r.club) : same(r.club, c));
+  const cl = [h.home, h.away], R = cl.map(row), F = cl.map(c => clubForm(c, m.date || new Date(8.64e15)));
+  const chips = f => f.length ? `<span class="form5">${f.map(x => `<span class="wdl ${x}">${x}</span>`).join("")}</span>` : "-";
+  const line = (lab, a, b) => `<div class="pv-r"><div class="a">${a}</div><div class="k">${lab}</div><div class="b">${b}</div></div>`;
+  const rows = [];
+  if (R[0] || R[1]) {
+    rows.push(line(`${esc(lg)} 順位`, R[0] ? `<b>${R[0].rank}</b><small>位</small>` : "-", R[1] ? `<b>${R[1].rank}</b><small>位</small>` : "-"));
+    rows.push(line("勝点", R[0] ? `<b>${R[0].pts}</b>` : "-", R[1] ? `<b>${R[1].pts}</b>` : "-"));
+    rows.push(line("勝 / 分 / 敗", R[0] ? `${R[0].w} / ${R[0].d} / ${R[0].l}` : "-", R[1] ? `${R[1].w} / ${R[1].d} / ${R[1].l}` : "-"));
+    rows.push(line("得点 / 失点", R[0] ? `${R[0].gf} / ${R[0].ga}` : "-", R[1] ? `${R[1].gf} / ${R[1].ga}` : "-"));
+  }
+  if (F[0].length || F[1].length) rows.push(line("直近5試合", chips(F[0]), chips(F[1])));
+  /* 注目選手：今シーズンここまでの得点・アシストの1位 */
+  const tot = {}; D.played.filter(x => x.season === m.season && x.date < (m.date || new Date(8.64e15))).forEach(x => x.lu.forEach(l => {
+    const t = tot[nameKey(l.name)] || (tot[nameKey(l.name)] = { name: l.name, g: 0, a: 0, n: 0 }); t.g += l.s["得点"] || 0; t.a += l.s["アシスト"] || 0; t.n++; }));
+  const top = k => Object.values(tot).filter(t => t[k] > 0).sort((a, b) => b[k] - a[k])[0];
+  const kp = [["チーム得点王", top("g"), "g", "ゴール"], ["チームアシスト王", top("a"), "a", "アシスト"]].filter(x => x[1]);
+  if (!rows.length && !kp.length) return "";
+  return `<div class="ph">PREVIEW<small>プレビュー</small></div>
+    ${rows.length ? `<div class="pv"><div class="pv-h"><div>${logo(cl[0], "md")}<b>${clubName2(cl[0])}</b></div><div>${logo(cl[1], "md")}<b>${clubName2(cl[1])}</b></div></div>${rows.join("")}</div>` : ""}
+    ${kp.length ? `<div class="ph">KEY PLAYERS<small>注目選手</small></div><div class="kp">${kp.map(([lab, t, k, u]) => `<a class="kp-c" href="#/player/${encodeURIComponent(t.name)}">${face(t.name)}<div><span>${lab}</span><b>${esc(t.name)}</b><em>${t[k]}<small>${u}</small></em></div></a>`).join("")}</div>` : ""}`;
+}
 function headToHead(m) {
   const L = D.played.filter(x => same(x.opp, m.opp)); if (!L.length) return "";
   const r = record(L);
@@ -1056,12 +1092,12 @@ function matchLineup(m) {
     return L(side).filter(l => l.role === "先発").map(l => {
       let [x, y] = POSXY[l.pos] || POSXY[{ GK: "GK", DF: "CB", MF: "CM", FW: "ST" }[l.pos]] || [50, 50];
       const k = x + "," + y; used[k] = (used[k] || 0) + 1; x += (used[k] - 1) * 14 * (used[k] % 2 ? 1 : -1);
-      const X = top ? 100 - x : x, Y = top ? (100 - y) / 2 : 50 + y / 2;
+      /* 横向きのピッチ：ホームは左から右へ、アウェイは右から左へ攻める */
+      const X = top ? 50 + y / 2 : (100 - y) / 2, Y = Math.max(8, Math.min(92, top ? 100 - x : x));
       return link(l, `<span class="lp-ph">${face(l.name)}${l.no != null ? `<em>${l.no}</em>` : ""}${gIcon(l)}</span><span class="lp-nm">${esc(l.name)}</span>`, `lp ${side}`).replace(/^<(a|div) class="([^"]+)"/, `<$1 class="$2" style="left:${X}%;top:${Y}%"`);
     }).join(""); };
-  const pitch = `<div class="lpitch"><div class="lp-team t"><span>${logo(club(h.as), "sm")}${esc(club(h.as))}</span><small>${esc(m.form[h.as] || "")}</small></div>
-    <div class="lp-field">${dots(h.as, true)}${dots(h.hs, false)}</div>
-    <div class="lp-team b"><span>${logo(club(h.hs), "sm")}${esc(club(h.hs))}</span><small>${esc(m.form[h.hs] || "")}</small></div></div>`;
+  const pitch = `<div class="lpitch"><div class="lp-team"><span>${logo(club(h.hs), "sm")}${esc(club(h.hs))}<small>${esc(m.form[h.hs] || "")}</small></span><span><small>${esc(m.form[h.as] || "")}</small>${esc(club(h.as))}${logo(club(h.as), "sm")}</span></div>
+    <div class="lp-field">${dots(h.hs, false)}${dots(h.as, true)}</div></div>`;
   /* 一覧：ホームとアウェイを左右に並べる */
   const row = l => link(l, `<span class="lr-pos">${esc(l.pos || "")}</span><span class="lr-no">${l.no ?? ""}</span>${face(l.name)}<span class="lr-nm">${esc(l.name)}${gIcon(l)}</span>${l.role === "途中出場" && l.s["出場時間"] != null ? `<span class="lr-in">IN ${l.s["出場時間"]}分</span>` : ""}`, "lr");
   const col = (side, list) => `<div class="lcol">${list.length ? list.map(row).join("") : `<div class="lr none">-</div>`}</div>`;
