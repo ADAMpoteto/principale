@@ -158,7 +158,7 @@ async function loadAll() {
     const pk = pkr ? (ha === "H" ? pkr : { a: pkr.b, b: pkr.a }) : null;
     const res = !played ? "U" : gf > ga ? "W" : gf < ga ? "L" : pk ? (pk.a > pk.b ? "W" : "L") : "D";
     return { i, season: F(o, "シーズン"), date, key: dKey(date), comp: F(o, "大会") || "試合", round: F(o, "節・ラウンド"), ha, opp, gf, ga, pk, res, played,
-      scorers: parseNames(F(o, "得点者")), assists: parseNames(F(o, "アシスト")), mom: F(o, "MOM"), stadium: F(o, "スタジアム"), att: num(F(o, "観客数")),
+      scorers: parseNames(F(o, "得点者")), assists: parseNames(F(o, "アシスト")), mom: F(o, "MOM"), stadium: F(o, "スタジアム"), kick: half(F(o, "キックオフ")), weather: F(o, "天気"), att: num(F(o, "観客数")),
       memo: F(o, "メモ"), ts: {}, form: {}, lu: [], luOpp: [], ev: [] };
   }).filter(Boolean);
   D.matches.sort((a, b) => (a.date && b.date ? a.date - b.date : 0) || a.i - b.i);
@@ -618,7 +618,13 @@ const dotY = d => d ? `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDa
 const seasonSel = () => `<label class="ssel"><span>SEASON</span><select id="season" aria-label="シーズン">${D.seasonList.map(s => `<option value="${esc(s)}"${s === ST.season ? " selected" : ""}>${esc(s)}</option>`).join("")}</select></label>`;
 const band = (en, jp, withSeason) => `<section class="band"><div class="band-in"><div><h1>${esc(en)}</h1><p>${esc(jp)}</p></div>${withSeason ? seasonSel() : ""}</div></section>`;
 const sec = (en, jp, link, linkTxt) => `<h2 class="sec"><b>${esc(en)}</b><small>${esc(jp)}</small>${link ? `<a href="${link}">${esc(linkTxt || "VIEW ALL")}</a>` : ""}</h2>`;
-const kickoff = m => { const t = half(m.memo).match(/(\d{1,2}:\d{2})/); return t ? t[1] : ""; };
+const kickoff = m => { if (m.kick) return m.kick; const t = half(m.memo).match(/(\d{1,2}:\d{2})/); return t ? t[1] : ""; };
+/* 天気のアイコン */
+const WX = {
+  晴れ: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>`,
+  曇り: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M7 18h10a4 4 0 0 0 .4-8A6 6 0 0 0 6 9.5 4.3 4.3 0 0 0 7 18z"/></svg>`,
+  雨: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 14h10a4 4 0 0 0 .4-8A6 6 0 0 0 6 5.5 4.3 4.3 0 0 0 7 14z"/><path d="M8 17l-1 3M12 17l-1 3M16 17l-1 3"/></svg>`,
+  雪: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v20M3.3 7l17.4 10M3.3 17L20.7 7"/></svg>` };
 const venue = m => m.stadium || (m.ha === "H" ? D.conf["ホームスタジアム"] : "") || "";
 
 function matchRow(m) {
@@ -967,10 +973,26 @@ function vMatch(id) {
   if (m.played) body = ST.mtab === "facts" ? matchFacts(m, h) : ST.mtab === "stats" ? matchStats(m, h, false) : matchLineup(m);
   else body = `<div class="prof">${[["日時", fmtDW(m.date) + (kickoff(m) ? " " + kickoff(m) : "")], ["大会", roundTxt(m)], ["会場", venue(m) || (m.ha === "H" ? "ホーム" : m.ha === "A" ? "アウェイ" : "中立地")], ["対戦相手", m.opp]]
     .map(([k, v]) => `<div><span>${k}</span><b>${esc(v)}</b></div>`).join("")}</div>${headToHead(m)}`;
-  return `<section class="mhead"><div class="mhead-in"><div class="meta">${esc(roundTxt(m))}　${dotY(m.date)} ${m.date ? WDE[m.date.getDay()] : ""}${venue(m) ? "　" + esc(venue(m)) : ""}</div>
-      <div class="vs">${club(h.home)}<div>${m.played ? `<div class="score">${scoreTxt(m)}</div><span class="ft">FULL TIME${m.pk ? ` ／ PK ${m.ha === "A" ? m.pk.b + "-" + m.pk.a : m.pk.a + "-" + m.pk.b}` : ""}</span>`
-        : `<div class="kick">${kickoff(m) || "VS"}</div><span class="ft">KICK OFF</span>`}</div>${club(h.away)}</div>
-      ${m.played && (hG || aG) ? `<div class="scorers"><div>${hG}</div><div class="ico">${ICON.ball}</div><div>${aG}</div></div>` : ""}</div></section>
+  /* 得点者：ホームは右寄せ、アウェイは左寄せでスコアの下に */
+  const gl = side => { const E = evGoals(side);
+    if (E.length) return E.map(e => `<li>${ICON.ball}<span>${esc(e.player)}</span><em>${esc(e.min)}'${e.kind === "PKゴール" ? " PK" : e.kind === "オウンゴール" ? " OG" : ""}</em></li>`).join("");
+    return side === "me" ? m.scorers.map(x => `<li>${ICON.ball}<span>${esc(x.name)}</span><em>${x.n > 1 ? "×" + x.n : ""}</em></li>`).join("") : ""; };
+  const hL = gl(h.hs), aL = gl(h.as);
+  const team = (c, lab) => `<div class="mh-team">${logo(c, "xl")}<b>${clubName2(c)}</b><small>${lab}</small></div>`;
+  const resLab = { W: "WIN", L: "LOSE", D: "DRAW" }[m.res];
+  const info = [["STADIUM", "スタジアム", venue(m)], ["WEATHER", "天気", m.weather ? `${WX[m.weather] || ""}${esc(m.weather)}` : ""], ["ATTENDANCE", "観客数", m.att ? fmtN(m.att) + "人" : ""]].filter(x => x[2]);
+  return `<section class="mh"><div class="mh-in">
+      <div class="mh-top"><span class="mh-comp">${esc(m.comp)}</span>${m.round ? `<span class="mh-round">${esc(m.round)}</span>` : ""}</div>
+      <div class="mh-date">${dotY(m.date)} <small>${m.date ? WDE[m.date.getDay()] : ""}</small>${kickoff(m) ? ` <span>${esc(kickoff(m))} KICK OFF</span>` : ""}</div>
+      <div class="mh-vs">${team(h.home, "HOME")}
+        <div class="mh-c">${m.played ? `<div class="mh-score"><b>${m.ha === "A" ? m.ga : m.gf}</b><i></i><b>${m.ha === "A" ? m.gf : m.ga}</b></div>
+          ${m.pk ? `<div class="mh-pk">PK ${m.ha === "A" ? m.pk.b + " - " + m.pk.a : m.pk.a + " - " + m.pk.b}</div>` : ""}
+          <div class="mh-ft">試合終了</div>${resLab ? `<div class="mh-res ${m.res}">${resLab}</div>` : ""}`
+        : `<div class="mh-kick">${esc(kickoff(m) || "VS")}</div><div class="mh-ft">${kickoff(m) ? "KICK OFF" : ""}</div>`}</div>
+        ${team(h.away, "AWAY")}</div>
+      ${m.played && (hL || aL) ? `<div class="mh-goals"><ul class="h">${hL}</ul><ul class="a">${aL}</ul></div>` : ""}
+    </div></section>
+    ${info.length ? `<div class="mh-info"><div class="mh-info-in">${info.map(([e, j, v]) => `<div><small>${e}<i>${j}</i></small><b>${v.includes("<svg") ? v : esc(v)}</b></div>`).join("")}</div></div>` : ""}
     ${m.played ? `<nav class="mtabs" id="mtabs">${tabs.map(([k, e, j]) => `<a href="javascript:void 0" data-t="${k}" class="${ST.mtab === k ? "on" : ""}">${e}<small>${j}</small></a>`).join("")}</nav>` : ""}
     <div class="wrap narrow"><div class="panel">${body}</div>${(() => { const i = D.matches.indexOf(m), pv = D.matches[i - 1], nx = D.matches[i + 1];
       const lk = (x, lab) => x ? `<a class="mnav-a" href="#/match/${x.id}"><small>${lab}</small><b>${esc(x.opp)}</b><span>${dotY(x.date)}${x.played ? `　${x.gf}-${x.ga}` : ""}</span></a>` : "<span></span>";
@@ -996,8 +1018,9 @@ function matchFacts(m, h) {
     const left = (e.side === "me") === (h.hs === "me");
     return pre + `<div class="ev"><div class="l">${left ? evTxt(e) + icon(e) : ""}</div><div class="m">${esc(e.min)}${e.min ? "'" : ""}</div><div class="r">${left ? "" : icon(e) + evTxt(e)}</div></div>`;
   }).join("");
-  const mom = m.mom ? (() => { const l = m.momL, op = l && l.side === "opp", inner = `<span class="no">${l && l.no != null ? l.no : ""}</span>${face(m.mom)}<div class="nm"><b>${esc(m.mom)}</b><small>${esc(l ? l.pos : "")}${op ? "　" + esc(m.opp) : ""}</small></div>${l ? rt(l.rating) : ""}`;
-    return `<div class="ph">MAN OF THE MATCH</div>${op ? `<div class="prow">${inner}</div>` : `<a class="prow" href="#/player/${encodeURIComponent(m.mom)}">${inner}</a>`}`; })() : "";
+  const mom = m.mom ? (() => { const l = m.momL, op = l && l.side === "opp";
+    const inner = `<div class="mom-ph">${face(m.mom)}</div><div class="mom-tx"><span>MAN OF THE MATCH</span><b>${esc(m.mom)}</b><small>${[l && l.no != null ? "#" + l.no : "", l ? l.pos : "", op ? m.opp : ""].filter(Boolean).map(esc).join("　")}</small></div>${l && l.rating != null ? `<div class="mom-rt"><small>RATING</small><b>${fmtN(l.rating, 1)}</b></div>` : ""}`;
+    return op ? `<div class="mom">${inner}</div>` : `<a class="mom" href="#/player/${encodeURIComponent(m.mom)}">${inner}</a>`; })() : "";
   const stats = matchStats(m, h, true);
   return `${mom}${tl ? `<div class="ph">試合経過</div>${tl}` : ""}${stats}${m.memo ? `<p style="padding:14px 18px;margin:0;color:var(--tx2)">${esc(m.memo)}</p>` : ""}
     ${!mom && !tl && !stats ? empty("試合の詳細はまだありません。") : ""}`;
