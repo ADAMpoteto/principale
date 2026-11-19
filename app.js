@@ -1161,10 +1161,7 @@ function historyRows(p, name, bySeason) {
     R.push({ p: y0 ? `${y0 + a}〜${end}` : lb, c: v, lg: own ? me : "", note: own ? "" : lb, school: !own, own }); } });
   /* 自前のU-18を出ていて、昇格の記録がない選手（初期メンバー）は、卒業の年からトップチーム */
   const ownU18 = (p.schools || []).some(x => x[0] === "高校" && x[1] && x[1].includes(me));
-  /* プロ化（最初のシーズン）より前は、アマチュア時代のトップチームに所属していた扱い */
-  const fy = proYear();
-  let gradTop = !promo && ownU18 && y0 ? String(y0 + 18) : null;
-  if (gradTop && fy && y0 + 18 < fy) { R.push({ p: `${y0 + 18}〜${fy}`, c: me, lg: me, note: "アマチュア", own: true }); gradTop = String(fy); }
+  const gradTop = !promo && ownU18 && y0 ? String(y0 + 18) : null;
   if ((/ユース/.test(p.origin || "") || promo) && !(p.schools || []).some(x => x[0] === "高校" && x[1])) R.push({ p: `${y0 ? y0 + 15 : ""}〜${promo ? promo.season : p.joined || ""}`, c: me + " ユース", lg: me, note: "" });
   let cur = { p0: (promo && promo.season) || gradTop || p.joined || (bySeason.length ? bySeason[bySeason.length - 1].se : ""), c: me, note: "" };
   const close = (to) => { if (cur) { R.push({ p: `${cur.p0}〜${to || ""}`, c: cur.c, note: cur.note }); cur = null; } };
