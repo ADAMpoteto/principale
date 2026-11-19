@@ -367,14 +367,19 @@ function vStaff(name) {
 }
 const staffBlock = () => { const S = staffList(); return S.length ? sec("STAFF", "監督・コーチ") + `<div class="pgrid">${S.map(staffCard).join("")}</div>` : ""; };
 function identity() {
-  const sq = D.players.filter(p => !/退団/.test(p.status));
-  const jp = sq.filter(isJP).length, yo = sq.filter(isYouth).length;
+  const sq = D.players.filter(p => !/退団/.test(p.status)), me = clubName();
+  const jp = sq.filter(isJP).length;
+  /* アカデミー出身：ユース昇格の記録か、U-12〜U-18のどれかが自クラブ */
+  const ac = sq.filter(p => isYouth(p) || (p.schools || []).some(x => x[1] && x[1].includes(me))).length;
   const sign = D.trans.filter(t => /^(加入|レンタル加入)$/.test(t.kind)).length;
+  const ages = sq.map(p => p.birth ? age(p.birth) : null).filter(a => a != null);
+  const avg = ages.length ? (ages.reduce((a, b) => a + b, 0) / ages.length).toFixed(1) : "-";
+  const pc = n => sq.length ? Math.round(n / sq.length * 100) : 100;
   return `<section class="ident"><div class="ident-in"><div class="ident-g">
-    <div><b>${sq.length ? Math.round(jp / sq.length * 100) : 100}<small>%</small></b><span>JAPANESE</span><em>日本人選手</em></div>
-    <div><b>${yo}</b><span>ACADEMY</span><em>ユース出身</em></div>
-    <div><b>${sq.length - jp}</b><span>FOREIGN</span><em>外国籍選手</em></div>
-    <div><b>${sign}</b><span>SIGNINGS</span><em>補強</em></div></div></div></section>`;
+    <div><b>${pc(jp)}<small>%</small></b><span>JAPANESE</span><em>日本人選手</em></div>
+    <div><b>${pc(ac)}<small>%</small></b><span>ACADEMY</span><em>アカデミー出身</em></div>
+    <div><b>${sign}</b><span>SIGNINGS</span><em>補強</em></div>
+    <div><b>${avg}<small>歳</small></b><span>AVERAGE AGE</span><em>平均年齢</em></div></div></div></section>`;
 }
 const pLink = (name, inner) => `<a href="#/player/${encodeURIComponent(name)}">${inner || esc(name)}</a>`;
 

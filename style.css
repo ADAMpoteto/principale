@@ -921,3 +921,11 @@ h3.sub:first-of-type{margin-top:0}
 a.pcard{color:inherit;text-decoration:none}
 .tiles.t4{grid-template-columns:repeat(4,minmax(0,1fr))}
 @media (max-width:700px){.tiles.t4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* スマホ：数字の下に英語・日本語を置いて、折り返さないように */
+@media (max-width:760px){
+  .ident-g div{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:4px 14px}
+  .ident-g b{font-size:38px;white-space:nowrap;line-height:1}
+  .ident-g b small{font-size:16px}
+  .ident-g span{font-size:12px;letter-spacing:.1em;white-space:nowrap}
+  .ident-g em{font-size:11px;white-space:nowrap;margin-top:-2px}
+}
