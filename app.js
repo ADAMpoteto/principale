@@ -52,7 +52,17 @@ function money(v) {
   const sg = v < 0 ? "-" : "", s2 = s.replace(/^-/, "");
   return sg + (/[€$£]/.test(u) ? u + s2 : s2 + u);
 }
-function age(birth, at) { if (!birth) return null; const t = at || new Date(); let a = t.getFullYear() - birth.getFullYear(); if (t.getMonth() < birth.getMonth() || (t.getMonth() === birth.getMonth() && t.getDate() < birth.getDate())) a--; return a; }
+/* ゲーム内の今日：設定の「ゲーム内の日付」、なければ記録の中で一番新しい日付 */
+let GAME_TODAY = null;
+function gameToday() {
+  if (GAME_TODAY) return GAME_TODAY;
+  const c = typeof D !== "undefined" && D.conf ? pDate(D.conf["ゲーム内の日付"] || "") : null;
+  if (c) return GAME_TODAY = c;
+  if (typeof D === "undefined" || !D.played) return new Date();
+  const ds = [...(D.played || []), ...(D.trans || []), ...(D.growth || [])].map(x => x.date).filter(d => d && !isNaN(d));
+  return GAME_TODAY = ds.length ? new Date(Math.max(...ds)) : new Date();
+}
+function age(birth, at) { if (!birth) return null; const t = at || gameToday(); let a = t.getFullYear() - birth.getFullYear(); if (t.getMonth() < birth.getMonth() || (t.getMonth() === birth.getMonth() && t.getDate() < birth.getDate())) a--; return a; }
 
 /* ---------- 読み込み ---------- */
 function sheetUrls(key) {
@@ -238,7 +248,7 @@ async function loadAll() {
   ST.season = ST.cur = (last && last.season) || D.seasonList[0];
 }
 /* 今のシーズン（7月はじまり。例：2026年11月 → 2026-27） */
-function curSeason() { const t = new Date(), y = t.getFullYear(); return t.getMonth() >= 6 ? `${y}-${String(y + 1).slice(2)}` : `${y - 1}-${String(y).slice(2)}`; }
+function curSeason() { const t = gameToday(), y = t.getFullYear(); return t.getMonth() >= 6 ? `${y}-${String(y + 1).slice(2)}` : `${y - 1}-${String(y).slice(2)}`; }
 const isGoal = e => /ゴール/.test(e.kind) && !/失敗/.test(e.kind);
 function count(names) { const c = {}; names.filter(Boolean).forEach(n => c[n] = (c[n] || 0) + 1); return Object.keys(c).map(n => ({ name: n, n: c[n] })); }
 
