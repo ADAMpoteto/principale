@@ -971,7 +971,8 @@ function vMatch(id) {
   const tabs = [["facts", "SUMMARY", "概要"], ["stats", "STATS", "スタッツ"], ["lineup", "LINE-UP", "メンバー"]];
   let body = "";
   if (m.played) body = ST.mtab === "facts" ? matchFacts(m, h) : ST.mtab === "stats" ? matchStats(m, h, false) : matchLineup(m);
-  else body = headToHead(m);
+  /* 試合前でもスタメンが入っていれば表示 */
+  else body = (m.lu.length || m.luOpp.length ? `<div class="ph">STARTING MEMBER<small>スタメン</small></div>${matchLineup(m)}` : "") + headToHead(m);
   /* 得点者：ホームは右寄せ、アウェイは左寄せでスコアの下に */
   const gl = side => { const E = evGoals(side);
     if (E.length) return E.map(e => `<li>${ICON.ball}<span>${esc(e.player)}</span><em>${esc(e.min)}'${e.kind === "PKゴール" ? " PK" : e.kind === "オウンゴール" ? " OG" : ""}</em></li>`).join("");
