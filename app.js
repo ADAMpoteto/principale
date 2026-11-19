@@ -1091,6 +1091,8 @@ const PITCH_SVG = `<svg class="lp-lines" viewBox="0 0 105 68" preserveAspectRati
   <rect x="2" y="14.4" width="16" height="39.2"/><rect x="2" y="24.1" width="5.4" height="19.8"/><circle cx="12.8" cy="34" r=".5" fill="rgba(255,255,255,.55)"/><path d="M18 27.4a8.5 8.5 0 0 1 0 13.2"/>
   <rect x="87" y="14.4" width="16" height="39.2"/><rect x="97.6" y="24.1" width="5.4" height="19.8"/><circle cx="92.2" cy="34" r=".5" fill="rgba(255,255,255,.55)"/><path d="M87 27.4a8.5 8.5 0 0 0 0 13.2"/>
   <rect x=".6" y="30.3" width="1.4" height="7.4"/><rect x="103" y="30.3" width="1.4" height="7.4"/></svg>`;
+/* スマホ用：縦向きのピッチ（68×105） */
+const PITCH_SVG_V = PITCH_SVG.replace('viewBox="0 0 105 68"', 'viewBox="0 0 68 105"').replace(/(<svg[^>]*>)/, '$1<g transform="translate(68 0) rotate(90)">').replace("</svg>", "</g></svg>");
 function matchLineup(m) {
   if (!m.lu.length && !m.luOpp.length) return empty("メンバーの記録はありません。");
   const h = homeAway(m), L = side => side === "me" ? m.lu : m.luOpp, B = side => side === "me" ? m.bench : m.benchOpp;
@@ -1107,7 +1109,18 @@ function matchLineup(m) {
       const X = top ? 100 - dep : dep, Y = Math.max(9, Math.min(91, top ? 100 - x : x));
       return link(l, `<span class="lp-ph">${face(l.name)}${l.no != null ? `<em>${l.no}</em>` : ""}${gIcon(l)}</span><span class="lp-nm">${esc(l.name)}</span>`, `lp ${side}`).replace(/^<(a|div) class="([^"]+)"/, `<$1 class="$2" style="left:${X}%;top:${Y}%"`);
     }).join(""); };
-  const pitch = `<div class="lpitch"><div class="lp-team"><span>${logo(club(h.hs), "sm")}${esc(club(h.hs))}<small>${esc(m.form[h.hs] || "")}</small></span><span><small>${esc(m.form[h.as] || "")}</small>${esc(club(h.as))}${logo(club(h.as), "sm")}</span></div>
+  /* スマホ：チームごとに縦向きで表示（自チームは下から上へ攻める） */
+  const vdots = side => { const used = {};
+    return L(side).filter(l => l.role === "先発").map(l => {
+      let [x, y] = POSXY[l.pos] || POSXY[{ GK: "GK", DF: "CB", MF: "CM", FW: "ST" }[l.pos]] || [50, 50];
+      const k = x + "," + y; used[k] = (used[k] || 0) + 1; x += (used[k] - 1) * 14 * (used[k] % 2 ? 1 : -1);
+      const X = Math.max(10, Math.min(90, x)), Y = l.pos === "GK" ? 92 : Math.max(9, Math.min(84, y));
+      return link(l, `<span class="lp-ph">${face(l.name)}${l.no != null ? `<em>${l.no}</em>` : ""}${gIcon(l)}</span><span class="lp-nm">${esc(l.name)}</span>`, `lp ${side}`).replace(/^<(a|div) class="([^"]+)"/, `<$1 class="$2" style="left:${X}%;top:${Y}%"`);
+    }).join(""); };
+  const tab = (side, i) => `<button type="button" class="lpm-tab${i ? "" : " on"}" onclick="const u=this.closest('.lu');u.dataset.t='${i}';u.querySelectorAll('.lpm-tab').forEach((b,j)=>b.classList.toggle('on',j==${i}))">${logo(club(side), "sm")}<b>${esc(shortOf(club(side)))}</b><small>${esc(m.form[side] || "")}</small></button>`;
+  const mob = `<div class="lpm"><div class="lpm-tabs">${tab(h.hs, 0)}${tab(h.as, 1)}</div>
+    ${[h.hs, h.as].map((sd, i) => `<div class="lpm-field s${i}">${PITCH_SVG_V}${vdots(sd) || `<p class="lpm-none">メンバーの記録はありません</p>`}</div>`).join("")}</div>`;
+  const pitch = mob + `<div class="lpitch"><div class="lp-team"><span>${logo(club(h.hs), "sm")}${esc(club(h.hs))}<small>${esc(m.form[h.hs] || "")}</small></span><span><small>${esc(m.form[h.as] || "")}</small>${esc(club(h.as))}${logo(club(h.as), "sm")}</span></div>
     <div class="lp-field">${PITCH_SVG}${dots(h.hs, false)}${dots(h.as, true)}</div></div>`;
   /* 控え：ホームとアウェイを左右に並べる（途中出場→ベンチの順） */
   const subEv = l => m.ev.find(e => e.kind === "交代" && e.side === l.side && same(e.player, l.name));
@@ -1117,7 +1130,7 @@ function matchLineup(m) {
     return link(l, `<span class="sb-ph">${face(l.name)}${l.no != null ? `<em>${l.no}</em>` : ""}</span><span class="sb-tx"><span class="sb-nm"><i>${esc(l.pos || "")}</i>${esc(l.name)}${gIcon(l)}</span>${info}</span>${tag}`, "sb" + (used ? "" : " off")); };
   const col = side => { const list = [...L(side).filter(l => l.role !== "先発"), ...B(side)];
     return `<div class="sb-col"><div class="sb-h">${logo(club(side), "sm")}<b>${esc(club(side))}</b><small>${list.length}名</small></div>${list.length ? list.map(row).join("") : `<div class="sb-none">記録なし</div>`}</div>`; };
-  return pitch + `<div class="sb-sec"><div class="sb-title">SUBSTITUTES<small>控え</small></div><div class="sb-cols">${col(h.hs)}${col(h.as)}</div></div>`;
+  return `<div class="lu" data-t="0">` + pitch + `<div class="sb-sec"><div class="sb-title">SUBSTITUTES<small>控え</small></div><div class="sb-cols">${col(h.hs)}${col(h.as)}</div></div></div>`;
 }
 
 function vTable() {
