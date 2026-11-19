@@ -251,7 +251,9 @@ async function loadAll() {
     a: num(F(o, "アシスト")), rating: num(F(o, "平均評価")), memo: F(o, "メモ") })).filter(x => x.name && x.club).sort((x, y) => (x.date || 0) - (y.date || 0));
   const ss = new Set([...D.matches, ...D.trans, ...D.table, ...D.seasons, ...D.loans].map(x => x.season).filter(Boolean));
   if (!ss.size && D.conf["最初のシーズン"]) ss.add(D.conf["最初のシーズン"]);
-  D.seasonList = [...ss].sort().reverse();
+  /* 最初のシーズンより前（ノンリーグ時代）はシーズン選択に出さない */
+  const first = D.conf["最初のシーズン"] || "";
+  D.seasonList = [...ss].filter(x => !first || x >= first).sort().reverse();
   if (!D.seasonList.length) D.seasonList = [curSeason()];
   const last = D.played[D.played.length - 1];
   ST.season = ST.cur = (last && last.season) || D.seasonList[0];
@@ -634,7 +636,11 @@ function milestones() {
   return N.concat(milestones2(), milestones3());
 }
 /* リーグの格（イングランド。数字が小さいほど上） */
-function tier(lg) { const s = String(lg || ""); return /プレミア/.test(s) ? 1 : /チャンピオンシップ/.test(s) ? 2 : /リーグ\s*1$/.test(s) ? 3 : /リーグ\s*2$/.test(s) ? 4 : null; }
+function tier(lg) { const s = String(lg || "");
+  if (/NWCFL/.test(s)) return /プレミア/.test(s) ? 9 : 10;
+  if (/NPL|ノーザン/.test(s)) return /プレミア/.test(s) ? 7 : 8;
+  if (/ナショナルリーグ/.test(s)) return /ノース|サウス/.test(s) ? 6 : 5;
+  return /プレミア/.test(s) ? 1 : /チャンピオンシップ/.test(s) ? 2 : /リーグ\s*1$/.test(s) ? 3 : /リーグ\s*2$/.test(s) ? 4 : null; }
 function leagueOfSeason(se) {
   const t = D.table.filter(r => r.season === se && isMe(r.club)).sort((a, b) => b.p - a.p)[0]; if (t) return t.comp;
   const s = D.seasons.find(x => x.season === se); if (s && s.league) return s.league;
@@ -1106,8 +1112,22 @@ function memberSeasons(p, name, bySeason) {
   const S = new Set(bySeason.map(o => o.se));
   const outs = D.trans.filter(t => same(t.name, name) && t.kind === "退団").map(t => t.season).filter(Boolean).sort();
   const end = /退団/.test(p.status || "") && outs.length ? outs[outs.length - 1] : null;
-  if (p.joined) D.seasons.forEach(x => { if (x.season >= p.joined && (!end || x.season <= end)) S.add(x.season); });
+  const promoted = D.trans.some(t => same(t.name, name) && t.kind === "ユース昇格"), sf = !promoted && seniorFrom(p);
+  const from = [p.joined, sf].filter(Boolean).sort()[0];
+  if (from) D.seasons.forEach(x => { if (x.season >= from && (!end || x.season <= end)) S.add(x.season); });
   return S;
+}
+/* ノンリーグからの歩み（最初のシーズンより前のシーズン行＋最初のシーズン） */
+function roadToEfl() {
+  const first = D.conf["最初のシーズン"] || ""; if (!first) return "";
+  const past = D.seasons.filter(x => x.season < first && x.league).sort((a, b) => a.season.localeCompare(b.season));
+  if (!past.length) return "";
+  const st = [...past.map(x => ({ se: x.season, lg: x.league, champ: String(x.titles || "").includes(x.league), memo: x.comment })),
+    { se: first, lg: leagueOfSeason(first) || (D.seasons.find(x => x.season === first) || {}).league || "", now: true }];
+  const T = st.map(x => tier(x.lg) || 10), lo = Math.max(...T), hi = Math.min(...T);
+  return sec("ROAD TO EFL", "ノンリーグからの歩み") + `<div class="road">${st.map((x, i) => { const t = T[i], h = (0.34 + (lo - t) / Math.max(1, lo - hi) * 0.66).toFixed(3);
+    return `<div class="rd${x.now ? " now" : ""}"><div class="rd-bar" style="--h:${h}"><b>${t}<small>部</small></b>${x.champ ? `<span class="rd-c">${ICON.cup}優勝</span>` : x.now ? `<span class="rd-c pro">PRO</span>` : ""}</div>
+      <div class="rd-lg">${esc(x.lg)}</div><div class="rd-se">${esc(x.se)}</div></div>`; }).join("")}</div>`;
 }
 function playerTitles(p, name, bySeason) {
   const S = memberSeasons(p, name, bySeason), team = {}, ind = {};
@@ -1123,6 +1143,13 @@ function playerHistory(p, name, bySeason) {
   return sec("HISTORY", "チーム歴") + `<ol class="hist">${R.map(r => `<li><span>${esc(r.p)}</span>${r.school ? `<i class="hist-dot"></i>` : logo(r.lg || r.c, "sm")}<b>${esc(r.c)}${leagueOf(r.c) ? `<small>${esc(leagueOf(r.c))}</small>` : ""}</b>${r.note ? `<em${r.school ? ' class="sc"' : ""}>${esc(r.note)}</em>` : ""}</li>`).join("")}</ol>`;
 }
 const seasonOfYear = y => `${y}-${String(y + 1).slice(2)}`;
+const proYear = () => parseInt(D.conf["最初のシーズン"], 10) || null;
+/* 生え抜きの初期メンバーが、トップチーム（アマチュア含む）に上がった年 */
+function seniorFrom(p) {
+  if (!p || !p.birth || !(p.schools || []).some(x => x[0] === "高校" && x[1] && x[1].includes(clubName()))) return null;
+  const y0 = p.birth.getFullYear() + ((p.birth.getMonth() < 3 || (p.birth.getMonth() === 3 && p.birth.getDate() === 1)) ? 0 : 1);
+  return seasonOfYear(y0 + 18);
+}
 function historyRows(p, name, bySeason) {
   const me = clubName(), R = [];
   const T = D.trans.filter(t => same(t.name, name)).sort((a, b) => (a.date || 0) - (b.date || 0) || String(a.season).localeCompare(String(b.season)));
@@ -1134,10 +1161,10 @@ function historyRows(p, name, bySeason) {
     R.push({ p: y0 ? `${y0 + a}〜${end}` : lb, c: v, lg: own ? me : "", note: own ? "" : lb, school: !own, own }); } });
   /* 自前のU-18を出ていて、昇格の記録がない選手（初期メンバー）は、卒業の年からトップチーム */
   const ownU18 = (p.schools || []).some(x => x[0] === "高校" && x[1] && x[1].includes(me));
-  /* 2024年にトップチームができるまでは、サテライトに所属していた扱い */
-  const fy = parseInt(D.conf["創設年"], 10) || null;
+  /* プロ化（最初のシーズン）より前は、アマチュア時代のトップチームに所属していた扱い */
+  const fy = proYear();
   let gradTop = !promo && ownU18 && y0 ? String(y0 + 18) : null;
-  if (gradTop && fy && y0 + 18 < fy) { R.push({ p: `${y0 + 18}〜${fy}`, c: me + " サテライト", lg: me, note: "", own: true }); gradTop = String(fy); }
+  if (gradTop && fy && y0 + 18 < fy) { R.push({ p: `${y0 + 18}〜${fy}`, c: me, lg: me, note: "アマチュア", own: true }); gradTop = String(fy); }
   if ((/ユース/.test(p.origin || "") || promo) && !(p.schools || []).some(x => x[0] === "高校" && x[1])) R.push({ p: `${y0 ? y0 + 15 : ""}〜${promo ? promo.season : p.joined || ""}`, c: me + " ユース", lg: me, note: "" });
   let cur = { p0: (promo && promo.season) || gradTop || p.joined || (bySeason.length ? bySeason[bySeason.length - 1].se : ""), c: me, note: "" };
   const close = (to) => { if (cur) { R.push({ p: `${cur.p0}〜${to || ""}`, c: cur.c, note: cur.note }); cur = null; } };
@@ -1190,6 +1217,7 @@ function vClub() {
       ${sl ? `<p class="club-sl"><small>CLUB SLOGAN</small>${slogan(sl)}</p>` : ""}</div></div></section>
     ${identity()}<div class="wrap">
     ${pol.length ? sec("PHILOSOPHY", "クラブの方針") + `<ol class="policy">${pol.map((p, i) => `<li><b>${pad(i + 1)}</b><span>${esc(p)}</span></li>`).join("")}</ol>` : ""}
+    ${roadToEfl()}
     ${mgr ? sec("MANAGER", "監督") + `<div class="mgr">${face(mgr.name)}<div><span>MANAGER</span><b>${flag(mgr.nat)}${esc(mgr.name)}</b>${mgr.memo ? `<p>${esc(mgr.memo)}</p>` : ""}
       <a class="btn" href="#/squad">STAFF</a></div></div>` : ""}
     ${sec("TITLES", "獲得タイトル")}${Object.keys(tc).length ? `<div class="trophies">${Object.keys(tc).map(t => `<div class="trophy">${ICON.cup}<b>${esc(t)}</b><small>${tc[t].map(esc).join("、")}</small><span class="cnt">${tc[t].length}</span></div>`).join("")}</div>` : `<div class="panel">${empty("まだタイトルはありません。")}</div>`}
