@@ -1172,7 +1172,7 @@ function playerTitles(p, name, bySeason) {
   D.seasons.filter(x => S.has(x.season)).forEach(x => String(x.titles || "").split(/[、,，\/／]/).map(t => t.trim()).filter(Boolean).forEach(t => (team[t] = team[t] || []).push(x.season)));
   (D.awards || []).filter(a => same(a.name, name)).forEach(a => { const t = (a.comp ? a.comp + "\u0001" : "") + a.title; (ind[t] = ind[t] || []).push(a.season || ""); });
   const box = (o, empTxt) => Object.keys(o).length ? `<div class="trophies">${Object.keys(o).map(t => `<div class="trophy">${ICON.cup}${t.includes("\u0001") ? `<span class="tr-comp">${esc(t.split("\u0001")[0])}</span>` : ""}<b>${esc(t.split("\u0001").pop())}</b><small>${o[t].sort().map(esc).join("、")}</small><span class="cnt">${o[t].length}</span></div>`).join("")}</div>` : `<div class="panel">${empty(empTxt)}</div>`;
-  return sec("TITLES", "獲得タイトル") + `<h3 class="sub">チームタイトル</h3>${box(team, "まだタイトルはありません。")}<h3 class="sub">個人タイトル</h3>${box(ind, "まだ個人タイトルはありません。")}`;
+  return sec("TITLES", "個人タイトル") + box(ind, "まだ個人タイトルはありません。");
 }
 /* チーム歴 */
 function playerHistory(p, name, bySeason) {
