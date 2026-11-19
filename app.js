@@ -327,8 +327,43 @@ function staffList() {
   return S.sort((a, b) => o(a.role) - o(b.role));
 }
 function staffCard(p) {
-  return `<div class="pcard staff"><div class="ph-wrap">${face(p.name)}<span class="pos">${esc(p.role)}</span></div>
-    <div class="info"><b>${flag(p.nat)}${esc(p.name)}</b><small>${[p.birth ? age(p.birth) + "歳" : "", p.memo].filter(Boolean).map(esc).join("　") || "&nbsp;"}</small></div></div>`;
+  return `<a class="pcard staff" href="#/staff/${encodeURIComponent(p.name)}"><div class="ph-wrap">${face(p.name)}<span class="pos">${esc(p.role)}</span></div>
+    <div class="info"><b>${flag(p.nat)}${esc(p.name)}</b><small>${[p.birth ? age(p.birth) + "歳" : "", p.memo].filter(Boolean).map(esc).join("　") || "&nbsp;"}</small></div></a>`;
+}
+const ROLE_EN = { 監督: "MANAGER", ヘッドコーチ: "HEAD COACH", コーチ: "COACH", GKコーチ: "GK COACH", フィジカルコーチ: "FITNESS COACH", アナリスト: "ANALYST", ユース監督: "ACADEMY MANAGER" };
+/* ---------- スタッフ詳細 ---------- */
+function vStaff(name) {
+  const p = D.staff.find(x => same(x.name, name)) || staffList().find(x => same(x.name, name)) || { name, role: "" };
+  const hw = [p.height ? p.height + "cm" : "", p.weight ? p.weight + "kg" : ""].filter(Boolean).join(" / ");
+  const info = [["生年月日", p.birth ? `${fmtD(p.birth)}（${age(p.birth)}歳）` : ""], ["出身地", p.pref], ["身長 / 体重", hw], ["就任", p.joined ? p.joined + "シーズン" : ""]].filter(x => x[1]);
+  /* 在任中の成績（就任シーズン以降） */
+  const from = p.joined || "", left = /退団/.test(p.status || "");
+  const M = D.played.filter(m => !from || m.season >= from).sort((a, b) => (a.date || 0) - (b.date || 0));
+  const w = M.filter(m => m.res === "W").length, d = M.filter(m => m.res === "D").length, l = M.filter(m => m.res === "L").length;
+  const gf = M.reduce((a, m) => a + (m.gf || 0), 0), ga = M.reduce((a, m) => a + (m.ga || 0), 0);
+  const seasons = [...new Set(M.map(m => m.season))].sort().reverse();
+  const S = historySeasons().filter(o => !from || o.se >= from);
+  const titles = S.flatMap(o => o.titles.map(t => ({ se: o.se, t })));
+  const showRec = p.role === "監督" || p.role === "ヘッドコーチ";
+  return `<section class="phero"><div class="phero-in"><div>
+      <div class="role-en">${esc(ROLE_EN[p.role] || "STAFF")}</div><h1>${esc(p.name)}</h1>${p.roma ? `<p class="roma">${esc(p.roma)}</p>` : ""}<div class="pos">${flag(p.nat)}${esc(p.role || "スタッフ")}${left ? "　退任" : ""}</div>
+    </div><div class="photo">${face(p.name)}</div></div></section>
+  <div class="wrap">
+    ${info.length ? sec("PROFILE", "プロフィール") + `<div class="prof p4" style="--n:${info.length}">${info.map(([k, v]) => `<div><span>${k}</span><b>${esc(v)}</b></div>`).join("")}</div>` : ""}
+    ${p.memo ? `<p style="color:var(--tx2);margin:12px 0 0">${esc(p.memo)}</p>` : ""}
+    ${showRec ? sec("RECORD", "在任中の成績") + (M.length ? `<div class="tiles t4"><div class="tile"><span>試合</span><b>${M.length}</b></div>
+      <div class="tile"><span>成績</span><b class="rec">${w}<small>勝</small>${d}<small>分</small>${l}<small>敗</small></b></div>
+      <div class="tile"><span>勝率</span><b>${Math.round(w / M.length * 100)}<small>%</small></b></div>
+      <div class="tile"><span>得点 / 失点</span><b>${gf}<small> / </small>${ga}</b></div></div>
+      <div class="panel" style="margin-top:12px"><table class="t"><thead><tr><th>シーズン</th><th>リーグ</th><th>順位</th><th>試合</th><th>勝</th><th>分</th><th>敗</th></tr></thead><tbody>
+      ${seasons.map(se => { const X = M.filter(m => m.season === se), o = S.find(z => z.se === se) || {};
+        return `<tr><td>${esc(se)}</td><td>${esc(o.lg || "")}</td><td>${o.rank ? o.rank + "位" : "-"}</td><td>${X.length}</td><td>${X.filter(m => m.res === "W").length}</td><td>${X.filter(m => m.res === "D").length}</td><td>${X.filter(m => m.res === "L").length}</td></tr>`; }).join("")}
+      </tbody></table></div>` : `<div class="panel">${empty("まだ試合はありません。")}</div>`) : ""}
+    ${showRec ? sec("TITLES", "在任中のタイトル") + (titles.length ? `<div class="tb"><div class="tb-h"><div class="tl-ic">${ICON.cup}</div><div class="tb-n"><b>獲得タイトル</b><small>TITLES</small></div><div class="tl-c">${titles.length}<small>回</small></div></div>
+      <ol class="tb-rows">${[...titles].reverse().map(x => `<li><span>${esc(x.se)}</span><b>${esc(x.t)}</b><em>${tier(x.t) ? tier(x.t) + "部" : "カップ"}</em></li>`).join("")}</ol></div>` : `<div class="panel">${empty("まだタイトルはありません。")}</div>`) : ""}
+    ${playerHistory(p, p.name, [])}
+    <p style="margin-top:28px"><a class="btn" href="#/squad">選手・スタッフ一覧</a></p>
+  </div>`;
 }
 const staffBlock = () => { const S = staffList(); return S.length ? sec("STAFF", "監督・コーチ") + `<div class="pgrid">${S.map(staffCard).join("")}</div>` : ""; };
 function identity() {
@@ -1257,8 +1292,8 @@ function vClub() {
       ${sl ? `<p class="club-sl"><small>CLUB SLOGAN</small>${slogan(sl)}</p>` : ""}</div></div></section>
     ${identity()}<div class="wrap">
     ${pol.length ? sec("PHILOSOPHY", "クラブの方針") + `<ol class="policy">${pol.map((p, i) => `<li><b>${pad(i + 1)}</b><span>${esc(p)}</span></li>`).join("")}</ol>` : ""}
-    ${mgr ? sec("MANAGER", "監督") + `<div class="mgr">${face(mgr.name)}<div><span>MANAGER</span><b>${flag(mgr.nat)}${esc(mgr.name)}</b>${mgr.memo ? `<p>${esc(mgr.memo)}</p>` : ""}
-      <a class="btn" href="#/squad">STAFF</a></div></div>` : ""}
+    ${mgr ? sec("MANAGER", "監督") + `<div class="mgr">${face(mgr.name)}<div><span>MANAGER</span><b><a href="#/staff/${encodeURIComponent(mgr.name)}" style="color:inherit">${flag(mgr.nat)}${esc(mgr.name)}</a></b>${mgr.memo ? `<p>${esc(mgr.memo)}</p>` : ""}
+      <a class="btn" href="#/staff/${encodeURIComponent(mgr.name)}">PROFILE</a></div></div>` : ""}
     <a class="hist-link" href="#/history"><span><b>HISTORY</b><small>ヒストリー・獲得タイトル</small></span><em>20部から${esc(clubName())}が歩んできた道のり</em><i>›</i></a>
     ${sec("ALL-TIME", "通算成績")}${all.n ? `<div class="tiles"><div class="tile"><span>試合</span><b>${all.n}</b></div><div class="tile"><span>成績</span><b class="rec">${all.w}<small>勝</small>${all.d}<small>分</small>${all.l}<small>敗</small></b></div>
       <div class="tile"><span>得点</span><b>${all.gf}</b></div><div class="tile"><span>失点</span><b>${all.ga}</b></div><div class="tile"><span>勝率</span><b>${fmtN(all.w / all.n * 100, 1)}<small>%</small></b></div>
@@ -1276,13 +1311,13 @@ function fillSeason() {
 }
 function render() {
   const { page, arg } = parseHash();
-  const V = { home: vHome, news: vNews, matches: vMatches, match: vMatch, table: vTable, stats: vStats, squad: vSquad, player: vPlayer, transfers: vTransfers, club: vClub, history: vHistory };
+  const V = { home: vHome, news: vNews, matches: vMatches, match: vMatch, table: vTable, stats: vStats, squad: vSquad, player: vPlayer, transfers: vTransfers, club: vClub, history: vHistory, staff: vStaff };
   const B = { news: bNews, matches: bMatches, match: bMatch, table: bTable };
   const view = $("view");
   view.innerHTML = (V[page] || vHome)(arg);
   (B[page] || (() => { }))();
   bindTips(view);
-  const navKey = { match: "matches", table: "matches", stats: "matches", player: "squad", transfers: "squad", history: "club" }[page] || page;
+  const navKey = { match: "matches", table: "matches", stats: "matches", player: "squad", transfers: "squad", staff: "squad", history: "club" }[page] || page;
   document.querySelectorAll("#tabs a").forEach(a => a.classList.toggle("on", a.dataset.p === navKey));
   fillSeason();
 }
