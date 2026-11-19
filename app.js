@@ -240,7 +240,7 @@ async function loadAll() {
     /* 自分の順位の推移（自分の試合ごと） */
     D.rankHist[k] = G.filter(g => g.m).map(g => ({ m: g.m, rank: (build(g.d).find(r => isMe(r.club)) || {}).rank })).filter(x => x.rank);
   });
-  D.seasons = got.ss.map(o => ({ season: F(o, "シーズン"), league: F(o, "リーグ"), rank: null, titles: F(o, "獲得タイトル"), cap: F(o, "主将"), comment: F(o, "一言") })).filter(s => s.season);
+  D.seasons = got.ss.map(o => ({ season: F(o, "シーズン"), league: F(o, "リーグ"), rank: null, titles: F(o, "獲得タイトル"), cap: F(o, "主将"), fa: F(o, "FAカップ"), comment: F(o, "一言") })).filter(s => s.season);
   /* 個人タイトル：1行1受賞（シーズン・大会・タイトル・選手） */
   D.awards = (got.aw || []).map(o => ({ season: F(o, "シーズン"), comp: F(o, "大会"), title: F(o, "タイトル"), name: F(o, "選手") })).filter(a => a.name && a.title);
 
@@ -1129,7 +1129,7 @@ function historySeasons() {
     const x = D.seasons.find(y => y.season === k) || {}, lg = (k >= first && leagueOfSeason(k)) || x.league || "";
     const titles = String(x.titles || "").split(/[、,，\/／]/).map(t => t.trim()).filter(Boolean);
     const me = D.table.filter(r => r.season === k && isMe(r.club) && (!lg || r.comp === lg))[0];
-    return { se: k, lg, t: tier(lg), titles, champ: titles.includes(lg), pro: first && k === first, efl: first && k >= first, rank: me && me.rank, cur: k === D.seasonList[0] && first && k >= first, memo: x.comment };
+    return { se: k, lg, t: tier(lg), titles, champ: titles.includes(lg), pro: first && k === first, efl: first && k >= first, rank: me && me.rank, cur: k === D.seasonList[0] && first && k >= first, memo: x.comment, fa: x.fa, cap: x.cap };
   }).filter(o => o.lg);
 }
 /* タイトル：リーグ優勝はまとめて1枚、カップ戦は大会ごと */
@@ -1155,7 +1155,9 @@ function vHistory() {
       <div class="hx-card"><div class="hx-top">${o.t ? `<b class="hx-t">${o.t}<small>部</small></b>` : ""}<span class="hx-lg">${esc(o.lg)}</span>${res(o)}</div>
         ${o.pro ? `<p class="hx-pro">EFL入り・プロクラブに</p>` : ""}
         ${o.titles.filter(t => t !== o.lg).length ? `<p class="hx-cups">${o.titles.filter(t => t !== o.lg).map(t => `<span>${ICON.cup}${esc(t)}</span>`).join("")}</p>` : ""}
-        ${o.memo ? `<p class="hx-memo">${esc(o.memo)}</p>` : ""}</div></li>`;
+        ${o.fa ? `<p class="hx-fa"><span>FAカップ</span>${esc(o.fa)}${/優勝/.test(o.fa) ? "" : /準優勝/.test(o.fa) ? "" : "進出"}</p>` : ""}
+        ${o.memo ? `<p class="hx-memo">${esc(o.memo)}</p>` : ""}
+        ${o.cap ? `<p class="hx-cap">主将　<a href="#/player/${encodeURIComponent(o.cap)}">${esc(o.cap)}</a></p>` : ""}</div></li>`;
   return band("HISTORY", "ヒストリー") + `<div class="wrap">
     <div class="tiles hx-sum"><div class="tile"><span>スタート</span><b>${Math.max(...T)}<small>部</small></b></div><div class="tile"><span>現在</span><b>${Math.min(...T)}<small>部</small></b></div>
       <div class="tile"><span>最多連続昇格</span><b>${up}<small>回</small></b></div><div class="tile"><span>リーグ優勝</span><b>${nL}<small>回</small></b></div><div class="tile"><span>カップ戦優勝</span><b>${nC}<small>回</small></b></div></div>
