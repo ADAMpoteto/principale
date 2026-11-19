@@ -159,7 +159,7 @@ async function loadAll() {
     const res = !played ? "U" : gf > ga ? "W" : gf < ga ? "L" : pk ? (pk.a > pk.b ? "W" : "L") : "D";
     return { i, season: F(o, "シーズン"), date, key: dKey(date), comp: F(o, "大会") || "試合", round: F(o, "節・ラウンド"), ha, opp, gf, ga, pk, res, played,
       scorers: parseNames(F(o, "得点者")), assists: parseNames(F(o, "アシスト")), mom: F(o, "MOM"), stadium: F(o, "スタジアム"), kick: half(F(o, "キックオフ")), weather: F(o, "天気"), att: num(F(o, "観客数")),
-      memo: F(o, "メモ"), ts: {}, form: {}, lu: [], luOpp: [], ev: [] };
+      memo: F(o, "メモ"), ts: {}, form: {}, lu: [], luOpp: [], bench: [], benchOpp: [], ev: [] };
   }).filter(Boolean);
   D.matches.sort((a, b) => (a.date && b.date ? a.date - b.date : 0) || a.i - b.i);
   D.matches.forEach((m, k) => m.id = k + 1);
@@ -175,7 +175,10 @@ async function loadAll() {
     const m = byKey[dKey(pDate(F(o, "日付")))]; const name = F(o, "名前"); if (!m || !name) return null;
     const s = {}; LU_NUM.forEach(h => { const v = num(F(o, h)); if (v != null) s[h] = v; });
     const l = { i, m, name, side: sideOf(F(o, "チーム")), role: F(o, "出場") || "先発", no: num(F(o, "背番号")), pos: F(o, "ポジション").toUpperCase(), s, rating: s["評価"] ?? null };
-    if (l.role !== "ベンチ") (l.side === "opp" ? m.luOpp : m.lu).push(l);
+    /* ベンチ登録でも出場時間か評価が入っていれば途中出場。使われなかった選手は控えとして別に持つ */
+    if (l.role === "ベンチ" && ((s["出場時間"] || 0) > 0 || l.rating != null)) l.role = "途中出場";
+    if (l.role === "ベンチ") { (l.side === "opp" ? m.benchOpp : m.bench).push(l); return null; }
+    (l.side === "opp" ? m.luOpp : m.lu).push(l);
     return l.side === "opp" ? null : l;
   }).filter(Boolean);
   got.ev.forEach((o, i) => {
@@ -627,12 +630,14 @@ const WX = {
   雪: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v20M3.3 7l17.4 10M3.3 17L20.7 7"/></svg>` };
 const venue = m => m.stadium || (m.ha === "H" ? D.conf["ホームスタジアム"] : "") || "";
 
+/* 大会のエンブレム（images/comp/大会名.png）。なければ何も出さない */
+const compLogo = (c, cls) => c ? `<img class="clogo ${cls || ""}" src="${esc(encodeURI(`images/comp/${String(c).trim()}.png`))}" alt="" loading="lazy" onerror="this.remove()">` : "";
 function matchRow(m) {
   const right = m.played ? `<span class="res ${m.res}">${m.gf}-${m.ga}</span>${m.pk ? `<span class="pk">PK ${m.pk.a}-${m.pk.b}</span>` : ""}`
     : `<span class="up">${kickoff(m) || "VS"}</span>`;
   return `<a class="mrow" href="#/match/${m.id}">
     <div class="d"><b>${dotD(m.date)}</b><span>${m.date ? WDE[m.date.getDay()] : ""}</span></div>
-    <div class="t">${logo(m.opp, "md")}<div><small><span class="ha ${m.ha}">${m.ha === "H" ? "HOME" : m.ha === "A" ? "AWAY" : ""}</span>${esc(roundTxt(m))}</small><b>${clubName2(m.opp)}</b></div></div>
+    <div class="t">${logo(m.opp, "md")}<div><small><span class="ha ${m.ha}">${m.ha === "H" ? "HOME" : m.ha === "A" ? "AWAY" : ""}</span>${compLogo(m.comp, "sm")}${esc(roundTxt(m))}</small><b>${clubName2(m.opp)}</b></div></div>
     <div class="s">${right}</div></a>`;
 }
 function standing(season, comp, mini) {
@@ -972,7 +977,7 @@ function vMatch(id) {
   let body = "";
   if (m.played) body = ST.mtab === "facts" ? matchFacts(m, h) : ST.mtab === "stats" ? matchStats(m, h, false) : matchLineup(m);
   /* 試合前でもスタメンが入っていれば表示 */
-  else body = (m.lu.length || m.luOpp.length ? `<div class="ph">STARTING MEMBER<small>スタメン</small></div>${matchLineup(m)}` : "") + headToHead(m);
+  else body = (m.lu.length || m.luOpp.length ? `<div class="ph">LINE-UP<small>メンバー</small></div>${matchLineup(m)}` : "") + headToHead(m);
   /* 得点者：ホームは右寄せ、アウェイは左寄せでスコアの下に */
   const gl = side => { const E = evGoals(side);
     if (E.length) return E.map(e => `<li>${ICON.ball}<span>${esc(e.player)}</span><em>${esc(e.min)}'${e.kind === "PKゴール" ? " PK" : e.kind === "オウンゴール" ? " OG" : ""}</em></li>`).join("");
@@ -982,7 +987,7 @@ function vMatch(id) {
   const resLab = { W: "WIN", L: "LOSE", D: "DRAW" }[m.res];
   const info = [["STADIUM", "スタジアム", venue(m)], ["WEATHER", "天気", m.weather ? `${WX[m.weather] || ""}${esc(m.weather)}` : ""], ["ATTENDANCE", "観客数", m.att ? fmtN(m.att) + "人" : ""]].filter(x => x[2]);
   return `<section class="mh"><div class="mh-in">
-      <div class="mh-top"><span class="mh-comp">${esc(m.comp)}</span>${m.round ? `<span class="mh-round">${esc(m.round)}</span>` : ""}</div>
+      <div class="mh-top">${compLogo(m.comp, "mh-cl")}<span class="mh-comp">${esc(m.comp)}</span>${m.round ? `<span class="mh-round">${esc(m.round)}</span>` : ""}</div>
       <div class="mh-date">${dotY(m.date)} <small>${m.date ? WDE[m.date.getDay()] : ""}</small>${kickoff(m) ? ` <span>${esc(kickoff(m))} KICK OFF</span>` : ""}</div>
       <div class="mh-vs">${team(h.home, "HOME")}
         <div class="mh-c">${m.played ? `<div class="mh-score"><b>${m.ha === "A" ? m.ga : m.gf}</b><i></i><b>${m.ha === "A" ? m.gf : m.ga}</b></div>
@@ -1042,20 +1047,28 @@ const POSXY = { GK: [50, 91], SW: [50, 82], RB: [86, 72], RCB: [66, 78], CB: [50
   RW: [84, 24], LW: [16, 24], RF: [66, 20], LF: [34, 20], CF: [50, 22], ST: [50, 15], RS: [64, 15], LS: [36, 15] };
 function matchLineup(m) {
   if (!m.lu.length && !m.luOpp.length) return empty("メンバーの記録はありません。");
-  const h = homeAway(m);
-  const team = (L, side) => {
-    const XI = L.filter(l => l.role === "先発"), subs = L.filter(l => l.role !== "先発"), me = side === "me", used = {};
-    const pos = l => { const p = POSXY[l.pos] || POSXY[{ GK: "GK", DF: "CB", MF: "CM", FW: "ST" }[l.pos]] || [50, 50]; const k = p.join(); used[k] = (used[k] || 0) + 1; return [p[0] + (used[k] - 1) * 16 * (used[k] % 2 ? 1 : -1), p[1]]; };
-    const gIcon = l => l.s["得点"] ? ICON.ball.repeat(Math.min(3, l.s["得点"])) : "";
-    const tag = (l, cls, style, inner) => me ? `<a class="${cls}" href="#/player/${encodeURIComponent(l.name)}"${style}>${inner}</a>` : `<div class="${cls}"${style}>${inner}</div>`;
-    const pitch = XI.length ? `<div class="pitch${me ? "" : " opp"}">${XI.map(l => { const [x, y] = pos(l); return tag(l, "pl", ` style="left:${x}%;top:${y}%"`, `${face(l.name)}${rt(l.rating)}<span class="gl">${gIcon(l)}</span><span>${l.no != null ? l.no + " " : ""}${esc(l.name)}</span>`); }).join("")}</div>` : "";
-    const row = l => tag(l, "prow", "", `<span class="no">${l.no ?? ""}</span>${face(l.name)}<div class="nm"><b>${esc(l.name)}</b><small>${esc(l.pos)}${l.s["出場時間"] != null ? `　${l.s["出場時間"]}分` : ""}${l.s["得点"] ? `　${l.s["得点"]}得点` : ""}${l.s["アシスト"] ? `　${l.s["アシスト"]}アシスト` : ""}</small></div>${rt(l.rating)}`);
-    const club = me ? clubName() : m.opp;
-    if (!L.length) return `<div class="lu-col"><div class="ph">${logo(club, "sm")} ${esc(club)}</div>${empty("記録なし")}</div>`;
-    return `<div class="lu-col"><div class="ph">${logo(club, "sm")} ${esc(club)}<small>${esc(m.form[side] || "")}</small></div>${pitch}${XI.map(row).join("")}
-      ${subs.length ? `<div class="ph">SUBSTITUTES</div>${subs.map(row).join("")}` : ""}</div>`;
-  };
-  return `<div class="lu-grid">${team(h.hs === "me" ? m.lu : m.luOpp, h.hs)}${team(h.as === "me" ? m.lu : m.luOpp, h.as)}</div>`;
+  const h = homeAway(m), L = side => side === "me" ? m.lu : m.luOpp, B = side => side === "me" ? m.bench : m.benchOpp;
+  const club = side => side === "me" ? clubName() : m.opp;
+  const link = (l, inner, cls) => l.side !== "opp" ? `<a class="${cls}" href="#/player/${encodeURIComponent(l.name)}">${inner}</a>` : `<div class="${cls}">${inner}</div>`;
+  const gIcon = l => l.s["得点"] ? `<i class="lp-g">${ICON.ball.repeat(Math.min(3, l.s["得点"]))}</i>` : "";
+  /* 1枚のピッチに両チーム（ホームは下、アウェイは上） */
+  const dots = (side, top) => { const used = {};
+    return L(side).filter(l => l.role === "先発").map(l => {
+      let [x, y] = POSXY[l.pos] || POSXY[{ GK: "GK", DF: "CB", MF: "CM", FW: "ST" }[l.pos]] || [50, 50];
+      const k = x + "," + y; used[k] = (used[k] || 0) + 1; x += (used[k] - 1) * 14 * (used[k] % 2 ? 1 : -1);
+      const X = top ? 100 - x : x, Y = top ? (100 - y) / 2 : 50 + y / 2;
+      return link(l, `<span class="lp-ph">${face(l.name)}${l.no != null ? `<em>${l.no}</em>` : ""}${gIcon(l)}</span><span class="lp-nm">${esc(l.name)}</span>`, `lp ${side}`).replace(/^<(a|div) class="([^"]+)"/, `<$1 class="$2" style="left:${X}%;top:${Y}%"`);
+    }).join(""); };
+  const pitch = `<div class="lpitch"><div class="lp-team t"><span>${logo(club(h.as), "sm")}${esc(club(h.as))}</span><small>${esc(m.form[h.as] || "")}</small></div>
+    <div class="lp-field">${dots(h.as, true)}${dots(h.hs, false)}</div>
+    <div class="lp-team b"><span>${logo(club(h.hs), "sm")}${esc(club(h.hs))}</span><small>${esc(m.form[h.hs] || "")}</small></div></div>`;
+  /* 一覧：ホームとアウェイを左右に並べる */
+  const row = l => link(l, `<span class="lr-pos">${esc(l.pos || "")}</span><span class="lr-no">${l.no ?? ""}</span>${face(l.name)}<span class="lr-nm">${esc(l.name)}${gIcon(l)}</span>${l.role === "途中出場" && l.s["出場時間"] != null ? `<span class="lr-in">IN ${l.s["出場時間"]}分</span>` : ""}`, "lr");
+  const col = (side, list) => `<div class="lcol">${list.length ? list.map(row).join("") : `<div class="lr none">-</div>`}</div>`;
+  const block = (title, sub, f) => { const a = f(h.hs), b = f(h.as); return a.length || b.length ? `<div class="lsec"><div class="lsec-h">${title}<small>${sub}</small></div><div class="lcols">${col(h.hs, a)}${col(h.as, b)}</div></div>` : ""; };
+  return pitch + `<div class="lcols lhead"><div>${logo(club(h.hs), "sm")}${esc(club(h.hs))}</div><div>${logo(club(h.as), "sm")}${esc(club(h.as))}</div></div>`
+    + block("STARTING MEMBER", "先発", side => L(side).filter(l => l.role === "先発"))
+    + block("SUBSTITUTES", "控え", side => [...L(side).filter(l => l.role !== "先発"), ...B(side)]);
 }
 
 function vTable() {
