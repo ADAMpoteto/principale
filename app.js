@@ -637,6 +637,7 @@ function milestones() {
 }
 /* リーグの格（イングランド。数字が小さいほど上） */
 function tier(lg) { const s = String(lg || "");
+  if (/カップ|トロフィー|ヴァーズ|シールド|杯/.test(s)) return null;
   const lv = s.match(/地区リーグ\s*(\d+)\s*部/); if (lv) return 14 + +lv[1];
   if (/ジンガリ/.test(s)) return 14;
   if (/LCPL|カウンティ/.test(s)) return /プレミア/.test(s) ? 11 : /2/.test(s) ? 13 : 12;
