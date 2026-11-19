@@ -793,11 +793,11 @@ function newsBody(n) {
 function newsProfile(t, pr) {
   if (!pr || !pr.name) return "";
   const ag = age(pr.birth, t.date);
-  const hist = historyRows(pr, t.name, []).filter(r => !r.note || r.school || r.own).map(r => r.c).filter((c, i, a) => a.indexOf(c) === i);
+  const hist = historyRows(pr, t.name, []).filter(r => !r.note || r.school || r.own).map(r => `${r.c}（${r.p}）`);
   const rows = [["選手名", `${esc(t.name)}${pr.roma ? `<small>${esc(pr.roma)}</small>` : ""}`], ["ポジション", esc(t.pos || pr.pos || "")],
     ["生年月日", pr.birth ? `${pr.birth.getFullYear()}年${pr.birth.getMonth() + 1}月${pr.birth.getDate()}日（${ag}歳）` : ""], ["出身地", esc(pr.pref || "")],
     ["身長／体重", [pr.height ? pr.height + "cm" : "", pr.weight ? pr.weight + "kg" : ""].filter(Boolean).join("／")], ["利き足", esc(pr.foot || "")],
-    ["経歴", hist.map(c => `<span class="nw">${esc(c)}</span>`).join(" → ")]].filter(r => r[1]);
+    ["経歴", hist.map((c, i) => `<span class="nh">${i ? "→ " : ""}${esc(c)}</span>`).join("")]].filter(r => r[1]);
   return `<div class="nprof"><h3>PROFILE<small>プロフィール</small></h3><dl>${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl></div>`;
 }
 function vNewsDetail(id) {
