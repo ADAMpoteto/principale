@@ -971,8 +971,7 @@ function vMatch(id) {
   const tabs = [["facts", "SUMMARY", "概要"], ["stats", "STATS", "スタッツ"], ["lineup", "LINE-UP", "メンバー"]];
   let body = "";
   if (m.played) body = ST.mtab === "facts" ? matchFacts(m, h) : ST.mtab === "stats" ? matchStats(m, h, false) : matchLineup(m);
-  else body = `<div class="prof">${[["日時", fmtDW(m.date) + (kickoff(m) ? " " + kickoff(m) : "")], ["大会", roundTxt(m)], ["会場", venue(m) || (m.ha === "H" ? "ホーム" : m.ha === "A" ? "アウェイ" : "中立地")], ["対戦相手", m.opp]]
-    .map(([k, v]) => `<div><span>${k}</span><b>${esc(v)}</b></div>`).join("")}</div>${headToHead(m)}`;
+  else body = headToHead(m);
   /* 得点者：ホームは右寄せ、アウェイは左寄せでスコアの下に */
   const gl = side => { const E = evGoals(side);
     if (E.length) return E.map(e => `<li>${ICON.ball}<span>${esc(e.player)}</span><em>${esc(e.min)}'${e.kind === "PKゴール" ? " PK" : e.kind === "オウンゴール" ? " OG" : ""}</em></li>`).join("");
@@ -994,7 +993,7 @@ function vMatch(id) {
     </div></section>
     ${info.length ? `<div class="mh-info"><div class="mh-info-in">${info.map(([e, j, v]) => `<div><small>${e}<i>${j}</i></small><b>${v.includes("<svg") ? v : esc(v)}</b></div>`).join("")}</div></div>` : ""}
     ${m.played ? `<nav class="mtabs" id="mtabs">${tabs.map(([k, e, j]) => `<a href="javascript:void 0" data-t="${k}" class="${ST.mtab === k ? "on" : ""}">${e}<small>${j}</small></a>`).join("")}</nav>` : ""}
-    <div class="wrap narrow"><div class="panel">${body}</div>${(() => { const i = D.matches.indexOf(m), pv = D.matches[i - 1], nx = D.matches[i + 1];
+    <div class="wrap narrow">${body ? `<div class="panel">${body}</div>` : ""}${(() => { const i = D.matches.indexOf(m), pv = D.matches[i - 1], nx = D.matches[i + 1];
       const lk = (x, lab) => x ? `<a class="mnav-a" href="#/match/${x.id}"><small>${lab}</small><b>${esc(x.opp)}</b><span>${dotY(x.date)}${x.played ? `　${x.gf}-${x.ga}` : ""}</span></a>` : "<span></span>";
       return `<nav class="mnav">${lk(pv, "‹ 前の試合")}<a class="btn" href="#/matches">MATCHES</a>${lk(nx, "次の試合 ›")}</nav>`; })()}</div>`;
 }
