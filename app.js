@@ -637,7 +637,7 @@ function matchRow(m) {
     : `<span class="up">${kickoff(m) || "VS"}</span>`;
   return `<a class="mrow" href="#/match/${m.id}">
     <div class="d"><b>${dotD(m.date)}</b><span>${m.date ? WDE[m.date.getDay()] : ""}</span></div>
-    <div class="t">${logo(m.opp, "md")}<div><small><span class="ha ${m.ha}">${m.ha === "H" ? "HOME" : m.ha === "A" ? "AWAY" : ""}</span>${compLogo(m.comp, "sm")}${esc(roundTxt(m))}</small><b>${clubName2(m.opp)}</b></div></div>
+    <div class="t">${logo(m.opp, "md")}<div><small class="mr-meta"><span class="ha ${m.ha}">${m.ha === "H" ? "HOME" : m.ha === "A" ? "AWAY" : ""}</span>${compLogo(m.comp, "sm")}<span class="mr-comp">${esc(roundTxt(m))}</span></small><b>${clubName2(m.opp)}</b></div></div>
     <div class="s">${right}</div></a>`;
 }
 function standing(season, comp, mini) {
@@ -803,7 +803,11 @@ function newsThumb(n) {
   if (n.ms) { const s = n.ms;
     return `<div class="nt nt-r${s.club ? " club" : ""}">${s.club ? logo(clubName(), "md") : face(s.who)}<div class="nt-w">${s.en ? `${s.big !== "" && s.big != null ? `<span class="nt-num">${s.big}</span>` : ""}${s.en}` : s.v === 1 && s.def.fe ? s.def.fe : `<span class="nt-num">${s.v}</span>${s.def.en}`}<small>${esc(s.club ? clubName() : s.who)}</small></div></div>`; }
   if (n.m) { const h = homeAway(n.m);
-    return `<div class="nt nt-m"><div class="nt-c">${logo(h.home, "md")}</div><div class="nt-s">${n.kind === "result" ? scoreTxt(n.m) : "VS"}<small>${n.kind === "result" ? "RESULT" : dotD(n.m.date)}</small></div><div class="nt-c">${logo(h.away, "md")}</div></div>`; }
+    const res = n.kind === "result";
+    return `<div class="nt nt-m2"><div class="nm-top">${compLogo(n.m.comp, "nm-cl")}<span>${esc(n.m.comp)}${n.m.round ? "　" + esc(n.m.round) : ""}</span></div>
+      <div class="nm-t">${logo(h.home, "")}<b>${esc(shortOf(h.home))}</b></div>
+      <div class="nm-c"><div class="nm-s">${res ? scoreTxt(n.m) : "VS"}</div><small>${res ? "FULL TIME" : dotY(n.m.date)}</small></div>
+      <div class="nm-t">${logo(h.away, "")}<b>${esc(shortOf(h.away))}</b></div></div>`; }
   if (n.tr) { const t = n.tr, pr = prof(t.name) || {};
     const w = { 加入: "WELCOME", レンタル加入: "WELCOME", ユース昇格: "PROMOTED", レンタル復帰: "RETURN", 退団: "THANK YOU", レンタル移籍: "ON LOAN", 契約延長: "RENEWED" }[t.kind] || "NEWS";
     const tag = t.kind === "ユース昇格" ? `ACADEMY GRADUATE${n.yno ? " #" + n.yno : ""}` : t.kind === "契約延長" && t.years ? `+${t.years} YEAR${t.years > 1 ? "S" : ""}` : t.kind === "レンタル移籍" && t.club ? `→ ${t.club}` : "";
@@ -1081,6 +1085,12 @@ function matchStats(m, h, short) {
 const POSXY = { GK: [50, 91], SW: [50, 82], RB: [86, 72], RCB: [66, 78], CB: [50, 79], LCB: [34, 78], LB: [14, 72], RWB: [88, 60], LWB: [12, 60],
   CDM: [50, 64], RDM: [66, 64], LDM: [34, 64], CM: [50, 52], RCM: [70, 53], LCM: [30, 53], RM: [88, 46], LM: [12, 46], CAM: [50, 38], RAM: [70, 38], LAM: [30, 38],
   RW: [84, 24], LW: [16, 24], RF: [66, 20], LF: [34, 20], CF: [50, 22], ST: [50, 15], RS: [64, 15], LS: [36, 15] };
+/* ピッチのライン（105×68） */
+const PITCH_SVG = `<svg class="lp-lines" viewBox="0 0 105 68" preserveAspectRatio="none" fill="none" stroke="rgba(255,255,255,.55)" stroke-width=".35">
+  <rect x="2" y="2" width="101" height="64"/><line x1="52.5" y1="2" x2="52.5" y2="66"/><circle cx="52.5" cy="34" r="8.5"/><circle cx="52.5" cy="34" r=".5" fill="rgba(255,255,255,.55)"/>
+  <rect x="2" y="14.4" width="16" height="39.2"/><rect x="2" y="24.1" width="5.4" height="19.8"/><circle cx="12.8" cy="34" r=".5" fill="rgba(255,255,255,.55)"/><path d="M18 27.4a8.5 8.5 0 0 1 0 13.2"/>
+  <rect x="87" y="14.4" width="16" height="39.2"/><rect x="97.6" y="24.1" width="5.4" height="19.8"/><circle cx="92.2" cy="34" r=".5" fill="rgba(255,255,255,.55)"/><path d="M87 27.4a8.5 8.5 0 0 0 0 13.2"/>
+  <rect x=".6" y="30.3" width="1.4" height="7.4"/><rect x="103" y="30.3" width="1.4" height="7.4"/></svg>`;
 function matchLineup(m) {
   if (!m.lu.length && !m.luOpp.length) return empty("メンバーの記録はありません。");
   const h = homeAway(m), L = side => side === "me" ? m.lu : m.luOpp, B = side => side === "me" ? m.bench : m.benchOpp;
@@ -1093,11 +1103,12 @@ function matchLineup(m) {
       let [x, y] = POSXY[l.pos] || POSXY[{ GK: "GK", DF: "CB", MF: "CM", FW: "ST" }[l.pos]] || [50, 50];
       const k = x + "," + y; used[k] = (used[k] || 0) + 1; x += (used[k] - 1) * 14 * (used[k] % 2 ? 1 : -1);
       /* 横向きのピッチ：ホームは左から右へ、アウェイは右から左へ攻める */
-      const X = top ? 50 + y / 2 : (100 - y) / 2, Y = Math.max(8, Math.min(92, top ? 100 - x : x));
+      const dep = l.pos === "GK" ? 4.5 : 12.5 + Math.max(0, Math.min(1, (79 - y) / 64)) * 32;
+      const X = top ? 100 - dep : dep, Y = Math.max(9, Math.min(91, top ? 100 - x : x));
       return link(l, `<span class="lp-ph">${face(l.name)}${l.no != null ? `<em>${l.no}</em>` : ""}${gIcon(l)}</span><span class="lp-nm">${esc(l.name)}</span>`, `lp ${side}`).replace(/^<(a|div) class="([^"]+)"/, `<$1 class="$2" style="left:${X}%;top:${Y}%"`);
     }).join(""); };
   const pitch = `<div class="lpitch"><div class="lp-team"><span>${logo(club(h.hs), "sm")}${esc(club(h.hs))}<small>${esc(m.form[h.hs] || "")}</small></span><span><small>${esc(m.form[h.as] || "")}</small>${esc(club(h.as))}${logo(club(h.as), "sm")}</span></div>
-    <div class="lp-field">${dots(h.hs, false)}${dots(h.as, true)}</div></div>`;
+    <div class="lp-field">${PITCH_SVG}${dots(h.hs, false)}${dots(h.as, true)}</div></div>`;
   /* 一覧：ホームとアウェイを左右に並べる */
   const row = l => link(l, `<span class="lr-pos">${esc(l.pos || "")}</span><span class="lr-no">${l.no ?? ""}</span>${face(l.name)}<span class="lr-nm">${esc(l.name)}${gIcon(l)}</span>${l.role === "途中出場" && l.s["出場時間"] != null ? `<span class="lr-in">IN ${l.s["出場時間"]}分</span>` : ""}`, "lr");
   const col = (side, list) => `<div class="lcol">${list.length ? list.map(row).join("") : `<div class="lr none">-</div>`}</div>`;
