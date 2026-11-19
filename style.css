@@ -882,3 +882,29 @@ h3.sub:first-of-type{margin-top:0}
 .hx-fa span{font-family:var(--font);font-size:11px;background:var(--navy);color:#fff;padding:1px 7px}
 .hx-cap{margin:6px 0 0;font-size:12px;color:var(--tx3);font-weight:700}
 .hx-cap a{color:var(--navy)}
+
+/* ===== ヒストリーのカードを整列 ===== */
+.hx-card{padding:14px 18px}
+.hx-head{display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:center}
+.hx-t{min-width:0;text-align:left}
+.hx-lgw{display:flex;flex-direction:column;align-items:flex-start;gap:5px;min-width:0}
+.hx-lg{font-size:15px;line-height:1.3}
+.hx-r{margin-left:0}
+.hx-pro{margin:10px 0 0 76px}
+.hx-dl{display:grid;grid-template-columns:64px 1fr;gap:6px 12px;margin:12px 0 0;padding-top:10px;border-top:1px solid var(--line);font-size:13px}
+.hx-dl dt{margin:0;font-size:11px;font-weight:700;color:var(--tx3);padding-top:2px}
+.hx-dl dd{margin:0;font-weight:700;display:flex;flex-direction:column;gap:3px}
+.hx-dl dd a{color:var(--navy)}
+.hx-cup{display:flex;align-items:center;gap:5px}
+.hx-cup svg{width:12px;height:12px;color:#b8860b;flex:none}
+.hx-memo{margin:10px 0 0;padding-top:8px;border-top:1px dashed var(--line);font-size:12px}
+.hx-cups,.hx-fa,.hx-cap{display:none}
+@media (max-width:700px){
+  .hx-card{padding:12px 12px}
+  .hx-head{grid-template-columns:44px 1fr;gap:8px}
+  .hx-pro{margin-left:52px}
+  .hx-dl{grid-template-columns:52px 1fr;gap:5px 8px;font-size:12px}
+  .hx-dl dt{font-size:10px}
+}
+@media (max-width:700px){.hx-head{grid-template-columns:52px 1fr}.hx-pro{margin-left:60px}.hx-dl{grid-template-columns:52px 1fr;gap:5px 8px}}
+.hx.pro .hx-card{border-left-width:1px;box-shadow:inset 4px 0 0 var(--blue)}

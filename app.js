@@ -1149,15 +1149,17 @@ function vHistory() {
   const T = S.map(o => o.t).filter(Boolean), up = (() => { let n = 0, b = 0; S.forEach((o, i) => { if (i && o.t && S[i - 1].t && o.t < S[i - 1].t) { n++; b = Math.max(b, n); } else if (i) n = 0; }); return b; })();
   const tc = {}; S.forEach(o => o.titles.forEach(t => (tc[t] = tc[t] || []).push(o.se)));
   const nL = S.reduce((a, o) => a + o.titles.filter(t => tier(t)).length, 0), nC = S.reduce((a, o) => a + o.titles.filter(t => !tier(t)).length, 0);
-  const res = o => o.champ ? `<span class="hx-r win">${ICON.cup}優勝</span>` : o.cur ? `<span class="hx-r now">シーズン中</span>` : o.rank ? `<span class="hx-r">${o.rank}位</span>` : "";
-  const node = o => `<li class="hx${o.champ ? " champ" : ""}${o.pro ? " pro" : ""}${o.cur ? " cur" : ""}">
+  const res = o => o.champ ? `<span class="hx-r win">${ICON.cup}リーグ優勝</span>` : o.cur ? `<span class="hx-r now">シーズン中</span>` : o.rank ? `<span class="hx-r">${o.rank}位</span>` : "";
+  const node = o => { const cups = o.titles.filter(t => t !== o.lg);
+    const rows = [cups.length ? ["カップ戦", cups.map(t => `<span class="hx-cup">${ICON.cup}${esc(t)}</span>`).join("")] : null,
+      o.fa ? ["FAカップ", esc(o.fa) + (/優勝/.test(o.fa) ? "" : "進出")] : null,
+      o.cap ? ["主将", `<a href="#/player/${encodeURIComponent(o.cap)}">${esc(o.cap)}</a>`] : null].filter(Boolean);
+    return `<li class="hx${o.champ ? " champ" : ""}${o.pro ? " pro" : ""}${o.cur ? " cur" : ""}">
       <div class="hx-se">${esc(o.se)}</div><i class="hx-dot"></i>
-      <div class="hx-card"><div class="hx-top">${o.t ? `<b class="hx-t">${o.t}<small>部</small></b>` : ""}<span class="hx-lg">${esc(o.lg)}</span>${res(o)}</div>
+      <div class="hx-card"><div class="hx-head"><b class="hx-t">${o.t || "-"}<small>部</small></b><div class="hx-lgw"><span class="hx-lg">${esc(o.lg)}</span>${res(o)}</div></div>
         ${o.pro ? `<p class="hx-pro">EFL入り・プロクラブに</p>` : ""}
-        ${o.titles.filter(t => t !== o.lg).length ? `<p class="hx-cups">${o.titles.filter(t => t !== o.lg).map(t => `<span>${ICON.cup}${esc(t)}</span>`).join("")}</p>` : ""}
-        ${o.fa ? `<p class="hx-fa"><span>FAカップ</span>${esc(o.fa)}${/優勝/.test(o.fa) ? "" : /準優勝/.test(o.fa) ? "" : "進出"}</p>` : ""}
-        ${o.memo ? `<p class="hx-memo">${esc(o.memo)}</p>` : ""}
-        ${o.cap ? `<p class="hx-cap">主将　<a href="#/player/${encodeURIComponent(o.cap)}">${esc(o.cap)}</a></p>` : ""}</div></li>`;
+        ${rows.length ? `<dl class="hx-dl">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>` : ""}
+        ${o.memo ? `<p class="hx-memo">${esc(o.memo)}</p>` : ""}</div></li>`; };
   return band("HISTORY", "ヒストリー") + `<div class="wrap">
     <div class="tiles hx-sum"><div class="tile"><span>スタート</span><b>${Math.max(...T)}<small>部</small></b></div><div class="tile"><span>現在</span><b>${Math.min(...T)}<small>部</small></b></div>
       <div class="tile"><span>最多連続昇格</span><b>${up}<small>回</small></b></div><div class="tile"><span>リーグ優勝</span><b>${nL}<small>回</small></b></div><div class="tile"><span>カップ戦優勝</span><b>${nC}<small>回</small></b></div></div>
