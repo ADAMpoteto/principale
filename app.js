@@ -21,7 +21,8 @@ const SHEETS = {          // キー: [シート名, gid]
   gr:    ["選手の推移", 8],
   tr:    ["移籍", 9],
   ss:    ["シーズン", 11],
-  li:    ["リスト", 12]
+  li:    ["リスト", 12],
+  aw:    ["個人タイトル", 13]
 };
 const DEFAULT_CLUB = "Principale";
 const DEMO = /[?&]demo\b/.test(location.search);
@@ -51,6 +52,13 @@ function money(v) {
   const s = a >= 1e6 ? fmtN(v / 1e6, a % 1e6 ? 1 : 0) + "M" : a >= 1e3 ? fmtN(v / 1e3, 0) + "K" : fmtN(v);
   const sg = v < 0 ? "-" : "", s2 = s.replace(/^-/, "");
   return sg + (/[€$£]/.test(u) ? u + s2 : s2 + u);
+}
+/* スローガン：前半はベタ、後半は縁取り（「,」「、」で区切る） */
+function slogan(t) {
+  t = String(t || "").trim(); if (!t) return "";
+  let i = t.search(/[,、，]/), a, b;
+  if (i >= 0) { a = t.slice(0, i + 1); b = t.slice(i + 1).trim(); } else { const w = t.split(/\s+/); a = w.slice(0, Math.ceil(w.length / 2)).join(" "); b = w.slice(Math.ceil(w.length / 2)).join(" "); }
+  return `<span class="slg"><b>${esc(a)}</b>${b ? ` <i>${esc(b)}</i>` : ""}</span>`;
 }
 /* ゲーム内の今日：設定の「ゲーム内の日付」、なければ記録の中で一番新しい日付 */
 let GAME_TODAY = null;
@@ -232,8 +240,9 @@ async function loadAll() {
     /* 自分の順位の推移（自分の試合ごと） */
     D.rankHist[k] = G.filter(g => g.m).map(g => ({ m: g.m, rank: (build(g.d).find(r => isMe(r.club)) || {}).rank })).filter(x => x.rank);
   });
-  D.seasons = got.ss.map(o => ({ season: F(o, "シーズン"), league: F(o, "リーグ"), rank: null, titles: F(o, "獲得タイトル"), cap: F(o, "主将"), comment: F(o, "一言"),
-    awards: [["得点王", F(o, "得点王")], ["アシスト王", F(o, "アシスト王")], ["年間MVP", F(o, "年間MVP")], ["若手MVP", F(o, "若手MVP")], ["ベストイレブン", F(o, "ベストイレブン")]] })).filter(s => s.season);
+  D.seasons = got.ss.map(o => ({ season: F(o, "シーズン"), league: F(o, "リーグ"), rank: null, titles: F(o, "獲得タイトル"), cap: F(o, "主将"), comment: F(o, "一言") })).filter(s => s.season);
+  /* 個人タイトル：1行1受賞（シーズン・大会・タイトル・選手） */
+  D.awards = (got.aw || []).map(o => ({ season: F(o, "シーズン"), comp: F(o, "大会"), title: F(o, "タイトル"), name: F(o, "選手") })).filter(a => a.name && a.title);
 
   /* リーグ順位は自動（シーズンの「リーグ」の順位表から） */
   D.seasons.forEach(s => { const r = D.table.find(t => t.season === s.season && t.comp === (s.league || D.conf["リーグ"]) && isMe(t.club)); if (r) s.rank = r.rank; });
@@ -803,11 +812,11 @@ function vHome() {
   const me = D.table.find(t => t.season === s && isMe(t.club));
   const nextHome = upc.find(m => m.ha === "H") || next;
   const kv = nextHome ? (() => { const h = homeAway(nextHome), d = nextHome.date; return `<section class="kv"><div class="kv-in">
-      <div class="kv-txt">${D.conf["スローガン"] ? `<p class="kv-sl">${esc(D.conf["スローガン"])}</p>` : ""}<p class="kv-lab">${nextHome.ha === "H" ? "NEXT HOME GAME" : "NEXT MATCH"}</p><p class="kv-comp">${esc(roundTxt(nextHome))}</p>
+      <div class="kv-txt">${D.conf["スローガン"] ? `<p class="kv-sl">${slogan(D.conf["スローガン"])}</p>` : ""}<p class="kv-lab">${nextHome.ha === "H" ? "NEXT HOME GAME" : "NEXT MATCH"}</p><p class="kv-comp">${esc(roundTxt(nextHome))}</p>
         <p class="kv-date"><b>${dotD(d)}</b><span>${d ? WDE[d.getDay()] : ""}</span>${kickoff(nextHome) ? `<em>${kickoff(nextHome)} KICK OFF</em>` : ""}</p>
         <p class="kv-venue">${esc(venue(nextHome) || "")}</p><a class="btn w" href="#/match/${nextHome.id}">MATCH INFO</a></div>
       <div class="kv-vs"><div>${logo(h.home, "xl")}<span>${esc(h.home)}</span></div><b>VS</b><div>${logo(h.away, "xl")}<span>${esc(h.away)}</span></div></div></div></section>`; })()
-    : `<section class="kv"><div class="kv-in"><div class="hero-club">${logo(clubName(), "xl")}<div><p class="kv-lab">${esc(s)} SEASON</p><h1 class="hero-name">${esc(clubName())}</h1>${D.conf["スローガン"] ? `<p class="kv-sl" style="margin:12px 0 0">${esc(D.conf["スローガン"])}</p>` : ""}</div></div></div></section>`;
+    : `<section class="kv"><div class="kv-in"><div class="hero-club">${logo(clubName(), "xl")}<div><p class="kv-lab">${esc(s)} SEASON</p><h1 class="hero-name">${esc(clubName())}</h1>${D.conf["スローガン"] ? `<p class="kv-sl" style="margin:12px 0 0">${slogan(D.conf["スローガン"])}</p>` : ""}</div></div></div></section>`;
   const cards = [lastM ? gameCard(lastM, "LATEST RESULT") : "", ...upc.slice(0, lastM ? 2 : 3).map((m, i) => gameCard(m, i === 0 ? "NEXT MATCH" : "UPCOMING"))].filter(Boolean);
   const news = buildNews();
   const tops = [[PM[0], "得点ランキング"], [PM[1], "アシストランキング"], [PM[3], "平均評価"]].map(([Mx, lb]) => rkCard(Mx, P, lb)).filter(Boolean);
@@ -1090,8 +1099,8 @@ function memberSeasons(p, name, bySeason) {
 function playerTitles(p, name, bySeason) {
   const S = memberSeasons(p, name, bySeason), team = {}, ind = {};
   D.seasons.filter(x => S.has(x.season)).forEach(x => String(x.titles || "").split(/[、,，\/／]/).map(t => t.trim()).filter(Boolean).forEach(t => (team[t] = team[t] || []).push(x.season)));
-  D.seasons.forEach(x => (x.awards || []).forEach(([t, v]) => { if (String(v || "").split(/[、,，\/／]/).some(n => same(n.trim(), name))) (ind[t] = ind[t] || []).push(x.season); }));
-  const box = (o, empTxt) => Object.keys(o).length ? `<div class="trophies">${Object.keys(o).map(t => `<div class="trophy">${ICON.cup}<b>${esc(t)}</b><small>${o[t].sort().map(esc).join("、")}</small><span class="cnt">${o[t].length}</span></div>`).join("")}</div>` : `<div class="panel">${empty(empTxt)}</div>`;
+  (D.awards || []).filter(a => same(a.name, name)).forEach(a => { const t = (a.comp ? a.comp + "\u0001" : "") + a.title; (ind[t] = ind[t] || []).push(a.season || ""); });
+  const box = (o, empTxt) => Object.keys(o).length ? `<div class="trophies">${Object.keys(o).map(t => `<div class="trophy">${ICON.cup}${t.includes("\u0001") ? `<span class="tr-comp">${esc(t.split("\u0001")[0])}</span>` : ""}<b>${esc(t.split("\u0001").pop())}</b><small>${o[t].sort().map(esc).join("、")}</small><span class="cnt">${o[t].length}</span></div>`).join("")}</div>` : `<div class="panel">${empty(empTxt)}</div>`;
   return sec("TITLES", "獲得タイトル") + `<h3 class="sub">チームタイトル</h3>${box(team, "まだタイトルはありません。")}<h3 class="sub">個人タイトル</h3>${box(ind, "まだ個人タイトルはありません。")}`;
 }
 /* チーム歴 */
@@ -1152,7 +1161,7 @@ function vClub() {
   const mgr = staffList().find(p => p.role === "監督"), founded = D.conf["創設年"], sl = D.conf["スローガン"];
   return band("CLUB", "クラブ") + `<section class="club-hero"><div class="club-hero-in">${logo(clubName(), "xl")}<div>
       <p class="kv-lab">${founded ? `EST. ${esc(founded)}` : "CLUB"}</p><h2>${esc(clubName())}</h2>
-      ${sl ? `<p class="club-sl"><small>${esc(ST.cur)} SLOGAN</small>${esc(sl)}</p>` : ""}</div></div></section>
+      ${sl ? `<p class="club-sl"><small>CLUB SLOGAN</small>${slogan(sl)}</p>` : ""}</div></div></section>
     ${identity()}<div class="wrap">
     ${pol.length ? sec("PHILOSOPHY", "クラブの方針") + `<ol class="policy">${pol.map((p, i) => `<li><b>${pad(i + 1)}</b><span>${esc(p)}</span></li>`).join("")}</ol>` : ""}
     ${mgr ? sec("MANAGER", "監督") + `<div class="mgr">${face(mgr.name)}<div><span>MANAGER</span><b>${flag(mgr.nat)}${esc(mgr.name)}</b>${mgr.memo ? `<p>${esc(mgr.memo)}</p>` : ""}
