@@ -1147,7 +1147,7 @@ function vHistory() {
   if (!S.length) return band("HISTORY", "ヒストリー") + `<div class="wrap">${empty("シーズンシートにリーグを入れると、ここに歩みが表示されます。")}</div>`;
   const T = S.map(o => o.t).filter(Boolean), up = (() => { let n = 0, b = 0; S.forEach((o, i) => { if (i && o.t && S[i - 1].t && o.t < S[i - 1].t) { n++; b = Math.max(b, n); } else if (i) n = 0; }); return b; })();
   const tc = {}; S.forEach(o => o.titles.forEach(t => (tc[t] = tc[t] || []).push(o.se)));
-  const nT = Object.values(tc).reduce((a, v) => a + v.length, 0);
+  const nL = S.reduce((a, o) => a + o.titles.filter(t => tier(t)).length, 0), nC = S.reduce((a, o) => a + o.titles.filter(t => !tier(t)).length, 0);
   const res = o => o.champ ? `<span class="hx-r win">${ICON.cup}優勝</span>` : o.cur ? `<span class="hx-r now">シーズン中</span>` : o.rank ? `<span class="hx-r">${o.rank}位</span>` : "";
   const node = o => `<li class="hx${o.champ ? " champ" : ""}${o.pro ? " pro" : ""}${o.cur ? " cur" : ""}">
       <div class="hx-se">${esc(o.se)}</div><i class="hx-dot"></i>
@@ -1157,7 +1157,7 @@ function vHistory() {
         ${o.memo ? `<p class="hx-memo">${esc(o.memo)}</p>` : ""}</div></li>`;
   return band("HISTORY", "ヒストリー") + `<div class="wrap">
     <div class="tiles hx-sum"><div class="tile"><span>スタート</span><b>${Math.max(...T)}<small>部</small></b></div><div class="tile"><span>現在</span><b>${Math.min(...T)}<small>部</small></b></div>
-      <div class="tile"><span>最多連続昇格</span><b>${up}<small>回</small></b></div><div class="tile"><span>優勝回数</span><b>${nT}<small>回</small></b></div></div>
+      <div class="tile"><span>最多連続昇格</span><b>${up}<small>回</small></b></div><div class="tile"><span>リーグ優勝</span><b>${nL}<small>回</small></b></div><div class="tile"><span>カップ戦優勝</span><b>${nC}<small>回</small></b></div></div>
     ${sec("ROAD TO PREMIER LEAGUE", "プレミアリーグへの道")}<ol class="hxl">${[...S].reverse().map(node).join("")}</ol>
     ${sec("TITLES", "獲得タイトル")}${titleBoard(S, tc)}
   </div>`;
