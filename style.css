@@ -761,3 +761,16 @@ h3.sub:first-of-type{margin-top:0}
   .kv::after{right:-6%;width:16%;transform:skewX(-12deg)}
   .kv-club::after{right:-6%;width:14%}
 }
+
+/* ===== 記事下の選手プロフィール ===== */
+.nprof{margin:28px 0 8px;border-top:3px solid var(--navy)}
+.nprof h3{display:flex;align-items:baseline;gap:10px;margin:14px 0 10px;font-family:var(--en);font-style:italic;font-weight:800;font-size:22px;letter-spacing:.04em}
+.nprof h3 small{font-family:var(--font);font-style:normal;font-size:12px;font-weight:700;color:var(--tx3)}
+.nprof dl{display:grid;grid-template-columns:110px 1fr;margin:0;background:var(--white);border:1px solid var(--line)}
+.nprof dt,.nprof dd{margin:0;padding:10px 14px;border-top:1px solid var(--line);font-size:14px}
+.nprof dt{background:#f4f6f8;color:var(--tx2);font-weight:700}
+.nprof dd{font-weight:700}
+.nprof dt:first-of-type,.nprof dt:first-of-type+dd{border-top:0}
+.nprof dd small{margin-left:10px;font-family:var(--en);font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3)}
+@media (max-width:700px){.nprof dl{grid-template-columns:92px 1fr}.nprof dt,.nprof dd{padding:9px 10px;font-size:13px}}
+.nprof .nw{white-space:nowrap}
