@@ -745,3 +745,19 @@ h3.sub:first-of-type{margin-top:0}
 .trophy b{padding-right:56px}
 .tr-comp{display:block;font-size:11px;font-weight:700;color:var(--sky);margin-bottom:2px}
 @media (max-width:700px){.trophy b{padding-right:30px}}
+
+/* ===== KVの斜めライン：文字と重ならないよう右端に寄せる ===== */
+.kv-club::before,.kv-club::after{content:""}
+.kv-club::before{background:radial-gradient(circle at 15% 120%,rgba(255,255,255,.08),transparent 55%)}
+.kv-club::after{position:absolute;top:0;bottom:0;right:-4%;width:24%;background:linear-gradient(90deg,rgba(124,192,232,.95) 0 82%,var(--blue) 82% 94%,transparent 94%);transform:skewX(-22deg);transform-origin:bottom}
+.kv-club .kv-in{grid-template-columns:1fr;z-index:1}
+@media (max-width:900px){
+  .kv::before{background:radial-gradient(circle at 15% 120%,rgba(255,255,255,.08),transparent 55%)}
+  .kv::after{content:"";position:absolute;top:0;bottom:0;right:-10%;width:22%;background:linear-gradient(90deg,rgba(124,192,232,.95) 0 80%,var(--blue) 80% 94%,transparent 94%);transform:skewX(-14deg);transform-origin:bottom}
+  .kv-in{z-index:1}
+  .kv-club::after{right:-14%;width:24%}
+}
+@media (max-width:900px){
+  .kv::after{right:-6%;width:16%;transform:skewX(-12deg)}
+  .kv-club::after{right:-6%;width:14%}
+}
