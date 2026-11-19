@@ -798,3 +798,14 @@ h3.sub:first-of-type{margin-top:0}
 .rd-bar{flex:none;height:calc(var(--h) * 200px)}
 .rd-lg{min-height:44px}
 @media (max-width:700px){.road{height:auto}.rd-bar{height:calc(var(--h) * 170px)}.rd-lg{min-height:48px}}
+/* 段が多いときは横スクロール */
+.road{grid-auto-columns:minmax(64px,1fr);overflow-x:auto;gap:6px}
+.rd-bar b{font-size:24px}
+.rd-lg{font-size:10px;min-height:56px}
+.rd-se{font-size:12px}
+@media (max-width:700px){.road{grid-auto-columns:56px}.rd-bar b{font-size:18px}.rd-lg{font-size:8.5px;min-height:60px}.rd-se{font-size:10px}}
+/* 右端（今のシーズン）から見えるように右から並べる */
+.road{direction:rtl;grid-auto-columns:minmax(54px,1fr)}
+.rd{direction:ltr}
+.rd-c{font-size:9px;padding:1px 4px}
+@media (max-width:700px){.road{grid-auto-columns:56px}}

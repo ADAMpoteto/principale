@@ -637,6 +637,9 @@ function milestones() {
 }
 /* リーグの格（イングランド。数字が小さいほど上） */
 function tier(lg) { const s = String(lg || "");
+  const lv = s.match(/地区リーグ\s*(\d+)\s*部/); if (lv) return 14 + +lv[1];
+  if (/ジンガリ/.test(s)) return 14;
+  if (/LCPL|カウンティ/.test(s)) return /プレミア/.test(s) ? 11 : /2/.test(s) ? 13 : 12;
   if (/NWCFL/.test(s)) return /プレミア/.test(s) ? 9 : 10;
   if (/NPL|ノーザン/.test(s)) return /プレミア/.test(s) ? 7 : 8;
   if (/ナショナルリーグ/.test(s)) return /ノース|サウス/.test(s) ? 6 : 5;
@@ -1125,7 +1128,7 @@ function roadToEfl() {
   const st = [...past.map(x => ({ se: x.season, lg: x.league, champ: String(x.titles || "").includes(x.league), memo: x.comment })),
     { se: first, lg: leagueOfSeason(first) || (D.seasons.find(x => x.season === first) || {}).league || "", now: true }];
   const T = st.map(x => tier(x.lg) || 10), lo = Math.max(...T), hi = Math.min(...T);
-  return sec("ROAD TO EFL", "ノンリーグからの歩み") + `<div class="road">${st.map((x, i) => { const t = T[i], h = (0.34 + (lo - t) / Math.max(1, lo - hi) * 0.66).toFixed(3);
+  return sec("ROAD TO EFL", "ノンリーグからの歩み") + `<div class="road">${st.map((x, i) => [x, i]).reverse().map(([x, i]) => { const t = T[i], h = (0.34 + (lo - t) / Math.max(1, lo - hi) * 0.66).toFixed(3);
     return `<div class="rd${x.now ? " now" : ""}"><div class="rd-bar" style="--h:${h}"><b>${t}<small>部</small></b>${x.champ ? `<span class="rd-c">${ICON.cup}優勝</span>` : x.now ? `<span class="rd-c pro">PRO</span>` : ""}</div>
       <div class="rd-lg">${esc(x.lg)}</div><div class="rd-se">${esc(x.se)}</div></div>`; }).join("")}</div>`;
 }
