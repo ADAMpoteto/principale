@@ -878,3 +878,7 @@ h3.sub:first-of-type{margin-top:0}
 .tb-h .tl-ic,.tb-h .tl-c,.tb-h .tb-n{grid-area:auto}
 .hx-sum{grid-template-columns:repeat(5,minmax(0,1fr))}
 @media (max-width:700px){.hx-sum{grid-template-columns:repeat(2,minmax(0,1fr))}.hx-sum .tile:last-child{grid-column:1/-1}}
+.hx-fa{margin:8px 0 0;font-size:12px;font-weight:700;color:var(--navy);display:flex;align-items:center;gap:6px}
+.hx-fa span{font-family:var(--font);font-size:11px;background:var(--navy);color:#fff;padding:1px 7px}
+.hx-cap{margin:6px 0 0;font-size:12px;color:var(--tx3);font-weight:700}
+.hx-cap a{color:var(--navy)}
