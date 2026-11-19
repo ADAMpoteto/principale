@@ -1114,7 +1114,6 @@ function matchLineup(m) {
   const col = (side, list) => `<div class="lcol">${list.length ? list.map(row).join("") : `<div class="lr none">-</div>`}</div>`;
   const block = (title, sub, f) => { const a = f(h.hs), b = f(h.as); return a.length || b.length ? `<div class="lsec"><div class="lsec-h">${title}<small>${sub}</small></div><div class="lcols">${col(h.hs, a)}${col(h.as, b)}</div></div>` : ""; };
   return pitch + `<div class="lcols lhead"><div>${logo(club(h.hs), "sm")}${esc(club(h.hs))}</div><div>${logo(club(h.as), "sm")}${esc(club(h.as))}</div></div>`
-    + block("STARTING MEMBER", "先発", side => L(side).filter(l => l.role === "先発"))
     + block("SUBSTITUTES", "控え", side => [...L(side).filter(l => l.role !== "先発"), ...B(side)]);
 }
 
