@@ -876,3 +876,5 @@ h3.sub:first-of-type{margin-top:0}
 @media (max-width:900px){.tboard{grid-template-columns:1fr}}
 @media (max-width:700px){.tb{padding:12px}.tb-h{grid-template-columns:40px 1fr auto;gap:10px}.tb-rows li{grid-template-columns:58px 1fr auto;font-size:12px}}
 .tb-h .tl-ic,.tb-h .tl-c,.tb-h .tb-n{grid-area:auto}
+.hx-sum{grid-template-columns:repeat(5,minmax(0,1fr))}
+@media (max-width:700px){.hx-sum{grid-template-columns:repeat(2,minmax(0,1fr))}.hx-sum .tile:last-child{grid-column:1/-1}}
