@@ -907,7 +907,7 @@ function vHome() {
     <div class="sch-btns"><a class="btn" href="#/matches">試合日程・結果一覧</a><a class="btn" href="#/table">順位表</a></div></div></section>
   <div class="wrap">
     ${sec("NEWS", "ニュース", "#/news", "MORE")}
-    ${news.length ? `<div class="ngrid">${news.slice(0, 4).map(newsCard).join("")}</div>${news.length > 4 ? newsList(news.slice(4, 9)) : ""}` : `<div class="panel">${empty("ニュースはまだありません。")}</div>`}
+    ${news.length ? `<div class="ngrid">${news.slice(0, 6).map(newsCard).join("")}</div>` : `<div class="panel">${empty("ニュースはまだありません。")}</div>`}
     <div class="grid" style="margin-top:8px"><div>
       ${sec("STANDINGS", st ? st.comp : "順位表", "#/table", "MORE")}
       ${me ? `<div class="stc"><div class="stc-rk"><b>${me.rank}</b><small>位</small></div><div class="stc-r"><span>${me.p}試合</span><b>${me.w}勝 ${me.d}分 ${me.l}敗</b><span>勝点 <b>${me.pts}</b>　得失点差 ${me.gf - me.ga > 0 ? "+" : ""}${me.gf - me.ga}${asOf ? `　（${asOf} 時点）` : ""}</span></div></div>` : ""}
@@ -930,7 +930,7 @@ function vNews(id) {
   const L = all.filter(n => ST.ncat === "ALL" || n.cat === ST.ncat);
   return band("NEWS", "ニュース") + `<div class="wrap">
     <div class="pills" id="ncat">${cats.map(c => `<button class="pill${c === ST.ncat ? " on" : ""}" data-c="${c}">${c === "ALL" ? "すべて" : NCAT[c]}</button>`).join("")}</div>
-    ${L.length ? `<div class="ngrid">${L.slice(0, 4).map(newsCard).join("")}</div>${L.length > 4 ? newsList(L.slice(4, 100)) : ""}` : `<div class="panel">${empty("ニュースはまだありません。")}</div>`}</div>`;
+    ${L.length ? `<div class="ngrid">${L.slice(0, 60).map(newsCard).join("")}</div>` : `<div class="panel">${empty("ニュースはまだありません。")}</div>`}</div>`;
 }
 function bNews() { document.querySelectorAll("#ncat .pill").forEach(b => b.onclick = () => { ST.ncat = b.dataset.c; render(); }); }
 
