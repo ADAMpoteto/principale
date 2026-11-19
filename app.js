@@ -1157,7 +1157,7 @@ function vHistory() {
         ${o.memo ? `<p class="hx-memo">${esc(o.memo)}</p>` : ""}</div></li>`;
   return band("HISTORY", "ヒストリー") + `<div class="wrap">
     <div class="tiles hx-sum"><div class="tile"><span>スタート</span><b>${Math.max(...T)}<small>部</small></b></div><div class="tile"><span>現在</span><b>${Math.min(...T)}<small>部</small></b></div>
-      <div class="tile"><span>最多連続昇格</span><b>${up}<small>回</small></b></div><div class="tile"><span>獲得タイトル</span><b>${nT}</b></div></div>
+      <div class="tile"><span>最多連続昇格</span><b>${up}<small>回</small></b></div><div class="tile"><span>優勝回数</span><b>${nT}<small>回</small></b></div></div>
     ${sec("ROAD TO PREMIER LEAGUE", "プレミアリーグへの道")}<ol class="hxl">${[...S].reverse().map(node).join("")}</ol>
     ${sec("TITLES", "獲得タイトル")}${titleBoard(S, tc)}
   </div>`;
