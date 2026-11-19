@@ -780,7 +780,7 @@ function newsBody(n) {
       + (H.length ? P(`${esc(m.opp)}との対戦成績は${r.n}試合${r.w}勝${r.d}分${r.l}敗です。`) : P(`${esc(m.opp)}とは初めての対戦です。`))
       + `<p class="nbtn"><a class="btn" href="#/match/${m.id}">MATCH INFO</a></p>`; }
   if (n.tr) { const t = n.tr, pr = prof(t.name) || {}, cl = t.club ? esc(t.club) + (leagueOf(t.club) ? `（${esc(leagueOf(t.club))}）` : "") : "";
-    const ag = t.age != null ? t.age : age(pr.birth, t.date);
+    const ag = trAge(t);
     const who = `${esc(t.name)}選手${ag != null ? `（${ag}歳）` : ""}`;
     const tx = { ユース昇格: `${who}が、アカデミーからトップチームに昇格することが決まりましたので、お知らせいたします。`,
       退団: cl ? `${who}が、${cl}へ完全移籍することが決まりましたので、お知らせいたします。` : `${who}が退団することになりましたので、お知らせいたします。`,
@@ -1219,12 +1219,14 @@ function historyRows(p, name, bySeason) {
 
 const IN_KINDS = /^(加入|レンタル加入|レンタル復帰|ユース昇格)$/, OUT_KINDS = /^(退団|レンタル移籍)$/;
 const KIND_TXT = { レンタル加入: "期限付き加入", レンタル移籍: "期限付き移籍", レンタル復帰: "復帰", ユース昇格: "昇格", 契約延長: "契約更新" };
+/* 移籍時の年齢：生年月日があればその日付で計算、なければシートの値 */
+function trAge(t) { const p = prof(t.name); return p && p.birth ? age(p.birth, t.date) : t.age; }
 function trRow(t) {
   const cls = IN_KINDS.test(t.kind) ? "in" : OUT_KINDS.test(t.kind) ? "out" : "etc";
   const cl = t.club ? t.club + (leagueOf(t.club) ? `（${leagueOf(t.club)}）` : "") : "";
   const from = cls === "in" ? (cl ? `前所属：${cl}` : "") : cls === "out" ? (cl ? `${t.kind === "レンタル移籍" ? "期限付き移籍先" : "移籍先"}：${cl}` : "") : cl;
   return `<div class="trow"><a class="who" href="#/player/${encodeURIComponent(t.name)}">${face(t.name)}<div><b><span class="kind ${cls}">${esc(KIND_TXT[t.kind] || t.kind)}</span>${esc(t.name)}</b>
-    <small>${[t.pos, t.age != null ? t.age + "歳" : "", from, t.memo].filter(Boolean).map(esc).join("　")}</small></div></a>
+    <small>${[t.pos, trAge(t) != null ? trAge(t) + "歳" : "", from, t.memo].filter(Boolean).map(esc).join("　")}</small></div></a>
     <div class="fee">${t.fee != null ? money(t.fee) : ""}<small>${dotY(t.date)}</small></div></div>`;
 }
 function vTransfers() {
