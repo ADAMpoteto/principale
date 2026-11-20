@@ -1349,3 +1349,6 @@ img.ico-ball{width:18px;height:18px;padding:2px;box-sizing:border-box;background
 .mh img.ico-ball,.mh-sc img.ico-ball{box-shadow:none}
 /* 評価点はいつも右上（端の選手でも左に回さない） */
 .lp.rl .lp-ph .rt.b-tr,.lp.rl .rt.lp-rt{left:auto;right:-14px}
+/* 試合結果：勝ち＝緑／負け＝赤／引き分け＝グレー */
+.mh-res{color:#fff}
+.mh-res.W{background:var(--w)}.mh-res.D{background:var(--d)}.mh-res.L{background:var(--l)}
