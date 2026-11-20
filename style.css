@@ -1257,3 +1257,10 @@ a.sb:hover .sb-nm{color:var(--blue)}
   .kv-date{justify-content:center}
 }
 .tile b.form5 span.wdl{display:inline-grid;place-items:center;width:26px;height:26px;margin:0;padding:0;color:#fff;font-family:var(--en);font-size:13px;font-weight:700;line-height:1;letter-spacing:0}
+/* 試合カード：ヘッダーも中央揃え、左右のクラブ幅を均等に */
+.gcard{position:relative}
+.g-lab,.g-comp{text-align:center}
+.g-date{justify-content:center}
+.g-ha{position:absolute;top:14px;right:14px;margin:0;line-height:1.5}
+.g-vs{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)}
+.g-club{min-width:0;overflow-wrap:anywhere}
