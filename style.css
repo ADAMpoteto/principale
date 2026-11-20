@@ -1356,3 +1356,6 @@ img.ico-ball{width:18px;height:18px;padding:2px;box-sizing:border-box;background
 .ev.pk-row .m.pk-sc{font-family:var(--en);font-weight:800;font-size:15px;color:var(--navy)}
 .pk-ic.ng{color:var(--l)}
 .pk-ic.ng svg{width:18px;height:18px}
+/* 試合経過の区切り：ラベルの下にスコア（縦並び） */
+.ev-ph{flex-direction:column;gap:2px;padding:10px 12px}
+.ev-ph span{font-size:18px;line-height:1.1}
