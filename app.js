@@ -105,7 +105,8 @@ const ST = { season: null, comp: "すべて", mtab: "facts", trSeason: null };
 const clubName = () => D.conf["クラブ名"] || DEFAULT_CLUB;
 const shortName = () => D.conf["略称"] || clubName();
 function isMe(club) { const k = nameKey(club); return !!k && (k === nameKey(clubName()) || k === nameKey(D.conf["略称"]) || k === nameKey(DEFAULT_CLUB) || /^自分/.test(club)); }
-const sideOf = s => /相手|opp|away/i.test(s) ? "opp" : "me";
+/* チーム列：チーム名（推奨）または 自分／相手 */
+const sideOf = s => { s = String(s || "").trim(); return !s || s === "自分" ? "me" : /^(相手|opp|away)$/i.test(s) ? "opp" : isMe(s) ? "me" : "opp"; };
 
 /* 出場選手シートの数字の列（チームスタッツに無いときは選手の合計を使う） */
 const LU_NUM = ["出場時間", "評価", "得点", "アシスト", "シュート", "枠内シュート", "ゴール期待値", "パス", "パス成功", "キーパス", "ドリブル", "ドリブル成功",
