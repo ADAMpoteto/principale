@@ -201,7 +201,7 @@ async function loadAll() {
       /* シュートは「打った側」で記録する。旧い書き方（シュート／枠内シュート／セーブ）も読めるように */
       if (e.kind === "シュート") e.kind = "シュート（枠外）";
       else if (e.kind === "枠内シュート") e.kind = "シュート（セーブ）";
-      else if (e.kind === "セーブ") { e.kind = "シュート（セーブ）"; [e.player, e.rel] = [e.rel, e.player]; e.side = e.side === "me" ? "opp" : "me"; }
+
       /* オウンゴール：チーム列は蹴った選手のチームなので、得点は相手側に付ける */
       if (e.kind === "オウンゴール") { const mine = m.lu.concat(m.bench || []).some(l => same(l.name, e.player)), opp = (m.luOpp || []).concat(m.benchOpp || []).some(l => same(l.name, e.player));
         e.side = mine ? "opp" : opp ? "me" : e.side === "me" ? "opp" : "me"; } });
@@ -283,7 +283,7 @@ async function loadAll() {
 function curSeason() { const t = gameToday(), y = t.getFullYear(); return t.getMonth() >= 6 ? `${y}-${String(y + 1).slice(2)}` : `${y - 1}-${String(y).slice(2)}`; }
 /* 試合の区切り（キックオフ・ハーフタイムなど）。分が空欄でも正しい位置に並べる */
 const PHASE = { キックオフ: ["KICK OFF", -1], 前半終了: ["HALF TIME", 45.98], 後半開始: ["SECOND HALF", 45.99], 後半終了: ["END OF 2ND HALF", 90.98], 延長開始: ["EXTRA TIME", 90.99], 延長前半終了: ["ET HALF TIME", 105.98], 延長後半開始: ["ET SECOND HALF", 105.99], 延長終了: ["END OF EXTRA TIME", 120.98], PK戦: ["PENALTY SHOOT-OUT", 9998], 試合終了: ["FULL TIME", 9999] };
-const MINOR = ["シュート（枠外）", "シュート（セーブ）", "シュート（ブロック）", "ポスト・バー", "オフサイド", "ビッグチャンス"];
+const MINOR = ["セーブ", "シュート（枠外）", "シュート（セーブ）", "シュート（ブロック）", "ポスト・バー", "オフサイド", "ビッグチャンス"];
 function phaseOrd(e) { const p = PHASE[e.kind]; return p ? p[1] : e.mn; }
 /* YouTube */
 function ytInfo(u) { u = String(u || "").trim(); if (!u) return null;
@@ -1117,16 +1117,16 @@ function headToHead(m) {
 function matchFacts(m, h) {
   const evs = m.ev.filter(e => e.kind !== "その他" || e.note || e.video);
   const SVG = d => `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
-  const EI = { "シュート（枠外）": SVG('<circle cx="12" cy="12" r="8"/>'), "シュート（セーブ）": SVG('<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor"/>'), "シュート（ブロック）": SVG('<circle cx="12" cy="12" r="8"/><path d="M6.5 17.5l11-11"/>'),
+  const EI = { セーブ: SVG('<path d="M8 13V6a1.5 1.5 0 0 1 3 0v5V4.5a1.5 1.5 0 0 1 3 0V11V6a1.5 1.5 0 0 1 3 0v8a6 6 0 0 1-6 6h-1a6 6 0 0 1-4.6-2.2L3.5 15a1.5 1.5 0 0 1 2.3-1.9L8 15"/>'), "シュート（枠外）": SVG('<circle cx="12" cy="12" r="8"/>'), "シュート（セーブ）": SVG('<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor"/>'), "シュート（ブロック）": SVG('<circle cx="12" cy="12" r="8"/><path d="M6.5 17.5l11-11"/>'),
     "ポスト・バー": SVG('<path d="M4 20V5h16v15"/><circle cx="17" cy="8" r="2.4" fill="currentColor"/>'), 
     オフサイド: SVG('<path d="M6 21V4"/><path d="M6 4h11l-2.5 4L17 12H6"/>'), ビッグチャンス: SVG('<path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/>'),
     PK失敗: SVG('<circle cx="12" cy="12" r="8"/><path d="M8 8l8 8M16 8l-8 8"/>'), 負傷: SVG('<path d="M12 5v14M5 12h14"/>'), VAR: SVG('<rect x="3" y="5" width="18" height="12" rx="1.5"/><path d="M8 21h8"/>') };
   const icon = e => `<span class="ico">${isGoal(e) ? ICON.ball : e.kind === "警告" ? `<i class="cardY"></i>` : e.kind === "退場" ? `<i class="cardR"></i>` : e.kind === "交代" ? ICON.sub : EI[e.kind] || ""}</span>`;
-  const LBL = { "シュート（枠外）": "シュート（枠外）", "シュート（セーブ）": "シュート（セーブされる）", "シュート（ブロック）": "シュート（ブロックされる）", "ポスト・バー": "ポスト・バー直撃", オフサイド: "オフサイド", ビッグチャンス: "決定機", PK失敗: "PK失敗", 負傷: "負傷", VAR: "VAR" };
+  const LBL = { セーブ: "セーブ", "シュート（枠外）": "シュート（枠外）", "シュート（セーブ）": "シュート（セーブされる）", "シュート（ブロック）": "シュート（ブロックされる）", "ポスト・バー": "ポスト・バー直撃", オフサイド: "オフサイド", ビッグチャンス: "決定機", PK失敗: "PK失敗", 負傷: "負傷", VAR: "VAR" };
   const evTxt = e => {
     const nm = e.player ? (e.side === "me" ? pLink(e.player) : esc(e.player)) : `<span class="ev-k">${esc(LBL[e.kind] || e.kind)}</span>`;
     const parts = e.kind === "交代" ? [`OUT ${esc(e.rel)}`] : isGoal(e) ? [e.kind === "PKゴール" ? "PK" : e.kind === "オウンゴール" ? "オウンゴール" : "", e.rel ? `アシスト：${esc(e.rel)}` : ""]
-      : e.kind === "シュート（セーブ）" ? [e.player ? LBL[e.kind] : "", e.rel ? `GK：${esc(e.rel)}` : ""] : e.kind === "シュート（ブロック）" ? [e.player ? LBL[e.kind] : "", e.rel ? `ブロック：${esc(e.rel)}` : ""] : LBL[e.kind] && e.player ? [LBL[e.kind], e.rel ? esc(e.rel) : ""] : [e.rel ? esc(e.rel) : ""];
+      : e.kind === "セーブ" ? ["セーブ", e.rel ? `シュート：${esc(e.rel)}` : ""] : e.kind === "シュート（セーブ）" ? [e.player ? LBL[e.kind] : "", e.rel ? `GK：${esc(e.rel)}` : ""] : e.kind === "シュート（ブロック）" ? [e.player ? LBL[e.kind] : "", e.rel ? `ブロック：${esc(e.rel)}` : ""] : LBL[e.kind] && e.player ? [LBL[e.kind], e.rel ? esc(e.rel) : ""] : [e.rel ? esc(e.rel) : ""];
     if (e.note) parts.push(esc(e.note));
     const sub = parts.filter(Boolean).join("　");
     return `<div>${nm}${sub ? `<small>${sub}</small>` : ""}</div>`;
