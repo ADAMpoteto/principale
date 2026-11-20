@@ -159,7 +159,7 @@ async function loadAll() {
     const res = !played ? "U" : gf > ga ? "W" : gf < ga ? "L" : pk ? (pk.a > pk.b ? "W" : "L") : "D";
     return { i, season: F(o, "シーズン"), date, key: dKey(date), comp: F(o, "大会") || "試合", round: F(o, "節・ラウンド"), ha, opp, gf, ga, pk, res, played,
       scorers: parseNames(F(o, "得点者")), assists: parseNames(F(o, "アシスト")), mom: F(o, "MOM"), stadium: F(o, "スタジアム"), kick: half(F(o, "キックオフ")), weather: F(o, "天気"), att: num(F(o, "観客数")),
-      memo: F(o, "メモ"), ts: {}, form: {}, lu: [], luOpp: [], bench: [], benchOpp: [], ev: [] };
+      memo: F(o, "メモ"), video: F(o, "動画"), ts: {}, form: {}, lu: [], luOpp: [], bench: [], benchOpp: [], ev: [] };
   }).filter(Boolean);
   D.matches.sort((a, b) => (a.date && b.date ? a.date - b.date : 0) || a.i - b.i);
   D.matches.forEach((m, k) => m.id = k + 1);
@@ -184,10 +184,11 @@ async function loadAll() {
   got.ev.forEach((o, i) => {
     const m = byKey[dKey(pDate(F(o, "日付")))]; if (!m) return;
     m.ev.push({ i, min: half(F(o, "分")), mn: minN(F(o, "分")), side: sideOf(F(o, "チーム")), kind: F(o, "種類") || "その他",
-      player: F(o, "選手"), rel: F(o, "関連する選手"), note: F(o, "補足") });
+      player: F(o, "選手"), rel: F(o, "関連する選手"), note: F(o, "補足"), video: F(o, "動画") });
   });
   D.matches.forEach(m => {
-    m.ev.sort((a, b) => a.mn - b.mn || a.i - b.i);
+    m.ev.forEach(e => { e.ord = phaseOrd(e); });
+    m.ev.sort((a, b) => a.ord - b.ord || a.i - b.i);
     if (!m.played) return;
     /* 得点者・アシストが空欄なら、出場選手 → 試合経過 の順で補う */
     if (!m.scorers.length) {
@@ -263,6 +264,20 @@ async function loadAll() {
 }
 /* 今のシーズン（7月はじまり。例：2026年11月 → 2026-27） */
 function curSeason() { const t = gameToday(), y = t.getFullYear(); return t.getMonth() >= 6 ? `${y}-${String(y + 1).slice(2)}` : `${y - 1}-${String(y).slice(2)}`; }
+/* 試合の区切り（キックオフ・ハーフタイムなど）。分が空欄でも正しい位置に並べる */
+const PHASE = { キックオフ: ["KICK OFF", -1], 前半終了: ["HALF TIME", 45.98], 後半開始: ["SECOND HALF", 45.99], 後半終了: ["END OF 2ND HALF", 90.98], 延長開始: ["EXTRA TIME", 90.99], 延長前半終了: ["ET HALF TIME", 105.98], 延長後半開始: ["ET SECOND HALF", 105.99], 延長終了: ["END OF EXTRA TIME", 120.98], PK戦: ["PENALTY SHOOT-OUT", 9998], 試合終了: ["FULL TIME", 9999] };
+const MINOR = ["シュート", "枠内シュート", "ポスト・バー", "セーブ", "オフサイド", "ビッグチャンス"];
+function phaseOrd(e) { const p = PHASE[e.kind]; return p ? p[1] : e.mn; }
+/* YouTube */
+function ytInfo(u) { u = String(u || "").trim(); if (!u) return null;
+  const m = u.match(/(?:youtu\.be\/|[?&]v=|\/embed\/|\/shorts\/|\/live\/)([\w-]{11})/) || u.match(/^([\w-]{11})$/); if (!m) return null;
+  const t = u.match(/[?&#](?:t|start)=(?:(\d+)h)?(?:(\d+)m)?(\d+)s?/); const st = t ? (+t[1] || 0) * 3600 + (+t[2] || 0) * 60 + (+t[3] || 0) : 0;
+  return { id: m[1], st }; }
+function ytBox(u, cls) { const y = ytInfo(u); if (!y) return "";
+  return `<div class="yt ${cls || ""}" data-id="${y.id}" data-st="${y.st}" onclick="ytPlay(this)" role="button" aria-label="動画を再生"><img src="https://i.ytimg.com/vi/${y.id}/hqdefault.jpg" alt="" loading="lazy"><span class="yt-play"><svg viewBox="0 0 68 48"><path d="M66.5 7.7a8.5 8.5 0 0 0-6-6C55.3.3 34 .3 34 .3s-21.3 0-26.5 1.4a8.5 8.5 0 0 0-6 6C.1 13 .1 24 .1 24s0 11 1.4 16.3a8.5 8.5 0 0 0 6 6C12.7 47.7 34 47.7 34 47.7s21.3 0 26.5-1.4a8.5 8.5 0 0 0 6-6C67.9 35 67.9 24 67.9 24s0-11-1.4-16.3z" fill="#e00"/><path d="M27 34V14l18 10z" fill="#fff"/></svg></span></div>`; }
+window.ytPlay = el => { if (el.querySelector("iframe")) return;
+  el.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${el.dataset.id}?autoplay=1&rel=0&playsinline=1${+el.dataset.st ? "&start=" + el.dataset.st : ""}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen title="YouTube"></iframe>`;
+  el.classList.add("on"); };
 const isGoal = e => /ゴール/.test(e.kind) && !/失敗/.test(e.kind);
 function count(names) { const c = {}; names.filter(Boolean).forEach(n => c[n] = (c[n] || 0) + 1); return Object.keys(c).map(n => ({ name: n, n: c[n] })); }
 
@@ -981,7 +996,7 @@ function vMatch(id) {
   let body = "";
   if (m.played) body = ST.mtab === "facts" ? matchFacts(m, h) : ST.mtab === "stats" ? matchStats(m, h, false) : matchLineup(m);
   /* 試合前でもスタメンが入っていれば表示 */
-  else body = matchPreview(m, h) + (m.lu.length || m.luOpp.length ? `<div class="ph">LINE-UP<small>メンバー</small></div>${matchLineup(m)}` : "") + headToHead(m);
+  else body = (ytInfo(m.video) ? `<div class="ph">VIDEO<small>動画</small></div><div class="hlw">${ytBox(m.video, "hl")}</div>` : "") + matchPreview(m, h) + (m.lu.length || m.luOpp.length ? `<div class="ph">LINE-UP<small>メンバー</small></div>${matchLineup(m)}` : "") + headToHead(m);
   /* 得点者：ホームは右寄せ、アウェイは左寄せでスコアの下に */
   const gl = side => { const E = evGoals(side);
     if (E.length) return E.map(e => `<li>${ICON.ball}<span>${esc(e.player)}</span><em>${esc(e.min)}'${e.kind === "PKゴール" ? " PK" : e.kind === "オウンゴール" ? " OG" : ""}</em></li>`).join("");
@@ -1050,25 +1065,44 @@ function headToHead(m) {
   return `<div class="ph">${esc(m.opp)}との対戦成績<small>${r.w}勝 ${r.d}分 ${r.l}敗</small></div><div class="mlist">${L.slice(-5).reverse().map(matchRow).join("")}</div>`;
 }
 function matchFacts(m, h) {
-  const evs = m.ev.filter(e => e.kind !== "その他" || e.note);
-  const icon = e => `<span class="ico">${isGoal(e) ? ICON.ball : e.kind === "警告" ? `<i class="cardY"></i>` : e.kind === "退場" ? `<i class="cardR"></i>` : e.kind === "交代" ? ICON.sub : ""}</span>`;
+  const evs = m.ev.filter(e => e.kind !== "その他" || e.note || e.video);
+  const SVG = d => `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+  const EI = { シュート: SVG('<circle cx="12" cy="12" r="8"/>'), 枠内シュート: SVG('<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor"/>'),
+    "ポスト・バー": SVG('<path d="M4 20V5h16v15"/><circle cx="17" cy="8" r="2.4" fill="currentColor"/>'), セーブ: SVG('<path d="M8 13V6a1.5 1.5 0 0 1 3 0v5V4.5a1.5 1.5 0 0 1 3 0V11V6a1.5 1.5 0 0 1 3 0v8a6 6 0 0 1-6 6h-1a6 6 0 0 1-4.6-2.2L3.5 15a1.5 1.5 0 0 1 2.3-1.9L8 15"/>'),
+    オフサイド: SVG('<path d="M6 21V4"/><path d="M6 4h11l-2.5 4L17 12H6"/>'), ビッグチャンス: SVG('<path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/>'),
+    PK失敗: SVG('<circle cx="12" cy="12" r="8"/><path d="M8 8l8 8M16 8l-8 8"/>'), 負傷: SVG('<path d="M12 5v14M5 12h14"/>'), VAR: SVG('<rect x="3" y="5" width="18" height="12" rx="1.5"/><path d="M8 21h8"/>') };
+  const icon = e => `<span class="ico">${isGoal(e) ? ICON.ball : e.kind === "警告" ? `<i class="cardY"></i>` : e.kind === "退場" ? `<i class="cardR"></i>` : e.kind === "交代" ? ICON.sub : EI[e.kind] || ""}</span>`;
+  const LBL = { シュート: "シュート", 枠内シュート: "枠内シュート", "ポスト・バー": "ポスト・バー直撃", セーブ: "セーブ", オフサイド: "オフサイド", ビッグチャンス: "決定機", PK失敗: "PK失敗", 負傷: "負傷", VAR: "VAR" };
   const evTxt = e => {
-    const nm = e.side === "me" ? pLink(e.player) : esc(e.player);
-    const sub = e.kind === "交代" ? `<small>OUT ${esc(e.rel)}</small>` : isGoal(e) && e.rel ? `<small>アシスト：${esc(e.rel)}</small>` : e.kind === "オウンゴール" ? "<small>オウンゴール</small>" : e.kind === "PKゴール" ? "<small>PK</small>" : e.note ? `<small>${esc(e.note)}</small>` : "";
-    return `<div>${nm}${sub}</div>`;
+    const nm = e.player ? (e.side === "me" ? pLink(e.player) : esc(e.player)) : `<span class="ev-k">${esc(LBL[e.kind] || e.kind)}</span>`;
+    const parts = e.kind === "交代" ? [`OUT ${esc(e.rel)}`] : isGoal(e) ? [e.kind === "PKゴール" ? "PK" : e.kind === "オウンゴール" ? "オウンゴール" : "", e.rel ? `アシスト：${esc(e.rel)}` : ""]
+      : e.kind === "セーブ" ? [LBL[e.kind], e.rel ? `シュート：${esc(e.rel)}` : ""] : LBL[e.kind] && e.player ? [LBL[e.kind], e.rel ? esc(e.rel) : ""] : [e.rel ? esc(e.rel) : ""];
+    if (e.note) parts.push(esc(e.note));
+    const sub = parts.filter(Boolean).join("　");
+    return `<div>${nm}${sub ? `<small>${sub}</small>` : ""}</div>`;
   };
-  let ht = false;
+  const vbtn = e => ytInfo(e.video) ? `<button type="button" class="ev-vb" onclick="const v=this.closest('.ev').nextElementSibling;v.hidden=!v.hidden;if(!v.hidden)ytPlay(v.firstElementChild)" aria-label="動画を見る"><svg viewBox="0 0 24 24" width="12" height="12"><path d="M7 4v16l13-8z" fill="currentColor"/></svg><span>動画</span></button>` : "";
+  const hasPhase = evs.some(e => PHASE[e.kind]);
+  let ht = false, a = 0, b = 0;
+  const sc = () => h.hs === "me" ? `${a} - ${b}` : `${b} - ${a}`;
   const tl = evs.map(e => {
-    let pre = ""; if (!ht && e.mn > 45.99 && e.mn < 999) { ht = true; pre = `<div class="ev-ht">HALF TIME</div>`; }
-    const left = (e.side === "me") === (h.hs === "me");
-    return pre + `<div class="ev"><div class="l">${left ? evTxt(e) + icon(e) : ""}</div><div class="m">${esc(e.min)}${e.min ? "'" : ""}</div><div class="r">${left ? "" : icon(e) + evTxt(e)}</div></div>`;
+    if (PHASE[e.kind]) { const ft = e.kind === "試合終了", score = e.kind !== "キックオフ" && e.kind !== "後半開始" && e.kind !== "延長開始" && e.kind !== "延長後半開始";
+      return `<div class="ev-ph${ft ? " ft" : ""}"><b>${PHASE[e.kind][0]}</b>${score ? `<span>${ft ? scoreTxt(m) : sc()}</span>` : ""}${e.min && !ft && e.kind !== "キックオフ" ? `<small>${esc(e.min)}'</small>` : ""}${e.note ? `<small>${esc(e.note)}</small>` : ""}</div>`; }
+    let pre = ""; if (!hasPhase && !ht && e.mn > 45.99 && e.mn < 999) { ht = true; pre = `<div class="ev-ph"><b>HALF TIME</b><span>${sc()}</span></div>`; }
+    if (isGoal(e)) e.side === "me" ? a++ : b++;
+    const left = (e.side === "me") === (h.hs === "me"), minor = MINOR.includes(e.kind);
+    return pre + `<div class="ev${minor ? " minor" : ""}${isGoal(e) ? " goal" : ""}"><div class="l">${left ? vbtn(e) + evTxt(e) + icon(e) : ""}</div><div class="m">${esc(e.min)}${e.min ? "'" : ""}</div><div class="r">${left ? "" : icon(e) + evTxt(e) + vbtn(e)}</div></div>`
+      + (vbtn(e) ? `<div class="ev-v" hidden>${ytBox(e.video)}</div>` : "");
   }).join("");
+  const nMinor = evs.filter(e => MINOR.includes(e.kind)).length;
+  const tlHead = `<div class="ph">試合経過${nMinor ? `<label class="ev-tg"><input type="checkbox" onchange="this.closest('.evw').classList.toggle('main',!this.checked)" checked>シュート・セーブも表示</label>` : ""}</div>`;
+  const hl = ytBox(m.video, "hl");
   const mom = m.mom ? (() => { const l = m.momL, op = l && l.side === "opp";
     const inner = `<div class="mom-ph">${face(m.mom)}</div><div class="mom-tx"><span>MAN OF THE MATCH</span><b>${esc(m.mom)}</b><small>${[l && l.no != null ? "#" + l.no : "", l ? l.pos : "", op ? m.opp : ""].filter(Boolean).map(esc).join("　")}</small></div>${l && l.rating != null ? `<div class="mom-rt"><small>RATING</small><b>${fmtN(l.rating, 1)}</b></div>` : ""}`;
     return op ? `<div class="mom">${inner}</div>` : `<a class="mom" href="#/player/${encodeURIComponent(m.mom)}">${inner}</a>`; })() : "";
   const stats = matchStats(m, h, true);
-  return `${mom}${tl ? `<div class="ph">試合経過</div>${tl}` : ""}${stats}${m.memo ? `<p style="padding:14px 18px;margin:0;color:var(--tx2)">${esc(m.memo)}</p>` : ""}
-    ${!mom && !tl && !stats ? empty("試合の詳細はまだありません。") : ""}`;
+  return `${hl ? `<div class="ph">HIGHLIGHTS<small>ハイライト</small></div><div class="hlw">${hl}</div>` : ""}${mom}${tl ? `<div class="evw">${tlHead}${tl}</div>` : ""}${stats}${m.memo ? `<p style="padding:14px 18px;margin:0;color:var(--tx2)">${esc(m.memo)}</p>` : ""}
+    ${!mom && !tl && !stats && !hl ? empty("試合の詳細はまだありません。") : ""}`;
 }
 function matchStats(m, h, short) {
   const H = h.hs, A = h.as;
