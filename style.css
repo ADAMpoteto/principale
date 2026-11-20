@@ -1223,3 +1223,37 @@ a.sb:hover .sb-nm{color:var(--blue)}
 .hlw .yt{max-width:860px;margin:0 auto}
 @media (max-width:700px){.hlw{padding:12px}.ev-v{padding:8px 10px 12px}.ph .ev-tg{font-size:11px}}
 @media (max-width:700px){.ev-vb{padding:5px}.ev-vb span{display:none}.ev{gap:6px;padding:9px 10px;grid-template-columns:1fr 44px 1fr}}
+/* ===== UIの整列まわり ===== */
+.ngrid.ng3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:900px){.ngrid.ng3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.grid>div>.sec:first-child{margin-top:40px}
+/* 記録カード：最後の段が半端なときは中央に寄せる */
+.sgrid:not(.sgrid3){display:flex;flex-wrap:wrap;justify-content:center}
+.sgrid:not(.sgrid3)>*{flex:0 0 calc((100% - 60px) / 4)}
+@media (max-width:1100px){.sgrid:not(.sgrid3)>*{flex-basis:calc((100% - 40px) / 3)}}
+@media (max-width:860px){.sgrid:not(.sgrid3)>*{flex-basis:calc((100% - 20px) / 2)}}
+@media (max-width:560px){.sgrid:not(.sgrid3)>*{flex-basis:100%}}
+.rk-top .big.l4{font-size:42px}
+.rk-top .big.l5{font-size:34px}
+/* タイルは空きマスを作らない */
+.tiles{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.tiles[style*="--c"]{grid-template-columns:repeat(var(--c),minmax(0,1fr))}
+@media (max-width:700px){.tiles[style*="--c"]{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:420px){.tiles[style*="--c"]{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.policy{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+/* 前後ナビ：片方しかなくてもボタンは中央 */
+.mnav{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)}
+@media (max-width:600px){.mnav{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+/* 直近5試合のチップ */
+.tile b.form5 .wdl{width:26px;height:26px;font-size:13px;line-height:1;font-weight:700}
+/* 順位カード：右の斜め帯に文字がかからないように */
+.stc-r{position:relative;z-index:1;padding-right:70px}
+/* 試合タブ：スマホは3等分 */
+@media (max-width:700px){.mtabs{display:grid;grid-template-columns:repeat(3,1fr)}.mtabs a{padding:12px 2px}}
+/* トップのキービジュアル：スマホは中央揃え */
+@media (max-width:900px){
+  .kv-in>div:first-child{text-align:center}
+  .kv-sl{justify-content:center}
+  .kv-date{justify-content:center}
+}
+.tile b.form5 span.wdl{display:inline-grid;place-items:center;width:26px;height:26px;margin:0;padding:0;color:#fff;font-family:var(--en);font-size:13px;font-weight:700;line-height:1;letter-spacing:0}
