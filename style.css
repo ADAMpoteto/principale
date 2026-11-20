@@ -1328,3 +1328,16 @@ a.pr-row:hover b{color:var(--blue)}
 /* ボールも白い丸の上に */
 .lp-ph .b-g img{width:19px;height:19px;padding:2px;box-sizing:border-box;background:#fff;border-radius:50%;filter:none;box-shadow:0 1px 2px rgba(0,0,0,.3)}
 .lp-ph .b-g img+img{margin-left:-9px}
+/* ===== 記録ニュースの画像 ===== */
+.nt-rec .nx-h+.nx-h{margin-top:.6cqw}
+.nt-rec .nx-h.s2{font-size:10cqw}
+.nt-rec .nx-h.s3{font-size:7.4cqw}
+.nt-rec .nx-tag{background:#c8a24a;color:#1c2833}
+.nx-crest{right:6cqw;top:50%;width:36cqw;height:36cqw;transform:translateY(-50%);z-index:2;filter:drop-shadow(0 0 3cqw rgba(0,0,0,.45))}
+.nx-crest .logo{width:100%;height:100%;font-size:10cqw}
+.is-club .nx-t{width:58cqw}
+.nt-rec .nx-h.s3{font-size:7.6cqw}
+.nt-rec .nx-h.s4{font-size:6cqw}
+.nt-x .nx-tag.gold{background:#c8a24a;color:#1c2833}
+.nt-rec:not(.is-acad) .nx-tag:not(.gold){background:var(--blue);color:#fff}
+.nx-crest{right:4cqw;width:30cqw;height:30cqw}
