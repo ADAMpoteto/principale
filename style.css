@@ -1359,3 +1359,7 @@ img.ico-ball{width:18px;height:18px;padding:2px;box-sizing:border-box;background
 /* 試合経過の区切り：ラベルの下にスコア（縦並び） */
 .ev-ph{flex-direction:column;gap:2px;padding:10px 12px}
 .ev-ph span{font-size:18px;line-height:1.1}
+/* 対戦成績：相手は同じなので名前とエンブレムは出さない */
+.h2h .mrow .t>.logo,.h2h .mrow .t b{display:none}
+.h2h .mrow .t small.mr-meta{margin-bottom:0}
+.mrow .t small.mr-meta .ha{flex:none;white-space:nowrap}
