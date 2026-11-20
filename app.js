@@ -896,10 +896,10 @@ function gameCard(m, lab) {
   return `<div class="gcard${m.played ? "" : " up"}"><div class="g-lab">${lab}</div>
     <div class="g-comp">${esc(roundTxt(m))}</div>
     <div class="g-date"><b>${d ? `${d.getMonth() + 1}/${d.getDate()}` : ""}</b><span>${d ? WDE[d.getDay()] : ""}</span>${kickoff(m) ? `<em>${kickoff(m)}</em>` : ""}<span class="g-ha ${m.ha}">${m.ha === "H" ? "HOME" : m.ha === "A" ? "AWAY" : ""}</span></div>
+    ${venue(m) ? `<div class="g-venue"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>${esc(venue(m))}</div>` : ""}
     <div class="g-vs"><div class="g-club">${logo(h.home, "lg")}<span>${esc(h.home)}</span></div>
       <div class="g-sc">${m.played ? `<b>${scoreTxt(m)}</b>${m.pk ? `<small>PK ${m.ha === "A" ? m.pk.b + "-" + m.pk.a : m.pk.a + "-" + m.pk.b}</small>` : ""}` : `<b class="vs">VS</b>`}</div>
       <div class="g-club">${logo(h.away, "lg")}<span>${esc(h.away)}</span></div></div>
-    <div class="g-venue">${esc(venue(m) || "")}</div>
     <div class="g-links">${m.played ? `<a href="#/match/${m.id}">試合詳細</a><a href="javascript:void 0" onclick="ST.mtab='stats';location.hash='#/match/${m.id}'">スタッツ</a><a href="javascript:void 0" onclick="ST.mtab='lineup';location.hash='#/match/${m.id}'">メンバー</a>`
       : `<a href="#/match/${m.id}">試合情報</a><a href="#/news/n${m.id}">プレビュー</a>`}</div></div>`;
 }

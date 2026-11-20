@@ -1288,3 +1288,6 @@ a.pr-row:hover b{color:var(--blue)}
 .pr{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
 .cmp-legend .sn{display:none}
 @media (max-width:600px){.cmp-legend .sn{display:inline}.cmp-legend .fn{display:none}}
+.g-venue{display:flex;align-items:center;justify-content:center;gap:4px;min-height:0;padding:6px 12px 0;font-size:12px;font-weight:700;color:var(--tx3)}
+.g-venue svg{flex:none;opacity:.8}
+.g-vs{padding-bottom:16px}
