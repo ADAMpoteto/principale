@@ -1363,3 +1363,6 @@ img.ico-ball{width:18px;height:18px;padding:2px;box-sizing:border-box;background
 .h2h .mrow .t>.logo,.h2h .mrow .t b{display:none}
 .h2h .mrow .t small.mr-meta{margin-bottom:0}
 .mrow .t small.mr-meta .ha{flex:none;white-space:nowrap}
+/* 枠外シュートはPK失敗と同じ赤い× */
+.ev .ico.miss{color:var(--l)}
+.ev .ico.miss svg{width:18px;height:18px}
