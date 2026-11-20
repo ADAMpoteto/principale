@@ -1160,17 +1160,25 @@ function matchLineup(m) {
   const lineX = side => xMap[side] || (xMap[side] = (() => { const P = new Set(L(side).filter(l => l.role === "先発").map(l => l.pos)), r = {};
     ROWS.forEach(row => { const c = row.filter(q => P.has(q) && !(q in WIDE)); c.forEach((q, i) => r[q] = (SPREAD[c.length] || SPREAD[4])[i]); });
     return r; })());
-  const posXY = (pos, side) => { const b = POSXY[pos] || POSXY[{ GK: "GK", DF: "CB", MF: "CM", FW: "ST" }[pos]] || [50, 50], x = lineX(side)[pos];
-    return [x ?? b[0], b[1]]; };
+  const baseXY = pos => POSXY[pos] || POSXY[{ GK: "GK", DF: "CB", MF: "CM", FW: "ST" }[pos]] || [50, 50];
+  /* 縦の位置：いるラインだけを等間隔に並べる（空いたラインで間延びしない） */
+  const yMap = {};
+  const lineY = side => yMap[side] || (yMap[side] = (() => {
+    const ys = [...new Set(L(side).filter(l => l.role === "先発" && l.pos !== "GK").map(l => baseXY(l.pos)[1]))].sort((a, b) => a - b), g = [];
+    ys.forEach(y => { const last = g[g.length - 1]; if (last && y - last.min <= 8) last.ys.push(y); else g.push({ min: y, ys: [y] }); });
+    const r = {}; g.forEach((gr, i) => { const base = g.length > 1 ? 14 + i * 60 / (g.length - 1) : 44; gr.ys.forEach(y => r[y] = base + (y - gr.min) * 0.6); });
+    return r; })());
+  const posXY = (pos, side) => { const b = baseXY(pos), x = lineX(side)[pos];
+    return [x ?? b[0], pos === "GK" ? b[1] : lineY(side)[b[1]] ?? b[1]]; };
   /* 1枚のピッチに両チーム（ホームは下、アウェイは上） */
   const dots = (side, top) => { const used = {};
     return L(side).filter(l => l.role === "先発").map(l => {
       let [x, y] = posXY(l.pos, side);
       const k = x + "," + y; used[k] = (used[k] || 0) + 1; x += (used[k] - 1) * 14 * (used[k] % 2 ? 1 : -1);
       /* 横向きのピッチ：ホームは左から右へ、アウェイは右から左へ攻める */
-      const dep = l.pos === "GK" ? 4.5 : 12.5 + Math.max(0, Math.min(1, (79 - y) / 64)) * 32;
+      const dep = l.pos === "GK" ? 5 : 16 + Math.max(0, Math.min(1, (74 - y) / 60)) * 29;
       const X = top ? 100 - dep : dep, Y = Math.max(9, Math.min(91, top ? 100 - x : x));
-      return link(l, `<span class="lp-ph">${face(l.name)}${l.no != null ? `<em>${l.no}</em>` : ""}${gIcon(l)}</span><span class="lp-nm">${esc(l.name)}</span>${rtChip(l.rating, "lp-rt")}`, `lp ${side}`).replace(/^<(a|div) class="([^"]+)"/, `<$1 class="$2" style="left:${X}%;top:${Y}%"`);
+      return link(l, `<span class="lp-ph">${face(l.name)}${l.no != null ? `<em>${l.no}</em>` : ""}${gIcon(l)}${rtChip(l.rating, "lp-rt")}</span><span class="lp-nm">${esc(l.name)}</span>`, `lp ${side}${X > 78 ? " rl" : ""}`).replace(/^<(a|div) class="([^"]+)"/, `<$1 class="$2" style="left:${X}%;top:${Y}%"`);
     }).join(""); };
   /* スマホ：チームごとに縦向きで表示（自チームは下から上へ攻める） */
   const vdots = side => { const used = {};
@@ -1178,7 +1186,7 @@ function matchLineup(m) {
       let [x, y] = posXY(l.pos, side);
       const k = x + "," + y; used[k] = (used[k] || 0) + 1; x += (used[k] - 1) * 14 * (used[k] % 2 ? 1 : -1);
       const X = Math.max(10, Math.min(90, x)), Y = l.pos === "GK" ? 92 : Math.max(9, Math.min(84, y));
-      return link(l, `<span class="lp-ph">${face(l.name)}${l.no != null ? `<em>${l.no}</em>` : ""}${gIcon(l)}</span><span class="lp-nm">${esc(l.name)}</span>${rtChip(l.rating, "lp-rt")}`, `lp ${side}`).replace(/^<(a|div) class="([^"]+)"/, `<$1 class="$2" style="left:${X}%;top:${Y}%"`);
+      return link(l, `<span class="lp-ph">${face(l.name)}${l.no != null ? `<em>${l.no}</em>` : ""}${gIcon(l)}${rtChip(l.rating, "lp-rt")}</span><span class="lp-nm">${esc(l.name)}</span>`, `lp ${side}${X > 78 ? " rl" : ""}`).replace(/^<(a|div) class="([^"]+)"/, `<$1 class="$2" style="left:${X}%;top:${Y}%"`);
     }).join(""); };
   const tab = (side, i) => `<button type="button" class="lpm-tab${i ? "" : " on"}" onclick="const u=this.closest('.lu');u.dataset.t='${i}';u.querySelectorAll('.lpm-tab').forEach((b,j)=>b.classList.toggle('on',j==${i}))">${logo(club(side), "sm")}<b>${esc(shortOf(club(side)))}</b><small>${esc(m.form[side] || "")}</small></button>`;
   const mob = `<div class="lpm"><div class="lpm-tabs">${tab(h.hs, 0)}${tab(h.as, 1)}</div>
