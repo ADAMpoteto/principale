@@ -791,12 +791,17 @@ function milestones2() {
     if (unb >= 5 && unb % 5 === 0) { const nr = unb > rec.unb && rec.unb >= 5; push(m, `r-ub-${m.id}`, `${clubName()} ${nr ? "クラブ新記録の" : ""}${unb}試合無敗`, { club: true, big: unb, en: "UNBEATEN", txt: `${clubName()}は${nr ? "クラブ新記録となる" : ""}公式戦${unb}試合無敗となりました。` }); }
     rec.win = Math.max(rec.win, win); rec.unb = Math.max(rec.unb, unb);
     /* クラブ最年少（デビュー・ゴール）。最初の記録は記事にしない */
-    const chk = (kind, name) => { const p = prof(name); if (!p || !p.birth || !m.date) return; const a = ageTxt(p.birth, m.date);
-      const cur = yng[kind]; if (!cur || a.ms < cur) { if (cur) push(m, `r-yg-${kind}-${m.id}-${nameKey(name)}`, `${name}選手 クラブ史上最年少${kind === "debut" ? "デビュー" : "ゴール"}`,
+    /* 1試合につき、その試合で一番若い選手だけを比べる（同じ試合で記録が何度も更新されないように） */
+    const chk = (kind, names) => { let best = null;
+      names.forEach(name => { const p = prof(name); if (!p || !p.birth || !m.date) return; const a = ageTxt(p.birth, m.date); if (!best || a.ms < best.a.ms) best = { name, a }; });
+      if (!best) return; const { name, a } = best, cur = yng[kind];
+      if (!cur || a.ms < cur) { if (cur) push(m, `r-yg-${kind}-${m.id}-${nameKey(name)}`, `${name}選手 クラブ史上最年少${kind === "debut" ? "デビュー" : "ゴール"}`,
         { who: name, big: a.y, en: "YEARS OLD", sub: `${a.y}歳${a.days}日`, txt: `${name}選手が${a.y}歳${a.days}日で${kind === "debut" ? "トップチームデビュー" : "ゴール"}を記録し、クラブ史上最年少記録を更新しました。` });
         yng[kind] = a.ms; } };
-    m.lu.forEach(l => { const k = nameKey(l.name); if (!seen.has(k)) { seen.add(k); chk("debut", l.name); } });
-    m.scorers.forEach(x => { if (!/オウン/.test(x.name)) chk("goal", x.name); });
+    const deb = [];
+    m.lu.filter(l => l.role !== "ベンチ").forEach(l => { const k = nameKey(l.name); if (!seen.has(k)) { seen.add(k); deb.push(l.name); } });
+    chk("debut", deb);
+    chk("goal", m.scorers.filter(x => !/オウン/.test(x.name)).map(x => x.name));
     /* MOM */
     if (m.mom && !(m.momL && m.momL.side === "opp")) { const k = nameKey(m.mom), c = (mom[k] = (mom[k] || 0) + 1);
       if (c === 5 || (c >= 10 && c % 10 === 0)) push(m, `r-mom-${k}-${c}`, `${m.mom}選手 通算${c}回目のMOM`, { who: m.mom, big: c, en: "MOM", txt: `${m.mom}選手が通算${c}回目のマン・オブ・ザ・マッチに選ばれました。` }); }
