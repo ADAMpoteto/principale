@@ -1347,3 +1347,5 @@ a.pr-row:hover b{color:var(--blue)}
 /* ボール：画像を白い丸に */
 img.ico-ball{width:18px;height:18px;padding:2px;box-sizing:border-box;background:#fff;border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.12);vertical-align:middle;flex:none}
 .mh img.ico-ball,.mh-sc img.ico-ball{box-shadow:none}
+/* 評価点はいつも右上（端の選手でも左に回さない） */
+.lp.rl .lp-ph .rt.b-tr,.lp.rl .rt.lp-rt{left:auto;right:-14px}
