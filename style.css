@@ -1297,3 +1297,6 @@ a.pr-row:hover b{color:var(--blue)}
 .lp .rt.lp-rt,.lpm-field .lp .rt.lp-rt{position:absolute;top:-9px;right:-27px;left:auto;margin:0;min-width:27px;height:16px;padding:0 3px;font-size:10px;border:1.5px solid #fff;box-sizing:content-box;box-shadow:none;z-index:2}
 .lp.rl .rt.lp-rt{right:auto;left:-27px}
 .lp.rl .lp-g{left:auto;right:-6px}
+/* 評価点：小さめの正方形 */
+.lp .rt.lp-rt,.lpm-field .lp .rt.lp-rt{top:-7px;right:-15px;width:21px;min-width:0;height:21px;padding:0;font-size:9.5px;letter-spacing:-.02em;border:1.5px solid #fff;border-radius:3px;box-sizing:border-box}
+.lp.rl .rt.lp-rt{right:auto;left:-15px}
