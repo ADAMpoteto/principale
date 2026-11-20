@@ -679,7 +679,7 @@ const venue = m => m.stadium || (m.ha === "H" ? D.conf["ホームスタジアム
 const compLogo = (c, cls) => c ? `<img class="clogo ${cls || ""}" src="${esc(encodeURI(`images/comp/${String(c).trim()}.png`))}" alt="" loading="lazy" onerror="this.remove()">` : "";
 function matchRow(m) {
   const right = m.played ? `<span class="res ${m.res}">${m.gf}-${m.ga}</span>${m.pk ? `<span class="pk">PK ${m.pk.a}-${m.pk.b}</span>` : ""}`
-    : `<span class="up">${kickoff(m) || "VS"}</span>`;
+    : `<span class="up">${kickoff(m) || ""}</span>`;
   return `<a class="mrow" href="#/match/${m.id}">
     <div class="d"><b>${dotD(m.date)}</b><span>${m.date ? WDE[m.date.getDay()] : ""}</span></div>
     <div class="t">${logo(m.opp, "md")}<div><small class="mr-meta"><span class="ha ${m.ha}">${m.ha === "H" ? "HOME" : m.ha === "A" ? "AWAY" : ""}</span>${compLogo(m.comp, "sm")}<span class="mr-comp">${esc(roundTxt(m))}</span></small><b>${clubName2(m.opp)}</b></div></div>
@@ -1111,13 +1111,13 @@ function matchPreview(m, h) {
   const kp = [["チーム得点王", top("g"), "g", "ゴール"], ["チームアシスト王", top("a"), "a", "アシスト"]].filter(x => x[1]);
   if (!rows.length && !kp.length) return "";
   return `<div class="ph">PREVIEW<small>プレビュー</small></div>
-    ${rows.length ? `<div class="pv"><div class="pv-h"><div>${logo(cl[0], "md")}<b>${clubName2(cl[0])}</b></div><div>${logo(cl[1], "md")}<b>${clubName2(cl[1])}</b></div></div>${rows.join("")}</div>` : ""}
+    ${rows.length ? `<div class="pv"><div class="pv-h"><div>${logo(cl[0], "md")}</div><div>${logo(cl[1], "md")}</div></div>${rows.join("")}</div>` : ""}
     ${kp.length ? `<div class="ph">KEY PLAYERS<small>注目選手</small></div><div class="kp">${kp.map(([lab, t, k, u]) => `<a class="kp-c" href="#/player/${encodeURIComponent(t.name)}">${face(t.name)}<div><span>${lab}</span><b>${esc(t.name)}</b><em>${t[k]}<small>${u}</small></em></div></a>`).join("")}</div>` : ""}`;
 }
 function headToHead(m) {
   const L = D.played.filter(x => same(x.opp, m.opp)); if (!L.length) return "";
   const r = record(L);
-  return `<div class="ph">${esc(m.opp)}との対戦成績<small>${r.w}勝 ${r.d}分 ${r.l}敗</small></div><div class="mlist">${L.slice(-5).reverse().map(matchRow).join("")}</div>`;
+  return `<div class="ph">対戦成績<small>${r.w}勝 ${r.d}分 ${r.l}敗</small></div><div class="mlist h2h">${L.slice(-5).reverse().map(matchRow).join("")}</div>`;
 }
 function matchFacts(m, h) {
   const evs = m.ev.filter(e => e.kind !== "その他" || e.note || e.video);
