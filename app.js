@@ -21,7 +21,7 @@ const SHEETS = {          // キー: [シート名, gid]
   gr:    ["選手の推移", 8],
   tr:    ["移籍", 9],
   ss:    ["シーズン", 11],
-  li:    ["リスト", 12],
+  li:    ["クラブ", 14],
   aw:    ["個人タイトル", 13]
 };
 const DEFAULT_CLUB = "Principale";
