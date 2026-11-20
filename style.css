@@ -1317,3 +1317,11 @@ a.pr-row:hover b{color:var(--blue)}
 @media (max-width:700px){
   .lpitch .lp-ph .bd{transform:scale(.7)}
 }
+/* ゴール：ボールを得点数だけ重ねて並べる／アシスト：傾けたスパイク */
+.lp-ph .b-g{right:auto;left:calc(100% - 12px);bottom:-5px;height:auto;min-width:0;padding:0;background:none;box-shadow:none;border-radius:0;gap:0}
+.lp-ph .b-g img{width:17px;height:17px;display:block;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4))}
+.lp-ph .b-g img+img{margin-left:-8px}
+.lp-ph .b-a{left:-9px;bottom:-5px;height:19px;min-width:19px;padding:0;border-radius:10px;background:#fff;gap:0}
+.lp-ph .b-a i{display:grid;place-items:center;width:19px;height:19px}
+.lp-ph .b-a img{width:15px;height:15px;transform:rotate(-28deg);display:block}
+.lp-ph .b-a b{padding:0 4px 0 0;color:var(--navy)}
