@@ -1054,8 +1054,10 @@ function vMatch(id) {
   else body = (ytInfo(m.video) ? `<div class="ph">VIDEO<small>動画</small></div><div class="hlw">${ytBox(m.video, "hl")}</div>` : "") + matchPreview(m, h) + (m.lu.length || m.luOpp.length ? `<div class="ph">LINE-UP<small>メンバー</small></div>${matchLineup(m)}` : "") + headToHead(m);
   /* 得点者：ホームは右寄せ、アウェイは左寄せでスコアの下に */
   const gl = side => { const E = evGoals(side);
-    if (E.length) return E.map(e => `<li>${ICON.ball}<span>${esc(e.player)}</span><em>${esc(e.min)}'${e.kind === "PKゴール" ? " PK" : e.kind === "オウンゴール" ? " OG" : ""}</em></li>`).join("");
-    return side === "me" ? m.scorers.map(x => `<li>${ICON.ball}<span>${esc(x.name)}</span><em>${x.n > 1 ? "×" + x.n : ""}</em></li>`).join("") : ""; };
+    if (E.length) { /* 1選手1行：時間をまとめる */ const G = []; E.forEach(e => { let g = G.find(x => same(x.name, e.player)); if (!g) G.push(g = { name: e.player, t: [] });
+        g.t.push(`${esc(e.min)}'${e.kind === "PKゴール" ? " PK" : e.kind === "オウンゴール" ? " OG" : ""}`); });
+      return G.map(g => `<li><span>${esc(g.name)}</span><em>${g.t.join(", ")}</em></li>`).join(""); }
+    return side === "me" ? m.scorers.map(x => `<li><span>${esc(x.name)}</span><em>${x.n > 1 ? "×" + x.n : ""}</em></li>`).join("") : ""; };
   const hL = gl(h.hs), aL = gl(h.as);
   const team = (c, lab) => `<div class="mh-team">${logo(c, "xl")}<b>${clubName2(c)}</b><small>${lab}</small></div>`;
   const resLab = { W: "WIN", L: "LOSE", D: "DRAW" }[m.res];
