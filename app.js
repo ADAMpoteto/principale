@@ -1099,10 +1099,15 @@ function matchLineup(m) {
   const club = side => side === "me" ? clubName() : m.opp;
   const link = (l, inner, cls) => l.side !== "opp" ? `<a class="${cls}" href="#/player/${encodeURIComponent(l.name)}">${inner}</a>` : `<div class="${cls}">${inner}</div>`;
   const gIcon = l => l.s["得点"] ? `<i class="lp-g">${ICON.ball.repeat(Math.min(3, l.s["得点"]))}</i>` : "";
-  /* 3バック（5バック）はCBを広げる。4バックは中央寄り */
-  const back3 = side => { const P = new Set(L(side).filter(l => l.role === "先発").map(l => l.pos)); return P.has("CB") && (P.has("LCB") || P.has("RCB")); };
-  const posXY = (pos, side) => back3(side) && (pos === "LCB" || pos === "RCB") ? [pos === "LCB" ? 26 : 74, 78]
-    : POSXY[pos] || POSXY[{ GK: "GK", DF: "CB", MF: "CM", FW: "ST" }[pos]] || [50, 50];
+  /* ラインごとに人数を数えて横位置を決める（4バック／5バック、2ボランチ／3ボランチなどで変わる） */
+  const ROWS = [["LB", "LCB", "CB", "RCB", "RB"], ["LDM", "CDM", "RDM"], ["LM", "LCM", "CM", "RCM", "RM"], ["LAM", "CAM", "RAM"], ["LF", "CF", "RF", "LS", "ST", "RS"]];
+  const WIDE = { LB: 14, RB: 86, LM: 12, RM: 88 }, SPREAD = { 1: [50], 2: [35, 65], 3: [27, 50, 73], 4: [20, 40, 60, 80] };
+  const xMap = {};
+  const lineX = side => xMap[side] || (xMap[side] = (() => { const P = new Set(L(side).filter(l => l.role === "先発").map(l => l.pos)), r = {};
+    ROWS.forEach(row => { const c = row.filter(q => P.has(q) && !(q in WIDE)); c.forEach((q, i) => r[q] = (SPREAD[c.length] || SPREAD[4])[i]); });
+    return r; })());
+  const posXY = (pos, side) => { const b = POSXY[pos] || POSXY[{ GK: "GK", DF: "CB", MF: "CM", FW: "ST" }[pos]] || [50, 50], x = lineX(side)[pos];
+    return [x ?? b[0], b[1]]; };
   /* 1枚のピッチに両チーム（ホームは下、アウェイは上） */
   const dots = (side, top) => { const used = {};
     return L(side).filter(l => l.role === "先発").map(l => {
