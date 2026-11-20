@@ -1344,3 +1344,6 @@ a.pr-row:hover b{color:var(--blue)}
 /* 評価点：丸、数字は中央 */
 .lp-ph .rt.b-tr{width:23px;height:23px;border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;text-align:center;font-size:9.5px;letter-spacing:-.03em;top:-7px;right:-14px}
 .lp.rl .lp-ph .rt.b-tr{right:auto;left:-14px}
+/* ボール：画像を白い丸に */
+img.ico-ball{width:18px;height:18px;padding:2px;box-sizing:border-box;background:#fff;border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.12);vertical-align:middle;flex:none}
+.mh img.ico-ball,.mh-sc img.ico-ball{box-shadow:none}

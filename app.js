@@ -188,7 +188,10 @@ async function loadAll() {
       player: F(o, "選手"), rel: F(o, "関連する選手"), note: F(o, "補足"), video: F(o, "動画") });
   });
   D.matches.forEach(m => {
-    m.ev.forEach(e => { e.ord = phaseOrd(e); });
+    m.ev.forEach(e => { e.ord = phaseOrd(e);
+      /* オウンゴール：チーム列は蹴った選手のチームなので、得点は相手側に付ける */
+      if (e.kind === "オウンゴール") { const mine = m.lu.concat(m.bench || []).some(l => same(l.name, e.player)), opp = (m.luOpp || []).concat(m.benchOpp || []).some(l => same(l.name, e.player));
+        e.side = mine ? "opp" : opp ? "me" : e.side === "me" ? "opp" : "me"; } });
     m.ev.sort((a, b) => a.ord - b.ord || a.i - b.i);
     if (!m.played) return;
     /* 得点者・アシストが空欄なら、出場選手 → 試合経過 の順で補う */
@@ -636,7 +639,7 @@ function bindTips(root) {
    ===================================================================== */
 const WDE = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 const ICON = {
-  ball: `<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 7.2l4 2.9-1.5 4.7h-5L8 10.1z" fill="currentColor"/></svg>`,
+  ball: `<img class="ico-ball" src="images/icon/ball.png" alt="" aria-hidden="true">`,
   sub: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="2.4" aria-hidden="true"><path d="M7 20V5M3 9l4-4 4 4" stroke="#1d9a55"/><path d="M17 4v15M13 15l4 4 4-4" stroke="#d6404a"/></svg>`,
   cup: `<svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 3h10v2h3v3a4 4 0 0 1-4 4h-.3A5 5 0 0 1 13 14.9V18h3v3H8v-3h3v-3.1A5 5 0 0 1 8.3 12H8a4 4 0 0 1-4-4V5h3V3zm0 4H6v1a2 2 0 0 0 1 1.7V7zm10 0v2.7A2 2 0 0 0 18 8V7h-1z"/></svg>`
 };
@@ -1129,7 +1132,7 @@ function matchFacts(m, h) {
       + (vbtn(e) ? `<div class="ev-v" hidden>${ytBox(e.video)}</div>` : "");
   }).join("");
   const nMinor = evs.filter(e => MINOR.includes(e.kind)).length;
-  const tlHead = `<div class="ph">試合経過${nMinor ? `<label class="ev-tg"><input type="checkbox" onchange="this.closest('.evw').classList.toggle('main',!this.checked)" checked>シュート・セーブも表示</label>` : ""}</div>`;
+  const tlHead = `<div class="ph">試合経過</div>`;
   const hl = ytBox(m.video, "hl");
   const mom = m.mom ? (() => { const l = m.momL, op = l && l.side === "opp";
     const inner = `<div class="mom-ph">${face(m.mom)}</div><div class="mom-tx"><span>MAN OF THE MATCH</span><b>${esc(m.mom)}</b><small>${[l && l.no != null ? "#" + l.no : "", l ? l.pos : "", op ? m.opp : ""].filter(Boolean).map(esc).join("　")}</small></div>${l && l.rating != null ? `<div class="mom-rt"><small>RATING</small><b>${fmtN(l.rating, 1)}</b></div>` : ""}`;
