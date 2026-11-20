@@ -1170,7 +1170,7 @@ function matchLineup(m) {
       /* 横向きのピッチ：ホームは左から右へ、アウェイは右から左へ攻める */
       const dep = l.pos === "GK" ? 4.5 : 12.5 + Math.max(0, Math.min(1, (79 - y) / 64)) * 32;
       const X = top ? 100 - dep : dep, Y = Math.max(9, Math.min(91, top ? 100 - x : x));
-      return link(l, `<span class="lp-ph">${face(l.name)}${l.no != null ? `<em>${l.no}</em>` : ""}${gIcon(l)}${rtChip(l.rating, "lp-rt")}</span><span class="lp-nm">${esc(l.name)}</span>`, `lp ${side}`).replace(/^<(a|div) class="([^"]+)"/, `<$1 class="$2" style="left:${X}%;top:${Y}%"`);
+      return link(l, `<span class="lp-ph">${face(l.name)}${l.no != null ? `<em>${l.no}</em>` : ""}${gIcon(l)}</span><span class="lp-nm">${esc(l.name)}</span>${rtChip(l.rating, "lp-rt")}`, `lp ${side}`).replace(/^<(a|div) class="([^"]+)"/, `<$1 class="$2" style="left:${X}%;top:${Y}%"`);
     }).join(""); };
   /* スマホ：チームごとに縦向きで表示（自チームは下から上へ攻める） */
   const vdots = side => { const used = {};
@@ -1178,7 +1178,7 @@ function matchLineup(m) {
       let [x, y] = posXY(l.pos, side);
       const k = x + "," + y; used[k] = (used[k] || 0) + 1; x += (used[k] - 1) * 14 * (used[k] % 2 ? 1 : -1);
       const X = Math.max(10, Math.min(90, x)), Y = l.pos === "GK" ? 92 : Math.max(9, Math.min(84, y));
-      return link(l, `<span class="lp-ph">${face(l.name)}${l.no != null ? `<em>${l.no}</em>` : ""}${gIcon(l)}${rtChip(l.rating, "lp-rt")}</span><span class="lp-nm">${esc(l.name)}</span>`, `lp ${side}`).replace(/^<(a|div) class="([^"]+)"/, `<$1 class="$2" style="left:${X}%;top:${Y}%"`);
+      return link(l, `<span class="lp-ph">${face(l.name)}${l.no != null ? `<em>${l.no}</em>` : ""}${gIcon(l)}</span><span class="lp-nm">${esc(l.name)}</span>${rtChip(l.rating, "lp-rt")}`, `lp ${side}`).replace(/^<(a|div) class="([^"]+)"/, `<$1 class="$2" style="left:${X}%;top:${Y}%"`);
     }).join(""); };
   const tab = (side, i) => `<button type="button" class="lpm-tab${i ? "" : " on"}" onclick="const u=this.closest('.lu');u.dataset.t='${i}';u.querySelectorAll('.lpm-tab').forEach((b,j)=>b.classList.toggle('on',j==${i}))">${logo(club(side), "sm")}<b>${esc(shortOf(club(side)))}</b><small>${esc(m.form[side] || "")}</small></button>`;
   const mob = `<div class="lpm"><div class="lpm-tabs">${tab(h.hs, 0)}${tab(h.as, 1)}</div>
