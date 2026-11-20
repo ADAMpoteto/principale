@@ -1148,7 +1148,7 @@ function matchFacts(m, h) {
       const nm = e.player ? (e.side === "me" ? pLink(e.player) : esc(e.player)) : `<span class="ev-k">${ok ? "成功" : "失敗"}</span>`;
       const tx = `<div>${nm}<small>${ok ? "成功" : "失敗"}${e.note ? "　" + esc(e.note) : ""}</small></div>`;
       return `<div class="ev pk-row"><div class="l">${left ? tx + ic : ""}</div><div class="m pk-sc">${sc2}</div><div class="r">${left ? "" : ic + tx}</div></div>`; }
-    if (PHASE[e.kind]) { const ft = e.kind === "試合終了", score = !["キックオフ", "後半開始", "延長開始", "延長後半開始", "PK戦"].includes(e.kind);
+    if (PHASE[e.kind]) { const ft = e.kind === "試合終了", score = !["キックオフ", "PK戦"].includes(e.kind);
       return `<div class="ev-ph${ft ? " ft" : ""}"><b>${PHASE[e.kind][0]}</b>${score ? `<span>${ft ? scoreTxt(m) + (m.pk ? `　PK ${h.hs === "me" ? m.pk.a + "-" + m.pk.b : m.pk.b + "-" + m.pk.a}` : "") : sc()}</span>` : ""}${e.min && !ft && e.kind !== "キックオフ" ? `<small>${esc(e.min)}'</small>` : ""}${e.note ? `<small>${esc(e.note)}</small>` : ""}</div>`; }
     let pre = ""; if (!hasPhase && !ht && e.mn > 45.99 && e.mn < 999) { ht = true; pre = `<div class="ev-ph"><b>HALF TIME</b><span>${sc()}</span></div>`; }
     if (isGoal(e)) e.side === "me" ? a++ : b++;
