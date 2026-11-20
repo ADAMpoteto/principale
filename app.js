@@ -1153,6 +1153,20 @@ function matchLineup(m) {
   const club = side => side === "me" ? clubName() : m.opp;
   const link = (l, inner, cls) => l.side !== "opp" ? `<a class="${cls}" href="#/player/${encodeURIComponent(l.name)}">${inner}</a>` : `<div class="${cls}">${inner}</div>`;
   const gIcon = l => l.s["得点"] ? `<i class="lp-g">${ICON.ball.repeat(Math.min(3, l.s["得点"]))}</i>` : "";
+  /* ピッチ上のバッジ（FotMob風）：右上 評価／右下 ゴール／左下 アシスト／左 カード／左上 交代時間 */
+  const mine = (l, e) => e.side === l.side && same(e.player, l.name);
+  const BOOT = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 15.5c0-1 .6-1.8 1.6-2l4.4-.9 2.2-4.6h4l.8 3.4 5.2 1.6c.8.3 1.3 1 1.3 1.9v1.6H2.5z" fill="currentColor"/><path d="M4 19h2M9 19h2M14 19h2M19 19h2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`;
+  const badges = l => {
+    const goals = l.s["得点"] ?? m.ev.filter(e => isGoal(e) && e.kind !== "オウンゴール" && mine(l, e)).length;
+    const ast = l.s["アシスト"] ?? m.ev.filter(e => isGoal(e) && e.side === l.side && same(e.rel, l.name)).length;
+    const yc = m.ev.filter(e => e.kind === "警告" && mine(l, e)).length, rc = m.ev.some(e => e.kind === "退場" && mine(l, e)) || yc >= 2;
+    const off = m.ev.find(e => e.kind === "交代" && e.side === l.side && same(e.rel, l.name));
+    return rtChip(l.rating, "bd b-tr")
+      + (goals ? `<span class="bd b-br b-g">${ICON.ball}${goals > 1 ? `<b>${goals}</b>` : ""}</span>` : "")
+      + (ast ? `<span class="bd b-bl b-a">${BOOT}${ast > 1 ? `<b>${ast}</b>` : ""}</span>` : "")
+      + (rc ? `<i class="bd b-ml b-card r"></i>` : yc ? `<i class="bd b-ml b-card y"></i>` : "")
+      + (off ? `<span class="bd b-tl b-off"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v14M6 12l6 6 6-6" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>${off.min ? esc(String(off.min).replace(/分$/, "")) + "'" : ""}</span>` : "");
+  };
   /* ラインごとに人数を数えて横位置を決める（4バック／5バック、2ボランチ／3ボランチなどで変わる） */
   const ROWS = [["LB", "LCB", "CB", "RCB", "RB"], ["LDM", "CDM", "RDM"], ["LM", "LCM", "CM", "RCM", "RM"], ["LAM", "CAM", "RAM"], ["LF", "CF", "RF", "LS", "ST", "RS"]];
   const WIDE = { LB: 14, RB: 86, LM: 12, RM: 88 }, SPREAD = { 1: [50], 2: [35, 65], 3: [27, 50, 73], 4: [20, 40, 60, 80] };
@@ -1178,7 +1192,7 @@ function matchLineup(m) {
       /* 横向きのピッチ：ホームは左から右へ、アウェイは右から左へ攻める */
       const dep = l.pos === "GK" ? 5 : 16 + Math.max(0, Math.min(1, (74 - y) / 60)) * 29;
       const X = top ? 100 - dep : dep, Y = Math.max(9, Math.min(91, top ? 100 - x : x));
-      return link(l, `<span class="lp-ph">${face(l.name)}${l.no != null ? `<em>${l.no}</em>` : ""}${gIcon(l)}${rtChip(l.rating, "lp-rt")}</span><span class="lp-nm">${esc(l.name)}</span>`, `lp ${side}${X > 78 ? " rl" : ""}`).replace(/^<(a|div) class="([^"]+)"/, `<$1 class="$2" style="left:${X}%;top:${Y}%"`);
+      return link(l, `<span class="lp-ph">${face(l.name)}${badges(l)}</span><span class="lp-nm">${l.no != null ? `<b>${l.no}</b>` : ""}${esc(l.name)}</span>`, `lp ${side}${X > 78 ? " rl" : ""}`).replace(/^<(a|div) class="([^"]+)"/, `<$1 class="$2" style="left:${X}%;top:${Y}%"`);
     }).join(""); };
   /* スマホ：チームごとに縦向きで表示（自チームは下から上へ攻める） */
   const vdots = side => { const used = {};
@@ -1186,7 +1200,7 @@ function matchLineup(m) {
       let [x, y] = posXY(l.pos, side);
       const k = x + "," + y; used[k] = (used[k] || 0) + 1; x += (used[k] - 1) * 14 * (used[k] % 2 ? 1 : -1);
       const X = Math.max(10, Math.min(90, x)), Y = l.pos === "GK" ? 92 : Math.max(9, Math.min(84, y));
-      return link(l, `<span class="lp-ph">${face(l.name)}${l.no != null ? `<em>${l.no}</em>` : ""}${gIcon(l)}${rtChip(l.rating, "lp-rt")}</span><span class="lp-nm">${esc(l.name)}</span>`, `lp ${side}${X > 78 ? " rl" : ""}`).replace(/^<(a|div) class="([^"]+)"/, `<$1 class="$2" style="left:${X}%;top:${Y}%"`);
+      return link(l, `<span class="lp-ph">${face(l.name)}${badges(l)}</span><span class="lp-nm">${l.no != null ? `<b>${l.no}</b>` : ""}${esc(l.name)}</span>`, `lp ${side}${X > 78 ? " rl" : ""}`).replace(/^<(a|div) class="([^"]+)"/, `<$1 class="$2" style="left:${X}%;top:${Y}%"`);
     }).join(""); };
   const tab = (side, i) => `<button type="button" class="lpm-tab${i ? "" : " on"}" onclick="const u=this.closest('.lu');u.dataset.t='${i}';u.querySelectorAll('.lpm-tab').forEach((b,j)=>b.classList.toggle('on',j==${i}))">${logo(club(side), "sm")}<b>${esc(shortOf(club(side)))}</b><small>${esc(m.form[side] || "")}</small></button>`;
   const mob = `<div class="lpm"><div class="lpm-tabs">${tab(h.hs, 0)}${tab(h.as, 1)}</div>

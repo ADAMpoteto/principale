@@ -1300,3 +1300,20 @@ a.pr-row:hover b{color:var(--blue)}
 /* 評価点：小さめの正方形 */
 .lp .rt.lp-rt,.lpm-field .lp .rt.lp-rt{top:-7px;right:-15px;width:21px;min-width:0;height:21px;padding:0;font-size:9.5px;letter-spacing:-.02em;border:1.5px solid #fff;border-radius:3px;box-sizing:border-box}
 .lp.rl .rt.lp-rt{right:auto;left:-15px}
+/* ===== ピッチのバッジ（FotMob風） ===== */
+.lp-ph .bd{position:absolute;z-index:2;display:flex;align-items:center;justify-content:center;box-sizing:border-box;font-style:normal}
+.lp-ph .rt.b-tr{top:-6px;right:-13px;left:auto;width:21px;min-width:0;height:21px;padding:0;font-size:9.5px;border:1.5px solid #fff;border-radius:3px;box-shadow:none}
+.lp-ph .b-br{right:-7px;bottom:-5px}
+.lp-ph .b-bl{left:-7px;bottom:-5px}
+.lp-ph .b-g,.lp-ph .b-a{height:18px;min-width:18px;padding:0 2px;border-radius:9px;background:#fff;color:var(--navy);gap:1px;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+.lp-ph .b-g svg,.lp-ph .b-a svg{width:13px;height:13px}
+.lp-ph .bd b{font-family:var(--en);font-weight:800;font-size:10px;line-height:1;padding-right:2px}
+.lp-ph .b-card{left:-11px;top:50%;width:9px;height:13px;margin-top:-7px;border-radius:2px;border:1px solid #fff;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+.lp-ph .b-card.y{background:#f5c518}.lp-ph .b-card.r{background:#d6303a}
+.lp-ph .b-off{top:-6px;left:-16px;height:16px;padding:0 4px 0 2px;border-radius:8px;background:#fff;color:#d6303a;font-family:var(--en);font-weight:800;font-size:10px;line-height:1;gap:1px;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+.lp-ph .b-off svg{width:10px;height:10px}
+.lp-nm b{font-family:var(--en);font-weight:800;margin-right:3px;opacity:.85}
+.lp.opp .lp-ph{border-color:var(--opp)}
+@media (max-width:700px){
+  .lpitch .lp-ph .bd{transform:scale(.7)}
+}
