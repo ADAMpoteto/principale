@@ -1126,7 +1126,7 @@ function matchFacts(m, h) {
   const evTxt = e => {
     const nm = e.player ? (e.side === "me" ? pLink(e.player) : esc(e.player)) : `<span class="ev-k">${esc(LBL[e.kind] || e.kind)}</span>`;
     const parts = e.kind === "交代" ? [`OUT ${esc(e.rel)}`] : isGoal(e) ? [e.kind === "PKゴール" ? "PK" : e.kind === "オウンゴール" ? "オウンゴール" : "", e.rel ? `アシスト：${esc(e.rel)}` : ""]
-      : e.kind === "セーブ" ? ["セーブ", e.rel ? `シュート：${esc(e.rel)}` : ""] : e.kind === "シュート（セーブ）" ? [e.player ? LBL[e.kind] : "", e.rel ? `GK：${esc(e.rel)}` : ""] : e.kind === "シュート（ブロック）" ? [e.player ? LBL[e.kind] : "", e.rel ? `ブロック：${esc(e.rel)}` : ""] : LBL[e.kind] && e.player ? [LBL[e.kind], e.rel ? esc(e.rel) : ""] : [e.rel ? esc(e.rel) : ""];
+      : e.kind === "セーブ" ? [e.rel ? `シュート：${esc(e.rel)}` : ""] : e.kind === "シュート（セーブ）" ? [e.player ? LBL[e.kind] : "", e.rel ? `GK：${esc(e.rel)}` : ""] : e.kind === "シュート（ブロック）" ? [e.player ? LBL[e.kind] : "", e.rel ? `ブロック：${esc(e.rel)}` : ""] : LBL[e.kind] && e.player ? [LBL[e.kind], e.rel ? esc(e.rel) : ""] : [e.rel ? esc(e.rel) : ""];
     if (e.note) parts.push(esc(e.note));
     const sub = parts.filter(Boolean).join("　");
     return `<div>${nm}${sub ? `<small>${sub}</small>` : ""}</div>`;
