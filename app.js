@@ -1124,16 +1124,16 @@ function headToHead(m) {
 function matchFacts(m, h) {
   const evs = m.ev.filter(e => e.kind !== "その他" || e.note || e.video);
   const SVG = d => `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
-  const EI = { セーブ: SVG('<path d="M8 13V6a1.5 1.5 0 0 1 3 0v5V4.5a1.5 1.5 0 0 1 3 0V11V6a1.5 1.5 0 0 1 3 0v8a6 6 0 0 1-6 6h-1a6 6 0 0 1-4.6-2.2L3.5 15a1.5 1.5 0 0 1 2.3-1.9L8 15"/>'), "シュート（枠外）": SVG('<path d="M3 21V10h12v11"/><circle cx="19.5" cy="5" r="2.5" fill="currentColor"/><path d="M11 15l5.5-7.5" stroke-dasharray="2 2.2"/>'), "シュート（セーブ）": SVG('<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor"/>'), "シュート（ブロック）": SVG('<circle cx="12" cy="12" r="8"/><path d="M6.5 17.5l11-11"/>'),
+  const EI = { セーブ: SVG('<path d="M8 13V6a1.5 1.5 0 0 1 3 0v5V4.5a1.5 1.5 0 0 1 3 0V11V6a1.5 1.5 0 0 1 3 0v8a6 6 0 0 1-6 6h-1a6 6 0 0 1-4.6-2.2L3.5 15a1.5 1.5 0 0 1 2.3-1.9L8 15"/>'), "シュート（枠外）": SVG('<circle cx="12" cy="12" r="9"/><path d="M8.5 8.5l7 7M15.5 8.5l-7 7"/>'), "シュート（セーブ）": SVG('<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor"/>'), "シュート（ブロック）": SVG('<circle cx="12" cy="12" r="8"/><path d="M6.5 17.5l11-11"/>'),
     "ポスト・バー": SVG('<path d="M4 20V5h16v15"/><circle cx="17" cy="8" r="2.4" fill="currentColor"/>'), 
     オフサイド: SVG('<path d="M6 21V4"/><path d="M6 4h11l-2.5 4L17 12H6"/>'), ビッグチャンス: SVG('<path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/>'),
     PK失敗: SVG('<circle cx="12" cy="12" r="8"/><path d="M8 8l8 8M16 8l-8 8"/>'), 負傷: SVG('<path d="M12 5v14M5 12h14"/>'), VAR: SVG('<rect x="3" y="5" width="18" height="12" rx="1.5"/><path d="M8 21h8"/>') };
-  const icon = e => `<span class="ico">${isGoal(e) ? ICON.ball : e.kind === "警告" ? `<i class="cardY"></i>` : e.kind === "退場" ? `<i class="cardR"></i>` : e.kind === "交代" ? ICON.sub : EI[e.kind] || ""}</span>`;
+  const icon = e => `<span class="ico${e.kind === "シュート（枠外）" ? " miss" : ""}">${isGoal(e) ? ICON.ball : e.kind === "警告" ? `<i class="cardY"></i>` : e.kind === "退場" ? `<i class="cardR"></i>` : e.kind === "交代" ? ICON.sub : EI[e.kind] || ""}</span>`;
   const LBL = { セーブ: "セーブ", "シュート（枠外）": "シュート（枠外）", "シュート（セーブ）": "シュート（セーブされる）", "シュート（ブロック）": "シュート（ブロックされる）", "ポスト・バー": "ポスト・バー直撃", オフサイド: "オフサイド", ビッグチャンス: "決定機", PK失敗: "PK失敗", 負傷: "負傷", VAR: "VAR" };
   const evTxt = e => {
     const nm = e.player ? (e.side === "me" ? pLink(e.player) : esc(e.player)) : `<span class="ev-k">${esc(LBL[e.kind] || e.kind)}</span>`;
     const parts = e.kind === "交代" ? [`OUT ${esc(e.rel)}`] : isGoal(e) ? [e.kind === "PKゴール" ? "PK" : e.kind === "オウンゴール" ? "オウンゴール" : "", e.rel ? `アシスト：${esc(e.rel)}` : ""]
-      : e.kind === "セーブ" ? [e.rel ? `シュート：${esc(e.rel)}` : ""] : e.kind === "シュート（セーブ）" ? [e.player ? LBL[e.kind] : "", e.rel ? `GK：${esc(e.rel)}` : ""] : e.kind === "シュート（ブロック）" ? [e.player ? LBL[e.kind] : "", e.rel ? `ブロック：${esc(e.rel)}` : ""] : LBL[e.kind] && e.player ? [LBL[e.kind], e.rel ? esc(e.rel) : ""] : [e.rel ? esc(e.rel) : ""];
+      : e.kind === "セーブ" ? [e.rel ? `シュート：${esc(e.rel)}` : ""] : e.kind === "シュート（セーブ）" ? [e.player ? LBL[e.kind] : "", e.rel ? `GK：${esc(e.rel)}` : ""] : e.kind === "シュート（ブロック）" ? [e.player ? LBL[e.kind] : "", e.rel ? `ブロック：${esc(e.rel)}` : ""] : e.kind === "シュート（枠外）" ? [e.rel ? esc(e.rel) : ""] : LBL[e.kind] && e.player ? [LBL[e.kind], e.rel ? esc(e.rel) : ""] : [e.rel ? esc(e.rel) : ""];
     if (e.note) parts.push(esc(e.note));
     const sub = parts.filter(Boolean).join("　");
     return `<div>${nm}${sub ? `<small>${sub}</small>` : ""}</div>`;
