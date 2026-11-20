@@ -728,7 +728,9 @@ function leagueOfSeason(se) {
   const t = D.table.filter(r => r.season === se && isMe(r.club)).sort((a, b) => b.p - a.p)[0]; if (t) return t.comp;
   const s = D.seasons.find(x => x.season === se); if (s && s.league) return s.league;
   const c = {}; D.matches.filter(m => m.season === se && tier(m.comp)).forEach(m => c[m.comp] = (c[m.comp] || 0) + 1);
-  return Object.keys(c).sort((a, b) => c[b] - c[a])[0] || "";
+  const top = Object.keys(c).sort((a, b) => c[b] - c[a])[0]; if (top) return top;
+  /* まだリーグ戦がない今シーズンは、クラブシートの所属リーグ */
+  return se === curSeason() || se === D.seasonList[0] ? clubInfo(clubName()).league || "" : "";
 }
 /* 最多得点差・連敗ストップ・1シーズンのクラブ記録・月間ベストプレーヤー・シーズン終了・昇格／優勝／降格 */
 function milestones3() {
@@ -1001,7 +1003,7 @@ const CMP = [
   ["シュート", [["シュート", 0], ["枠内シュート", 0], ["枠外シュート", 0], ["ブロックされたシュート", 0], ["ボックス内シュート", 0], ["ゴール期待値", 2]]],
   ["パス", [["パス", 0], ["パス成功", 0], ["パス成功率", 0, "%"], ["キーパス", 0], ["クロス", 0], ["スルーパス", 0]]],
   ["守備", [["タックル", 0], ["タックル成功", 0], ["タックル成功率", 0, "%"], ["インターセプト", 0], ["ブロック", 0], ["クリア", 0], ["空中戦勝利", 0], ["セーブ", 0], ["ボール奪取時間", 1, "秒", true]]],
-  ["その他", [["ドリブル", 0], ["ドリブル成功", 0], ["ドリブル成功率", 0, "%"], ["オフサイド", 0, "", true], ["フリーキック", 0], ["PK", 0], ["走行距離", 1, "km"]]]
+  ["その他", [["ドリブル", 0], ["ドリブル成功", 0], ["ドリブル成功率", 0, "%"], ["コーナーキック", 0], ["フリーキック", 0], ["PK", 0], ["オフサイド", 0, "", true], ["ファウル", 0, "", true], ["警告", 0, "", true], ["退場", 0, "", true], ["走行距離", 1, "km"]]]
 ];
 function cmpRow(label, a, b, d, u, low) {
   if (a == null && b == null) return "";
@@ -1216,7 +1218,7 @@ function matchLineup(m) {
       let [x, y] = posXY(l.pos, side);
       const k = x + "," + y; used[k] = (used[k] || 0) + 1; x += (used[k] - 1) * 14 * (used[k] % 2 ? 1 : -1);
       /* 横向きのピッチ：ホームは左から右へ、アウェイは右から左へ攻める */
-      const dep = l.pos === "GK" ? 5 : 16 + Math.max(0, Math.min(1, (74 - y) / 60)) * 29;
+      const dep = l.pos === "GK" ? 6.5 : 16 + Math.max(0, Math.min(1, (74 - y) / 60)) * 29;
       const X = top ? 100 - dep : dep, Y = Math.max(9, Math.min(91, top ? 100 - x : x));
       return link(l, `<span class="lp-ph">${face(l.name)}${badges(l)}</span><span class="lp-nm">${l.no != null ? `<b>${l.no}</b>` : ""}${esc(l.name)}</span>`, `lp ${side}${X > 78 ? " rl" : ""}`).replace(/^<(a|div) class="([^"]+)"/, `<$1 class="$2" style="left:${X}%;top:${Y}%"`);
     }).join(""); };
@@ -1228,7 +1230,8 @@ function matchLineup(m) {
       const X = Math.max(10, Math.min(90, x)), Y = l.pos === "GK" ? 92 : Math.max(9, Math.min(84, y));
       return link(l, `<span class="lp-ph">${face(l.name)}${badges(l)}</span><span class="lp-nm">${l.no != null ? `<b>${l.no}</b>` : ""}${esc(l.name)}</span>`, `lp ${side}${X > 78 ? " rl" : ""}`).replace(/^<(a|div) class="([^"]+)"/, `<$1 class="$2" style="left:${X}%;top:${Y}%"`);
     }).join(""); };
-  const tab = (side, i) => `<button type="button" class="lpm-tab${i ? "" : " on"}" onclick="const u=this.closest('.lu');u.dataset.t='${i}';u.querySelectorAll('.lpm-tab').forEach((b,j)=>b.classList.toggle('on',j==${i}))">${logo(club(side), "sm")}<b>${esc(shortOf(club(side)))}</b><small>${esc(m.form[side] || "")}</small></button>`;
+  const t0 = h.hs === "me" ? 0 : 1; /* スマホは自チームのタブを最初に開く */
+  const tab = (side, i) => `<button type="button" class="lpm-tab${i === t0 ? " on" : ""}" onclick="const u=this.closest('.lu');u.dataset.t='${i}';u.querySelectorAll('.lpm-tab').forEach((b,j)=>b.classList.toggle('on',j==${i}))">${logo(club(side), "sm")}<b>${esc(shortOf(club(side)))}</b><small>${esc(m.form[side] || "")}</small></button>`;
   const mob = `<div class="lpm"><div class="lpm-tabs">${tab(h.hs, 0)}${tab(h.as, 1)}</div>
     ${[h.hs, h.as].map((sd, i) => `<div class="lpm-field s${i}">${PITCH_SVG_V}${vdots(sd) || `<p class="lpm-none">メンバーの記録はありません</p>`}</div>`).join("")}</div>`;
   const pitch = mob + `<div class="lpitch"><div class="lp-team"><span>${logo(club(h.hs), "sm")}${esc(club(h.hs))}<small>${esc(m.form[h.hs] || "")}</small></span><span><small>${esc(m.form[h.as] || "")}</small>${esc(club(h.as))}${logo(club(h.as), "sm")}</span></div>
@@ -1241,7 +1244,7 @@ function matchLineup(m) {
     return link(l, `<span class="sb-ph">${face(l.name)}${l.no != null ? `<em>${l.no}</em>` : ""}</span><span class="sb-tx"><span class="sb-nm"><i>${esc(l.pos || "")}</i>${esc(l.name)}${gIcon(l)}</span>${info}</span>${tag}${rtChip(l.rating)}`, "sb" + (used ? "" : " off")); };
   const col = side => { const list = [...L(side).filter(l => l.role !== "先発"), ...B(side)];
     return `<div class="sb-col"><div class="sb-h">${logo(club(side), "sm")}<b>${esc(club(side))}</b><small>${list.length}名</small></div>${list.length ? list.map(row).join("") : `<div class="sb-none">記録なし</div>`}</div>`; };
-  return `<div class="lu" data-t="0">` + pitch + `<div class="sb-sec"><div class="sb-title">SUBSTITUTES<small>控え</small></div><div class="sb-cols">${col(h.hs)}${col(h.as)}</div></div></div>`;
+  return `<div class="lu" data-t="${t0}">` + pitch + `<div class="sb-sec"><div class="sb-title">SUBSTITUTES<small>控え</small></div><div class="sb-cols">${col(h.hs)}${col(h.as)}</div></div></div>`;
 }
 
 function vTable() {
@@ -1542,7 +1545,6 @@ window.addEventListener("hashchange", () => { const p = location.hash; if (!/^#\
 (async function init() {
   $("menu-btn").onclick = () => setMenu(!$("tabs").classList.contains("open"));
   try { await loadAll(); } catch (e) { console.error(e); D.err = "データを読み込めませんでした。"; }
-  document.title = clubName();
   ["brand-name", "foot-name", "copy-name"].forEach(id => $(id).textContent = clubName());
   if (D.conf["創設年"]) $("copy-year").textContent = D.conf["創設年"];
   if (D.conf["サブタイトル"]) $("brand-sub").textContent = D.conf["サブタイトル"];
