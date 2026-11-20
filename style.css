@@ -1341,3 +1341,6 @@ a.pr-row:hover b{color:var(--blue)}
 .nt-x .nx-tag.gold{background:#c8a24a;color:#1c2833}
 .nt-rec:not(.is-acad) .nx-tag:not(.gold){background:var(--blue);color:#fff}
 .nx-crest{right:4cqw;width:30cqw;height:30cqw}
+/* 評価点：丸、数字は中央 */
+.lp-ph .rt.b-tr{width:23px;height:23px;border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;text-align:center;font-size:9.5px;letter-spacing:-.03em;top:-7px;right:-14px}
+.lp.rl .lp-ph .rt.b-tr{right:auto;left:-14px}
