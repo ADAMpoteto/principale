@@ -833,8 +833,22 @@ function buildNews() {
 }
 /* サムネイル（画像の代わりに、試合ならエンブレムとスコア、移籍なら選手） */
 function newsThumb(n) {
-  if (n.ms) { const s = n.ms;
-    return `<div class="nt nt-r${s.club ? " club" : ""}">${s.club ? logo(clubName(), "md") : face(s.who)}<div class="nt-w">${s.en ? `${s.big !== "" && s.big != null ? `<span class="nt-num">${s.big}</span>` : ""}${s.en}` : s.v === 1 && s.def.fe ? s.def.fe : `<span class="nt-num">${s.v}</span>${s.def.en}`}<small>${esc(s.club ? clubName() : s.who)}</small></div></div>`; }
+  if (n.ms) { const s = n.ms, m0 = n.m0;
+    /* 記録の画像：移籍・昇格と同じデザイン（大きい英字＋写真） */
+    let lines, tag = m0 && m0.opp ? `VS ${shortOf(m0.opp)}` : "";
+    const big = s.big !== "" && s.big != null ? String(s.big) : "";
+    if (s.en === "HAT-TRICK") lines = ["HAT-", "TRICK"];
+    else if (s.en === "MONTHLY MVP") { lines = ["MONTHLY", "MVP"]; tag = big ? `AVG ${big}` : ""; }
+    else if (s.en === "YEARS OLD") { lines = [big, "YEARS OLD"]; tag = "CLUB RECORD"; }
+    else if (s.en) lines = big ? [big, s.en] : s.en.split(" ");
+    else if (s.v === 1 && s.def.fe) lines = s.def.fe === "DEBUT" ? ["DEBUT"] : [s.def.fe.split(" ")[0], s.def.fe.split(" ").slice(1).join(" ")];
+    else lines = [String(s.v), s.def.en];
+    if (/クラブ新記録|シーズン最多|最多得点差/.test(n.t || "")) tag = "CLUB RECORD";
+    const sz = t => t.length > 11 ? " s4" : t.length > 8 ? " s3" : t.length > 6 ? " s2" : "";
+    const head = lines.filter(Boolean).map(t => `<b class="nx-h${sz(t)}">${esc(t)}</b>`).join("");
+    const pr = s.club ? {} : prof(s.who) || {};
+    return `<div class="nt nt-x nt-rec${s.club ? " is-club" : ""}"><div class="nx-bg">${logo(clubName(), "")}</div>${s.club ? `<div class="nx-crest">${logo(clubName(), "")}</div>` : face(s.who)}
+      <div class="nx-t">${tag ? `<span class="nx-tag${tag === "CLUB RECORD" ? " gold" : ""}">${esc(tag)}</span>` : ""}${head}${s.club ? "" : `<span class="nx-n">${esc(pr.roma || s.who)}</span>${pr.roma ? `<span class="nx-j">${esc(s.who)}</span>` : ""}`}<span class="nx-c">${logo(clubName(), "")}${esc(clubName())}</span></div></div>`; }
   if (n.m) { const h = homeAway(n.m);
     const res = n.kind === "result";
     return `<div class="nt nt-m2"><div class="nm-top">${compLogo(n.m.comp, "nm-cl")}<span>${esc(n.m.comp)}${n.m.round ? "　" + esc(n.m.round) : ""}</span></div>
