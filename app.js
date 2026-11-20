@@ -1082,7 +1082,7 @@ function matchStats(m, h, short) {
     <div class="cmp-legend"><span><i style="background:var(--cl)"></i>${clubName2(H === "me" ? clubName() : m.opp)} ${fm(H)}</span><span>${fm(A)} ${clubName2(A === "me" ? clubName() : m.opp)}<i style="background:var(--cr)"></i></span></div>
     ${poss}${body}</div>`;
 }
-const POSXY = { GK: [50, 91], SW: [50, 82], RB: [86, 72], RCB: [72, 78], CB: [50, 80], LCB: [28, 78], LB: [14, 72], RWB: [88, 68], LWB: [12, 68],
+const POSXY = { GK: [50, 91], SW: [50, 82], RB: [86, 72], RCB: [64, 78], CB: [50, 79], LCB: [36, 78], LB: [14, 72], RWB: [88, 68], LWB: [12, 68],
   CDM: [50, 64], RDM: [66, 64], LDM: [34, 64], CM: [50, 52], RCM: [70, 53], LCM: [30, 53], RM: [88, 46], LM: [12, 46], CAM: [50, 38], RAM: [70, 38], LAM: [30, 38],
   RW: [84, 24], LW: [16, 24], RF: [66, 20], LF: [34, 20], CF: [50, 22], ST: [50, 15], RS: [64, 15], LS: [36, 15] };
 /* ピッチのライン（105×68） */
@@ -1099,10 +1099,14 @@ function matchLineup(m) {
   const club = side => side === "me" ? clubName() : m.opp;
   const link = (l, inner, cls) => l.side !== "opp" ? `<a class="${cls}" href="#/player/${encodeURIComponent(l.name)}">${inner}</a>` : `<div class="${cls}">${inner}</div>`;
   const gIcon = l => l.s["得点"] ? `<i class="lp-g">${ICON.ball.repeat(Math.min(3, l.s["得点"]))}</i>` : "";
+  /* 3バック（5バック）はCBを広げる。4バックは中央寄り */
+  const back3 = side => { const P = new Set(L(side).filter(l => l.role === "先発").map(l => l.pos)); return P.has("CB") && (P.has("LCB") || P.has("RCB")); };
+  const posXY = (pos, side) => back3(side) && (pos === "LCB" || pos === "RCB") ? [pos === "LCB" ? 26 : 74, 78]
+    : POSXY[pos] || POSXY[{ GK: "GK", DF: "CB", MF: "CM", FW: "ST" }[pos]] || [50, 50];
   /* 1枚のピッチに両チーム（ホームは下、アウェイは上） */
   const dots = (side, top) => { const used = {};
     return L(side).filter(l => l.role === "先発").map(l => {
-      let [x, y] = POSXY[l.pos] || POSXY[{ GK: "GK", DF: "CB", MF: "CM", FW: "ST" }[l.pos]] || [50, 50];
+      let [x, y] = posXY(l.pos, side);
       const k = x + "," + y; used[k] = (used[k] || 0) + 1; x += (used[k] - 1) * 14 * (used[k] % 2 ? 1 : -1);
       /* 横向きのピッチ：ホームは左から右へ、アウェイは右から左へ攻める */
       const dep = l.pos === "GK" ? 4.5 : 12.5 + Math.max(0, Math.min(1, (79 - y) / 64)) * 32;
@@ -1112,7 +1116,7 @@ function matchLineup(m) {
   /* スマホ：チームごとに縦向きで表示（自チームは下から上へ攻める） */
   const vdots = side => { const used = {};
     return L(side).filter(l => l.role === "先発").map(l => {
-      let [x, y] = POSXY[l.pos] || POSXY[{ GK: "GK", DF: "CB", MF: "CM", FW: "ST" }[l.pos]] || [50, 50];
+      let [x, y] = posXY(l.pos, side);
       const k = x + "," + y; used[k] = (used[k] || 0) + 1; x += (used[k] - 1) * 14 * (used[k] % 2 ? 1 : -1);
       const X = Math.max(10, Math.min(90, x)), Y = l.pos === "GK" ? 92 : Math.max(9, Math.min(84, y));
       return link(l, `<span class="lp-ph">${face(l.name)}${l.no != null ? `<em>${l.no}</em>` : ""}${gIcon(l)}</span><span class="lp-nm">${esc(l.name)}</span>`, `lp ${side}`).replace(/^<(a|div) class="([^"]+)"/, `<$1 class="$2" style="left:${X}%;top:${Y}%"`);
