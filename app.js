@@ -672,7 +672,7 @@ function rkCard(M, P, label) {
   const R = ranked(P, M); if (!R.length) return "";
   const f = R[0], v = x => fmtN(x, M.d) + (M.u === "%" ? "%" : "");
   return `<div class="rk-card"><a class="rk-top" href="#/player/${encodeURIComponent(f.p.name)}"><div class="who"><h3>${esc(label || M.k)}</h3><b>${esc(f.p.name)}</b><small>${esc(f.p.pos || "")}</small></div>
-      ${face(f.p.name)}<div class="big">${v(f.v)}</div></a>
+      ${face(f.p.name)}<div class="big${v(f.v).length >= 5 ? " l5" : v(f.v).length >= 4 ? " l4" : ""}">${v(f.v)}</div></a>
     ${R.slice(1, 5).map((x, i) => `<a class="rk-row" href="#/player/${encodeURIComponent(x.p.name)}"><span class="n">${i + 2}</span><span class="nm">${esc(x.p.name)}</span><span class="val">${v(x.v)}</span></a>`).join("")}
     ${R.length > 5 ? `<a class="all" href="#/stats/${encodeURIComponent(M.k)}">ランキングを見る</a>` : ""}</div>`;
 }
@@ -923,7 +923,7 @@ function vHome() {
     <div class="sch-btns"><a class="btn" href="#/matches">試合日程・結果一覧</a><a class="btn" href="#/table">順位表</a></div></div></section>
   <div class="wrap">
     ${sec("NEWS", "ニュース", "#/news", "MORE")}
-    ${news.length ? `<div class="ngrid">${news.slice(0, 6).map(newsCard).join("")}</div>` : `<div class="panel">${empty("ニュースはまだありません。")}</div>`}
+    ${news.length ? `<div class="ngrid ng3">${news.slice(0, 6).map(newsCard).join("")}</div>` : `<div class="panel">${empty("ニュースはまだありません。")}</div>`}
     <div class="grid" style="margin-top:8px"><div>
       ${sec("STANDINGS", st ? st.comp : "順位表", "#/table", "MORE")}
       ${me ? `<div class="stc"><div class="stc-rk"><b>${me.rank}</b><small>位</small></div><div class="stc-r"><span>${me.p}試合</span><b>${me.w}勝 ${me.d}分 ${me.l}敗</b><span>勝点 <b>${me.pts}</b>　得失点差 ${me.gf - me.ga > 0 ? "+" : ""}${me.gf - me.ga}${asOf ? `　（${asOf} 時点）` : ""}</span></div></div>` : ""}
@@ -1265,7 +1265,7 @@ function vPlayer(name) {
     ${p.memo ? `<p style="color:var(--tx2);margin:12px 0 0">${esc(p.memo)}</p>` : ""}
     ${playerFirsts(all)}${playerTitles(p, name, bySeason)}${playerHistory(p, name, bySeason)}
     <h2 class="sec"><b>SEASON STATS</b><small>シーズン成績</small><span style="margin-left:auto">${seasonSel()}</span></h2>
-    ${tiles.length ? `<div class="tiles">${tiles.map(([k, v, u]) => `<div class="tile"><span>${k}</span><b>${typeof v === "number" ? fmtN(v) : esc(v)}${u ? `<small>${u}</small>` : ""}</b></div>`).join("")}</div>` : `<div class="panel">${empty("このシーズンの出場はありません。")}</div>`}
+    ${tiles.length ? `<div class="tiles" style="--c:${Math.ceil(tiles.length / Math.ceil(tiles.length / 7))}">${tiles.map(([k, v, u]) => `<div class="tile"><span>${k}</span><b>${typeof v === "number" ? fmtN(v) : esc(v)}${u ? `<small>${u}</small>` : ""}</b></div>`).join("")}</div>` : `<div class="panel">${empty("このシーズンの出場はありません。")}</div>`}
     ${ratings.length ? sec("RATING", "試合ごとの評価") + `<div class="chart">${ratingChart(ratings.slice(-30))}</div>` : ""}
     ${ovrChart ? sec("GROWTH", "能力値の推移") + `<div class="chart">${ovrChart}</div>` : ""}
     ${valChart ? sec("MARKET VALUE", "市場価値の推移") + `<div class="chart">${valChart}</div>` : ""}
