@@ -1352,3 +1352,7 @@ img.ico-ball{width:18px;height:18px;padding:2px;box-sizing:border-box;background
 /* 試合結果：勝ち＝緑／負け＝赤／引き分け＝グレー */
 .mh-res{color:#fff}
 .mh-res.W{background:var(--w)}.mh-res.D{background:var(--d)}.mh-res.L{background:var(--l)}
+/* PK戦 */
+.ev.pk-row .m.pk-sc{font-family:var(--en);font-weight:800;font-size:15px;color:var(--navy)}
+.pk-ic.ng{color:var(--l)}
+.pk-ic.ng svg{width:18px;height:18px}

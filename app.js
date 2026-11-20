@@ -206,6 +206,11 @@ async function loadAll() {
       if (e.kind === "オウンゴール") { const mine = m.lu.concat(m.bench || []).some(l => same(l.name, e.player)), opp = (m.luOpp || []).concat(m.benchOpp || []).some(l => same(l.name, e.player));
         e.side = mine ? "opp" : opp ? "me" : e.side === "me" ? "opp" : "me"; } });
     m.ev.sort((a, b) => a.ord - b.ord || a.i - b.i);
+    /* 試合シートのPKが空欄なら、試合経過のPK戦の記録から計算 */
+    const kicks = m.ev.filter(e => /^PK戦（成功）/.test(e.kind));
+    if (!m.pk && m.played && m.gf === m.ga && m.ev.some(e => /^PK戦（/.test(e.kind))) {
+      m.pk = { a: kicks.filter(e => e.side === "me").length, b: kicks.filter(e => e.side === "opp").length };
+      m.res = m.pk.a > m.pk.b ? "W" : m.pk.a < m.pk.b ? "L" : "D"; }
     if (!m.played) return;
     /* 得点者・アシストが空欄なら、出場選手 → 試合経過 の順で補う */
     if (!m.scorers.length) {
@@ -284,7 +289,7 @@ function curSeason() { const t = gameToday(), y = t.getFullYear(); return t.getM
 /* 試合の区切り（キックオフ・ハーフタイムなど）。分が空欄でも正しい位置に並べる */
 const PHASE = { キックオフ: ["KICK OFF", -1], 前半終了: ["HALF TIME", 45.98], 後半開始: ["SECOND HALF", 45.99], 後半終了: ["END OF 2ND HALF", 90.98], 延長開始: ["EXTRA TIME", 90.99], 延長前半終了: ["ET HALF TIME", 105.98], 延長後半開始: ["ET SECOND HALF", 105.99], 延長終了: ["END OF EXTRA TIME", 120.98], PK戦: ["PENALTY SHOOT-OUT", 9998], 試合終了: ["FULL TIME", 9999] };
 const MINOR = ["セーブ", "シュート（枠外）", "シュート（セーブ）", "シュート（ブロック）", "ポスト・バー", "オフサイド", "ビッグチャンス"];
-function phaseOrd(e) { const p = PHASE[e.kind]; return p ? p[1] : e.mn; }
+function phaseOrd(e) { if (/^PK戦（/.test(e.kind)) return 9998.5; const p = PHASE[e.kind]; return p ? p[1] : e.mn; }
 /* YouTube */
 function ytInfo(u) { u = String(u || "").trim(); if (!u) return null;
   const m = u.match(/(?:youtu\.be\/|[?&]v=|\/embed\/|\/shorts\/|\/live\/)([\w-]{11})/) || u.match(/^([\w-]{11})$/); if (!m) return null;
@@ -1117,7 +1122,7 @@ function headToHead(m) {
 function matchFacts(m, h) {
   const evs = m.ev.filter(e => e.kind !== "その他" || e.note || e.video);
   const SVG = d => `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
-  const EI = { セーブ: SVG('<path d="M8 13V6a1.5 1.5 0 0 1 3 0v5V4.5a1.5 1.5 0 0 1 3 0V11V6a1.5 1.5 0 0 1 3 0v8a6 6 0 0 1-6 6h-1a6 6 0 0 1-4.6-2.2L3.5 15a1.5 1.5 0 0 1 2.3-1.9L8 15"/>'), "シュート（枠外）": SVG('<circle cx="12" cy="12" r="8"/>'), "シュート（セーブ）": SVG('<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor"/>'), "シュート（ブロック）": SVG('<circle cx="12" cy="12" r="8"/><path d="M6.5 17.5l11-11"/>'),
+  const EI = { セーブ: SVG('<path d="M8 13V6a1.5 1.5 0 0 1 3 0v5V4.5a1.5 1.5 0 0 1 3 0V11V6a1.5 1.5 0 0 1 3 0v8a6 6 0 0 1-6 6h-1a6 6 0 0 1-4.6-2.2L3.5 15a1.5 1.5 0 0 1 2.3-1.9L8 15"/>'), "シュート（枠外）": SVG('<path d="M3 21V10h12v11"/><circle cx="19.5" cy="5" r="2.5" fill="currentColor"/><path d="M11 15l5.5-7.5" stroke-dasharray="2 2.2"/>'), "シュート（セーブ）": SVG('<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor"/>'), "シュート（ブロック）": SVG('<circle cx="12" cy="12" r="8"/><path d="M6.5 17.5l11-11"/>'),
     "ポスト・バー": SVG('<path d="M4 20V5h16v15"/><circle cx="17" cy="8" r="2.4" fill="currentColor"/>'), 
     オフサイド: SVG('<path d="M6 21V4"/><path d="M6 4h11l-2.5 4L17 12H6"/>'), ビッグチャンス: SVG('<path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/>'),
     PK失敗: SVG('<circle cx="12" cy="12" r="8"/><path d="M8 8l8 8M16 8l-8 8"/>'), 負傷: SVG('<path d="M12 5v14M5 12h14"/>'), VAR: SVG('<rect x="3" y="5" width="18" height="12" rx="1.5"/><path d="M8 21h8"/>') };
@@ -1135,9 +1140,16 @@ function matchFacts(m, h) {
   const hasPhase = evs.some(e => PHASE[e.kind]);
   let ht = false, a = 0, b = 0;
   const sc = () => h.hs === "me" ? `${a} - ${b}` : `${b} - ${a}`;
+  let pa = 0, pb = 0; /* PK戦のスコア（自分・相手） */
   const tl = evs.map(e => {
-    if (PHASE[e.kind]) { const ft = e.kind === "試合終了", score = e.kind !== "キックオフ" && e.kind !== "後半開始" && e.kind !== "延長開始" && e.kind !== "延長後半開始";
-      return `<div class="ev-ph${ft ? " ft" : ""}"><b>${PHASE[e.kind][0]}</b>${score ? `<span>${ft ? scoreTxt(m) : sc()}</span>` : ""}${e.min && !ft && e.kind !== "キックオフ" ? `<small>${esc(e.min)}'</small>` : ""}${e.note ? `<small>${esc(e.note)}</small>` : ""}</div>`; }
+    if (/^PK戦（/.test(e.kind)) { const ok = /成功/.test(e.kind); if (ok) e.side === "me" ? pa++ : pb++;
+      const left = (e.side === "me") === (h.hs === "me"), sc2 = h.hs === "me" ? `${pa}-${pb}` : `${pb}-${pa}`;
+      const ic = `<span class="ico pk-ic ${ok ? "ok" : "ng"}">${ok ? ICON.ball : SVG('<circle cx="12" cy="12" r="9"/><path d="M8.5 8.5l7 7M15.5 8.5l-7 7"/>')}</span>`;
+      const nm = e.player ? (e.side === "me" ? pLink(e.player) : esc(e.player)) : `<span class="ev-k">${ok ? "成功" : "失敗"}</span>`;
+      const tx = `<div>${nm}<small>${ok ? "成功" : "失敗"}${e.note ? "　" + esc(e.note) : ""}</small></div>`;
+      return `<div class="ev pk-row"><div class="l">${left ? tx + ic : ""}</div><div class="m pk-sc">${sc2}</div><div class="r">${left ? "" : ic + tx}</div></div>`; }
+    if (PHASE[e.kind]) { const ft = e.kind === "試合終了", score = !["キックオフ", "後半開始", "延長開始", "延長後半開始", "PK戦"].includes(e.kind);
+      return `<div class="ev-ph${ft ? " ft" : ""}"><b>${PHASE[e.kind][0]}</b>${score ? `<span>${ft ? scoreTxt(m) + (m.pk ? `　PK ${h.hs === "me" ? m.pk.a + "-" + m.pk.b : m.pk.b + "-" + m.pk.a}` : "") : sc()}</span>` : ""}${e.min && !ft && e.kind !== "キックオフ" ? `<small>${esc(e.min)}'</small>` : ""}${e.note ? `<small>${esc(e.note)}</small>` : ""}</div>`; }
     let pre = ""; if (!hasPhase && !ht && e.mn > 45.99 && e.mn < 999) { ht = true; pre = `<div class="ev-ph"><b>HALF TIME</b><span>${sc()}</span></div>`; }
     if (isGoal(e)) e.side === "me" ? a++ : b++;
     const left = (e.side === "me") === (h.hs === "me"), minor = MINOR.includes(e.kind);
