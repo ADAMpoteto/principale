@@ -184,7 +184,7 @@ async function loadAll() {
   D.lineups = got.lu.map((o, i) => {
     const m = byKey[dKey(pDate(F(o, "日付")))]; const name = F(o, "名前"); if (!m || !name) return null;
     const s = {}; LU_NUM.forEach(h => { const v = num(F(o, h)); if (v != null) s[h] = v; });
-    const l = { i, m, name, side: sideOf(F(o, "チーム")), role: F(o, "出場") || "先発", no: num(F(o, "背番号")), pos: F(o, "ポジション").toUpperCase(), s, rating: s["評価"] ?? null };
+    const l = { i, m, name, side: sideOf(F(o, "チーム")), role: F(o, "出場") || "先発", no: num(F(o, "背番号")), pos: F(o, "ポジション").toUpperCase(), s, rating: s["評価"] ?? null, totw: /^(true|1|○|◯|✓|✔|y|yes)$/i.test(String(F(o, "TOTW")).trim()) };
     /* ベンチ登録でも出場時間か評価が入っていれば途中出場。使われなかった選手は控えとして別に持つ */
     if (l.role === "ベンチ" && ((s["出場時間"] || 0) > 0 || l.rating != null)) l.role = "途中出場";
     if (l.role === "ベンチ") { (l.side === "opp" ? m.benchOpp : m.bench).push(l); return null; }
@@ -775,6 +775,13 @@ function milestones3() {
     [["g", m.scorers, "ゴール"], ["a", m.assists, "アシスト"]].forEach(([k, L, u]) => L.forEach(x => { if (/オウン/.test(x.name)) return; const key = nameKey(x.name), p = cur[key] || (cur[key] = { g: 0, a: 0, done: {} });
       p[k] += x.n; if (best[k] > 0 && p[k] > best[k] && !p.done[k]) { p.done[k] = 1; push(m, `r-sr-${k}-${m.season}-${key}`, `${x.name}選手 クラブのシーズン最多${u}記録を更新`, { who: x.name, big: p[k], en: k === "g" ? "GOALS" : "ASSISTS", txt: `${x.name}選手が今シーズン${p[k]}${u}目を記録し、クラブの1シーズン最多${u}記録（${best[k]}）を更新しました。` }); } }));
   });
+  /* TOTW（チーム・オブ・ザ・ウィーク）選出。自チームの選手のみ */
+  const TW = {};
+  D.played.forEach(m => m.lu.filter(l => l.totw).forEach(l => { const k = nameKey(l.name), c = (TW[k] = (TW[k] || 0) + 1), ovr = l.rating != null ? Math.round(l.rating * 10) : null;
+    const d = m.date, when = `${d.getMonth() + 1}月${d.getDate()}日（${WD[d.getDay()]}）の${esc(roundTxt(m))} ${esc(m.opp)}戦`;
+    const st = [l.rating != null ? `評価${fmtN(l.rating, 1)}` : "", l.s["得点"] ? `${l.s["得点"]}ゴール` : "", l.s["アシスト"] ? `${l.s["アシスト"]}アシスト` : ""].filter(Boolean).join("・");
+    push(m, `r-totw-${m.id}-${k}`, `${l.name}選手 TOTWに選出`, { who: l.name, en: "TOTW", totw: { ovr, pos: l.pos, c },
+      html: `<p>${when}での活躍が評価され、${esc(l.name)}選手がチーム・オブ・ザ・ウィーク（TOTW）に選ばれました。${c > 1 ? `TOTW選出は通算${c}回目です。` : ""}</p>${st ? `<p>この試合の成績：${st}</p>` : ""}<p class="nbtn"><a class="btn" href="#/match/${m.id}">MATCH REPORT</a> <a class="btn" href="#/player/${encodeURIComponent(l.name)}">PLAYER PROFILE</a></p>` }); }));
   /* 月間ベストプレーヤー（翌月の試合が入ったら） */
   const byM = {}; D.played.forEach(m => { if (m.date) (byM[`${m.date.getFullYear()}-${pad(m.date.getMonth() + 1)}`] = byM[`${m.date.getFullYear()}-${pad(m.date.getMonth() + 1)}`] || []).push(m); });
   const months = Object.keys(byM).sort();
@@ -863,6 +870,9 @@ function buildNews() {
 }
 /* サムネイル（画像の代わりに、試合ならエンブレムとスコア、移籍なら選手） */
 function newsThumb(n) {
+  if (n.ms && n.ms.totw) { const s = n.ms, t = s.totw, pr = prof(s.who) || {};
+    return `<div class="nt nt-totw"><div class="tw-l"><span class="tw-tag">${t.c > 1 ? `${t.c}回目の選出` : "SELECTED"}</span><b>TEAM OF<br>THE WEEK</b></div>
+      <div class="tw-card"><div class="tw-o">${t.ovr ?? ""}<small>${esc(t.pos || "")}</small></div>${logo(clubName(), "tw-cl")}${face(s.who, "tw-f")}<div class="tw-n">${esc(pr.roma || s.who)}</div></div></div>`; }
   if (n.ms) { const s = n.ms, m0 = n.m0;
     /* 記録の画像：移籍・昇格と同じデザイン（大きい英字＋写真） */
     let lines, tag = m0 && m0.opp ? `VS ${shortOf(m0.opp)}` : "";
