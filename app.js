@@ -228,8 +228,8 @@ async function loadAll() {
       m.assists = L.length ? L.map(l => ({ name: l.name, n: l.s["アシスト"] }))
         : count(m.ev.filter(e => e.side === "me" && isGoal(e) && e.rel).map(e => e.rel));
     }
-    /* MOM が空欄なら最高評価の選手 */
-    if (!m.mom) { const r = [...m.lu, ...m.luOpp].filter(l => l.rating != null).sort((a, b) => b.rating - a.rating)[0]; if (r) { m.mom = r.name; m.momL = r; } }
+    /* MOM が空欄なら最高評価の選手（勝ったチームから。引き分けは両チームから） */
+    if (!m.mom) { const r = (m.res === "W" ? m.lu : m.res === "L" ? (m.luOpp || []) : [...m.lu, ...(m.luOpp || [])]).filter(l => l.rating != null).sort((a, b) => b.rating - a.rating)[0]; if (r) { m.mom = r.name; m.momL = r; } }
     else m.momL = m.lu.find(l => same(l.name, m.mom));
   });
   D.played = D.matches.filter(m => m.played);
