@@ -321,16 +321,18 @@ function initials(name) {
   if (/^[\p{Script=Latin}\s.'’-]+$/u.test(s)) { const w = s.replace(/[^A-Za-z0-9\s]/g, " ").split(/\s+/).filter(Boolean); return (w.length > 1 ? w[0][0] + w[w.length - 1][0] : s.slice(0, 2)).toUpperCase(); }
   return s.split(/[\s　]+/)[0].slice(0, 2);
 }
+const IMG_V = ((document.currentScript && document.currentScript.src || "").match(/[?&]v=([^&]+)/) || [])[1] || "";
+const imgSrc = p => encodeURI(String(p).split("?")[0]) + (IMG_V ? "?v=" + IMG_V : "");
 function imgTag(cands, alt, cls, key, phTxt) {
   const list = IMG_OK[key] ? [IMG_OK[key]] : cands, ini = phTxt || initials(alt);
   if (IMG_OK[key] === false || !list.length) return `<div class="${cls} ph" role="img" aria-label="${esc(alt)}">${esc(ini)}</div>`;
-  return `<img class="${cls}" src="${esc(encodeURI(list[0]))}" alt="${esc(alt)}" loading="lazy" decoding="async" data-k="${esc(key)}" data-c="${esc(list.slice(1).join("|"))}"
+  return `<img class="${cls}" src="${esc(imgSrc(list[0]))}" alt="${esc(alt)}" loading="lazy" decoding="async" data-k="${esc(key)}" data-c="${esc(list.slice(1).join("|"))}"
     data-i="${esc(ini)}" onload="imgOk(this)" onerror="imgNext(this)">`;
 }
-window.imgOk = el => { const k = el.dataset.k; if (k) IMG_OK[k] = decodeURI(el.getAttribute("src")); };
+window.imgOk = el => { const k = el.dataset.k; if (k) IMG_OK[k] = decodeURI(el.getAttribute("src").split("?")[0]); };
 window.imgNext = el => {
   const rest = (el.dataset.c || "").split("|").filter(Boolean);
-  if (rest.length) { el.dataset.c = rest.slice(1).join("|"); el.src = encodeURI(rest[0]); return; }
+  if (rest.length) { el.dataset.c = rest.slice(1).join("|"); el.src = imgSrc(rest[0]); return; }
   if (el.dataset.k) IMG_OK[el.dataset.k] = false;
   const d = document.createElement("div"); d.className = el.className + " ph"; d.textContent = el.dataset.i || "?"; d.setAttribute("role", "img"); d.setAttribute("aria-label", el.alt || "");
   el.replaceWith(d);
@@ -681,7 +683,7 @@ const WX = {
 const venue = m => m.stadium || (m.ha === "H" ? D.conf["ホームスタジアム"] : "") || "";
 
 /* 大会のエンブレム（images/comp/大会名.png）。なければ何も出さない */
-const compLogo = (c, cls) => c ? `<img class="clogo ${cls || ""}" src="${esc(encodeURI(`images/comp/${String(c).trim()}.png`))}" alt="" loading="lazy" onerror="this.remove()">` : "";
+const compLogo = (c, cls) => c ? `<img class="clogo ${cls || ""}" src="${esc(imgSrc(`images/comp/${String(c).trim()}.png`))}" alt="" loading="lazy" onerror="this.remove()">` : "";
 function matchRow(m) {
   const right = m.played ? `<span class="res ${m.res}">${m.gf}-${m.ga}</span>${m.pk ? `<span class="pk">PK ${m.pk.a}-${m.pk.b}</span>` : ""}`
     : `<span class="up">${kickoff(m) || ""}</span>`;
