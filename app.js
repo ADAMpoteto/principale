@@ -775,7 +775,7 @@ function milestones3() {
     [["g", m.scorers, "ゴール"], ["a", m.assists, "アシスト"]].forEach(([k, L, u]) => L.forEach(x => { if (/オウン/.test(x.name)) return; const key = nameKey(x.name), p = cur[key] || (cur[key] = { g: 0, a: 0, done: {} });
       p[k] += x.n; if (best[k] > 0 && p[k] > best[k] && !p.done[k]) { p.done[k] = 1; push(m, `r-sr-${k}-${m.season}-${key}`, `${x.name}選手 クラブのシーズン最多${u}記録を更新`, { who: x.name, big: p[k], en: k === "g" ? "GOALS" : "ASSISTS", txt: `${x.name}選手が今シーズン${p[k]}${u}目を記録し、クラブの1シーズン最多${u}記録（${best[k]}）を更新しました。` }); } }));
   });
-  /* TOTW（チーム・オブ・ザ・ウィーク）選出。自チームの選手のみ、1試合で1記事 */
+  /* TOTW（チーム・オブ・ザ・ウィーク）選出。自チームの選手のみ、1試合で1記事、試合の5日後に発表 */
   const TW = {};
   D.played.forEach(m => { const L = m.lu.filter(l => l.totw); if (!L.length) return;
     const d = m.date, when = `${d.getMonth() + 1}月${d.getDate()}日（${WD[d.getDay()]}）の${esc(roundTxt(m))} ${esc(m.opp)}戦`;
@@ -783,7 +783,7 @@ function milestones3() {
     const t = P.length === 1 ? `${P[0].name}選手 TOTWに選出` : P.length === 2 ? `${P[0].name}選手・${P[1].name}選手 TOTWに選出` : `TOTWに${P.length}選手が選出`;
     const li = P.map(x => `<li><span>${esc(x.pos || "")}</span><b><a href="#/player/${encodeURIComponent(x.name)}">${esc(x.name)}</a></b></li>`).join("");
     push(m, `r-totw-${m.id}`, t, { who: P[0].name, en: "TOTW", totw: P,
-      html: `<p>${when}での活躍が評価され、${P.length === 1 ? `${esc(P[0].name)}選手が` : `${P.length}選手が`}チーム・オブ・ザ・ウィーク（TOTW）に選ばれました。</p><ul class="srev">${li}</ul><p class="nbtn"><a class="btn" href="#/match/${m.id}">MATCH REPORT</a></p>` }); });
+      html: `<p>${when}での活躍が評価され、${P.length === 1 ? `${esc(P[0].name)}選手が` : `${P.length}選手が`}チーム・オブ・ザ・ウィーク（TOTW）に選ばれました。</p><ul class="srev">${li}</ul><p class="nbtn"><a class="btn" href="#/match/${m.id}">MATCH REPORT</a></p>` }, new Date(m.date.getFullYear(), m.date.getMonth(), m.date.getDate() + 5)); });
   /* 月間ベストプレーヤー（翌月の試合が入ったら） */
   const byM = {}; D.played.forEach(m => { if (m.date) (byM[`${m.date.getFullYear()}-${pad(m.date.getMonth() + 1)}`] = byM[`${m.date.getFullYear()}-${pad(m.date.getMonth() + 1)}`] || []).push(m); });
   const months = Object.keys(byM).sort();
