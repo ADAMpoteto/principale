@@ -781,7 +781,7 @@ function milestones3() {
     const d = m.date, when = `${d.getMonth() + 1}月${d.getDate()}日（${WD[d.getDay()]}）の${esc(roundTxt(m))} ${esc(m.opp)}戦`;
     const P = L.map(l => { const k = nameKey(l.name); TW[k] = (TW[k] || 0) + 1; return { name: l.name, pos: l.pos, rating: l.rating, ovr: l.rating != null ? Math.round(l.rating * 10) : null, c: TW[k], g: l.s["得点"] || 0, a: l.s["アシスト"] || 0 }; });
     const t = P.length === 1 ? `${P[0].name}選手 TOTWに選出` : P.length === 2 ? `${P[0].name}選手・${P[1].name}選手 TOTWに選出` : `TOTWに${P.length}選手が選出`;
-    const li = P.map(x => `<li><span>${esc(x.pos || "")}</span><b><a href="#/player/${encodeURIComponent(x.name)}">${esc(x.name)}</a></b>${[x.ovr != null ? `総合値${x.ovr}` : "", x.rating != null ? `評価${fmtN(x.rating, 1)}` : "", x.g ? `${x.g}ゴール` : "", x.a ? `${x.a}アシスト` : "", x.c > 1 ? `通算${x.c}回目` : "初選出"].filter(Boolean).join("・")}</li>`).join("");
+    const li = P.map(x => `<li><span>${esc(x.pos || "")}</span><b><a href="#/player/${encodeURIComponent(x.name)}">${esc(x.name)}</a></b></li>`).join("");
     push(m, `r-totw-${m.id}`, t, { who: P[0].name, en: "TOTW", totw: P,
       html: `<p>${when}での活躍が評価され、${P.length === 1 ? `${esc(P[0].name)}選手が` : `${P.length}選手が`}チーム・オブ・ザ・ウィーク（TOTW）に選ばれました。</p><ul class="srev">${li}</ul><p class="nbtn"><a class="btn" href="#/match/${m.id}">MATCH REPORT</a></p>` }); });
   /* 月間ベストプレーヤー（翌月の試合が入ったら） */
@@ -872,10 +872,12 @@ function buildNews() {
 }
 /* サムネイル（画像の代わりに、試合ならエンブレムとスコア、移籍なら選手） */
 function newsThumb(n) {
+  /* 名字だけ：英字の名前は最後、日本語の名前は最初 */
+  const surname = nm => { const w = String(nm).trim().split(/[\s　]+/); return w.length < 2 ? w[0] : /[A-Za-z]/.test(nm) ? w[w.length - 1] : w[0]; };
   if (n.ms && n.ms.totw) { const P = n.ms.totw, k = P.length;
     const card = x => { const pr = prof(x.name) || {}, nm = pr.roma || x.name;
       return `<div class="tw-card"><div class="tw-in"><span class="tw-lb">TOTW</span><div class="tw-o"><b>${x.ovr ?? ""}</b><small>${esc(x.pos || "")}</small>${logo(clubName(), "tw-cl")}</div>${face(x.name, "tw-f")}
-        <div class="tw-n">${esc(String(nm).split(" ").length > 1 && String(nm).length > 12 ? String(nm).split(" ").slice(-1)[0] : nm)}</div><div class="tw-ft">TEAM OF THE WEEK</div></div></div>`; };
+        <div class="tw-n">${esc(surname(nm))}</div><div class="tw-ft">TEAM OF THE WEEK</div></div></div>`; };
     return `<div class="nt nt-totw${k > 1 ? " multi" : ""}" style="--n:${k}"><div class="tw-l"><b>TEAM OF${k > 1 ? " " : "<br>"}THE WEEK</b></div><div class="tw-cards">${P.map(card).join("")}</div></div>`; }
   if (n.ms) { const s = n.ms, m0 = n.m0;
     /* 記録の画像：移籍・昇格と同じデザイン（大きい英字＋写真） */
