@@ -1045,7 +1045,7 @@ function cmpRow(label, a, b, d, u, low) {
 function vMatch(id) {
   const m = D.matches.find(x => x.id === parseInt(id, 10)); if (!m) return `<div class="wrap">${empty("試合が見つかりません。")}</div>`;
   const h = homeAway(m);
-  if (!["facts", "stats", "lineup"].includes(ST.mtab)) ST.mtab = "facts";
+  if (!["facts", "stats", "pstats", "lineup"].includes(ST.mtab)) ST.mtab = "facts";
   const evGoals = side => m.ev.filter(e => e.side === side && isGoal(e));
   const goalsTxt = side => {
     const E = evGoals(side);
@@ -1054,9 +1054,9 @@ function vMatch(id) {
   };
   const hG = goalsTxt(h.hs), aG = goalsTxt(h.as);
   const club = c => `<div class="club">${logo(c, "lg")}<span>${esc(c)}</span></div>`;
-  const tabs = [["facts", "SUMMARY", "概要"], ["stats", "STATS", "スタッツ"], ["lineup", "LINE-UP", "メンバー"]];
+  const tabs = [["facts", "SUMMARY", "概要"], ["stats", "TEAM STATS", "チームスタッツ"], ["pstats", "PLAYER STATS", "選手スタッツ"], ["lineup", "LINE-UP", "メンバー"]];
   let body = "";
-  if (m.played) body = ST.mtab === "facts" ? matchFacts(m, h) : ST.mtab === "stats" ? matchStats(m, h, false) + matchRatings(m, h) : matchLineup(m);
+  if (m.played) body = ST.mtab === "facts" ? matchFacts(m, h) : ST.mtab === "stats" ? matchStats(m, h, false) : ST.mtab === "pstats" ? matchRatings(m, h) + matchPlayerStats(m, h) : matchLineup(m);
   /* 試合前でもスタメンが入っていれば表示 */
   else body = (ytInfo(m.video) ? `<div class="ph">VIDEO<small>動画</small></div><div class="hlw">${ytBox(m.video, "hl")}</div>` : "") + matchPreview(m, h) + (m.lu.length || m.luOpp.length ? `<div class="ph">LINE-UP<small>メンバー</small></div>${matchLineup(m)}` : "") + headToHead(m);
   /* 得点者：ホームは右寄せ、アウェイは左寄せでスコアの下に */
@@ -1174,7 +1174,25 @@ function matchFacts(m, h) {
   return `${hl ? `<div class="ph">HIGHLIGHTS<small>ハイライト</small></div><div class="hlw">${hl}</div>` : ""}${mom}${tl ? `<div class="evw">${tlHead}${tl}</div>` : ""}${stats}${m.memo ? `<p style="padding:14px 18px;margin:0;color:var(--tx2)">${esc(m.memo)}</p>` : ""}
     ${!mom && !tl && !stats && !hl ? empty("試合の詳細はまだありません。") : ""}`;
 }
-/* 選手評価（スタッツタブ） */
+/* 選手スタッツ：出場した両チームの選手を項目ごとにランキング */
+const PSTAT = [["得点", 0], ["アシスト", 0], ["ゴール期待値", 2], ["シュート", 0], ["枠内シュート", 0], ["キーパス", 0], ["パス成功", 0], ["パス成功率", 0, "%"],
+  ["ドリブル成功", 0], ["タックル成功", 0], ["インターセプト", 0], ["ブロック", 0], ["クリア", 0], ["セーブ", 0], ["走行距離", 1, "km"]];
+function matchPlayerStats(m, h) {
+  const all = [...m.lu, ...m.luOpp];
+  const val = (l, k) => k === "パス成功率" ? ((l.s["パス"] || 0) >= 5 && l.s["パス成功"] != null ? l.s["パス成功"] / l.s["パス"] * 100 : null) : l.s[k];
+  const cards = PSTAT.map(([k, d, u]) => {
+    const L = all.map(l => ({ l, v: val(l, k) })).filter(x => x.v != null && x.v > 0).sort((a, b) => b.v - a.v || (b.l.rating ?? 0) - (a.l.rating ?? 0));
+    if (!L.length) return "";
+    let rank = 0, prev = null;
+    const rows = L.map((x, i) => { if (x.v !== prev) { rank = i + 1; prev = x.v; } const op = x.l.side === "opp", c = op ? m.opp : clubName();
+      const inner = `<span class="ps-rk">${rank}</span>${face(x.l.name, "ps-f")}<span class="ps-nm"><b>${esc(x.l.name)}</b><small>${logo(c, "xs")}${esc(shortOf(c))}${x.l.pos ? "　" + esc(x.l.pos) : ""}</small></span><span class="ps-v">${fmtN(x.v, d)}${u === "%" ? "%" : ""}</span>`;
+      const cls = `ps-r${rank === 1 ? " is-1" : ""}${i >= 5 ? " more" : ""}`;
+      return op ? `<div class="${cls}">${inner}</div>` : `<a class="${cls}" href="#/player/${encodeURIComponent(x.l.name)}">${inner}</a>`; }).join("");
+    return `<div class="ps-c"><h3>${esc(k)}${u && u !== "%" ? `<small>（${u}）</small>` : ""}</h3>${rows}${L.length > 5 ? `<button class="ps-more" type="button" onclick="this.parentNode.classList.toggle('open');this.textContent=this.parentNode.classList.contains('open')?'閉じる':'すべて見る（${L.length}人）'">すべて見る（${L.length}人）</button>` : ""}</div>`; }).join("");
+  if (!cards) return matchRatings(m, h) ? "" : empty("選手スタッツはまだありません。");
+  return `<div class="ph">項目別ランキング<small>PLAYER STATS</small></div><div class="ps">${cards}</div>`;
+}
+/* 選手評価（選手スタッツタブ） */
 function matchRatings(m, h) {
   const all = side => (side === "me" ? m.lu : m.luOpp).filter(l => l.rating != null).sort((a, b) => b.rating - a.rating);
   const best = Math.max(-1, ...[...m.lu, ...m.luOpp].map(l => l.rating ?? -1));
