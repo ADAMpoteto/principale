@@ -775,13 +775,15 @@ function milestones3() {
     [["g", m.scorers, "ゴール"], ["a", m.assists, "アシスト"]].forEach(([k, L, u]) => L.forEach(x => { if (/オウン/.test(x.name)) return; const key = nameKey(x.name), p = cur[key] || (cur[key] = { g: 0, a: 0, done: {} });
       p[k] += x.n; if (best[k] > 0 && p[k] > best[k] && !p.done[k]) { p.done[k] = 1; push(m, `r-sr-${k}-${m.season}-${key}`, `${x.name}選手 クラブのシーズン最多${u}記録を更新`, { who: x.name, big: p[k], en: k === "g" ? "GOALS" : "ASSISTS", txt: `${x.name}選手が今シーズン${p[k]}${u}目を記録し、クラブの1シーズン最多${u}記録（${best[k]}）を更新しました。` }); } }));
   });
-  /* TOTW（チーム・オブ・ザ・ウィーク）選出。自チームの選手のみ */
+  /* TOTW（チーム・オブ・ザ・ウィーク）選出。自チームの選手のみ、1試合で1記事 */
   const TW = {};
-  D.played.forEach(m => m.lu.filter(l => l.totw).forEach(l => { const k = nameKey(l.name), c = (TW[k] = (TW[k] || 0) + 1), ovr = l.rating != null ? Math.round(l.rating * 10) : null;
+  D.played.forEach(m => { const L = m.lu.filter(l => l.totw); if (!L.length) return;
     const d = m.date, when = `${d.getMonth() + 1}月${d.getDate()}日（${WD[d.getDay()]}）の${esc(roundTxt(m))} ${esc(m.opp)}戦`;
-    const st = [l.rating != null ? `評価${fmtN(l.rating, 1)}` : "", l.s["得点"] ? `${l.s["得点"]}ゴール` : "", l.s["アシスト"] ? `${l.s["アシスト"]}アシスト` : ""].filter(Boolean).join("・");
-    push(m, `r-totw-${m.id}-${k}`, `${l.name}選手 TOTWに選出`, { who: l.name, en: "TOTW", totw: { ovr, pos: l.pos, c },
-      html: `<p>${when}での活躍が評価され、${esc(l.name)}選手がチーム・オブ・ザ・ウィーク（TOTW）に選ばれました。${c > 1 ? `TOTW選出は通算${c}回目です。` : ""}</p>${st ? `<p>この試合の成績：${st}</p>` : ""}<p class="nbtn"><a class="btn" href="#/match/${m.id}">MATCH REPORT</a> <a class="btn" href="#/player/${encodeURIComponent(l.name)}">PLAYER PROFILE</a></p>` }); }));
+    const P = L.map(l => { const k = nameKey(l.name); TW[k] = (TW[k] || 0) + 1; return { name: l.name, pos: l.pos, rating: l.rating, ovr: l.rating != null ? Math.round(l.rating * 10) : null, c: TW[k], g: l.s["得点"] || 0, a: l.s["アシスト"] || 0 }; });
+    const t = P.length === 1 ? `${P[0].name}選手 TOTWに選出` : P.length === 2 ? `${P[0].name}選手・${P[1].name}選手 TOTWに選出` : `TOTWに${P.length}選手が選出`;
+    const li = P.map(x => `<li><span>${esc(x.pos || "")}</span><b><a href="#/player/${encodeURIComponent(x.name)}">${esc(x.name)}</a></b>${[x.ovr != null ? `総合値${x.ovr}` : "", x.rating != null ? `評価${fmtN(x.rating, 1)}` : "", x.g ? `${x.g}ゴール` : "", x.a ? `${x.a}アシスト` : "", x.c > 1 ? `通算${x.c}回目` : "初選出"].filter(Boolean).join("・")}</li>`).join("");
+    push(m, `r-totw-${m.id}`, t, { who: P[0].name, en: "TOTW", totw: P,
+      html: `<p>${when}での活躍が評価され、${P.length === 1 ? `${esc(P[0].name)}選手が` : `${P.length}選手が`}チーム・オブ・ザ・ウィーク（TOTW）に選ばれました。</p><ul class="srev">${li}</ul><p class="nbtn"><a class="btn" href="#/match/${m.id}">MATCH REPORT</a></p>` }); });
   /* 月間ベストプレーヤー（翌月の試合が入ったら） */
   const byM = {}; D.played.forEach(m => { if (m.date) (byM[`${m.date.getFullYear()}-${pad(m.date.getMonth() + 1)}`] = byM[`${m.date.getFullYear()}-${pad(m.date.getMonth() + 1)}`] || []).push(m); });
   const months = Object.keys(byM).sort();
@@ -870,9 +872,11 @@ function buildNews() {
 }
 /* サムネイル（画像の代わりに、試合ならエンブレムとスコア、移籍なら選手） */
 function newsThumb(n) {
-  if (n.ms && n.ms.totw) { const s = n.ms, t = s.totw, pr = prof(s.who) || {};
-    return `<div class="nt nt-totw"><div class="tw-l"><span class="tw-tag">${t.c > 1 ? `${t.c}回目の選出` : "SELECTED"}</span><b>TEAM OF<br>THE WEEK</b></div>
-      <div class="tw-card"><div class="tw-o">${t.ovr ?? ""}<small>${esc(t.pos || "")}</small></div>${logo(clubName(), "tw-cl")}${face(s.who, "tw-f")}<div class="tw-n">${esc(pr.roma || s.who)}</div></div></div>`; }
+  if (n.ms && n.ms.totw) { const P = n.ms.totw, k = P.length;
+    const card = x => { const pr = prof(x.name) || {}, nm = pr.roma || x.name;
+      return `<div class="tw-card"><div class="tw-in"><span class="tw-lb">TOTW</span><div class="tw-o"><b>${x.ovr ?? ""}</b><small>${esc(x.pos || "")}</small>${logo(clubName(), "tw-cl")}</div>${face(x.name, "tw-f")}
+        <div class="tw-n">${esc(String(nm).split(" ").length > 1 && String(nm).length > 12 ? String(nm).split(" ").slice(-1)[0] : nm)}</div><div class="tw-ft">TEAM OF THE WEEK</div></div></div>`; };
+    return `<div class="nt nt-totw${k > 1 ? " multi" : ""}" style="--n:${k}"><div class="tw-l"><b>TEAM OF${k > 1 ? " " : "<br>"}THE WEEK</b></div><div class="tw-cards">${P.map(card).join("")}</div></div>`; }
   if (n.ms) { const s = n.ms, m0 = n.m0;
     /* 記録の画像：移籍・昇格と同じデザイン（大きい英字＋写真） */
     let lines, tag = m0 && m0.opp ? `VS ${shortOf(m0.opp)}` : "";
