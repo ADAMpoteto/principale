@@ -1110,7 +1110,6 @@ function matchPreview(m, h) {
     rows.push(line("勝 / 分 / 敗", R[0] ? `${R[0].w} / ${R[0].d} / ${R[0].l}` : "-", R[1] ? `${R[1].w} / ${R[1].d} / ${R[1].l}` : "-"));
     rows.push(line("得点 / 失点", R[0] ? `${R[0].gf} / ${R[0].ga}` : "-", R[1] ? `${R[1].gf} / ${R[1].ga}` : "-"));
   }
-  if (F[0].length || F[1].length) rows.push(line("直近5試合", chips(F[0]), chips(F[1])));
   /* 注目選手：今シーズンここまでの得点・アシストの1位 */
   const tot = {}; D.played.filter(x => x.season === m.season && x.date < (m.date || new Date(8.64e15))).forEach(x => x.lu.forEach(l => {
     const t = tot[nameKey(l.name)] || (tot[nameKey(l.name)] = { name: l.name, g: 0, a: 0, n: 0 }); t.g += l.s["得点"] || 0; t.a += l.s["アシスト"] || 0; t.n++; }));
