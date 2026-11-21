@@ -22,7 +22,8 @@ const SHEETS = {          // キー: [シート名, gid]
   tr:    ["移籍", 9],
   ss:    ["シーズン", 11],
   li:    ["クラブ", 14],
-  aw:    ["個人タイトル", 13]
+  aw:    ["個人タイトル", 13],
+  ox:    ["他クラブの試合", 17]
 };
 const DEFAULT_CLUB = "Principale";
 const DEMO = /[?&]demo\b/.test(location.search);
@@ -151,6 +152,10 @@ async function loadAll() {
 
   /* 試合シート：自分の試合と他クラブの試合が混ざっている（ホーム／アウェイ形式） */
   const OX = []; D.ox = OX;
+  /* 他クラブの試合シート（PrincipaleのPK欄と同じく ホーム-アウェイ の順） */
+  (got.ox || []).forEach(o => { const home = F(o, "ホーム"), away = F(o, "アウェイ"), hg = num(F(o, "ホーム得点")), ag = num(F(o, "アウェイ得点"));
+    if (!home || !away || hg == null || ag == null || isMe(home) || isMe(away)) return;
+    OX.push({ season: F(o, "シーズン"), date: pDate(F(o, "日付")), comp: F(o, "大会"), round: F(o, "節・ラウンド"), home, away, hg, ag, pk: parsePK(F(o, "PK")) }); });
   D.matches = got.match.map((o, i) => {
     const home = F(o, "ホーム"), away = F(o, "アウェイ"); if (!home || !away) return null;
     const hg = num(F(o, "ホーム得点")), ag = num(F(o, "アウェイ得点")), pkr = parsePK(F(o, "PK")), date = pDate(F(o, "日付"));
