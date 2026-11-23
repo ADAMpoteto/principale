@@ -23,7 +23,8 @@ const SHEETS = {          // キー: [シート名, gid]
   ss:    ["シーズン", 11],
   li:    ["クラブ", 14],
   aw:    ["個人タイトル", 13],
-  ox:    ["他クラブの試合", 17]
+  ox:    ["他クラブの試合", 17],
+  inj:   ["負傷", 18]
 };
 const DEFAULT_CLUB = "Principale";
 const DEMO = /[?&]demo\b/.test(location.search);
@@ -156,6 +157,11 @@ async function loadAll() {
   (got.ox || []).forEach(o => { const home = F(o, "ホーム"), away = F(o, "アウェイ"), hg = num(F(o, "ホーム得点")), ag = num(F(o, "アウェイ得点"));
     if (!home || !away || hg == null || ag == null || isMe(home) || isMe(away)) return;
     OX.push({ season: F(o, "シーズン"), date: pDate(F(o, "日付")), comp: F(o, "大会"), round: F(o, "節・ラウンド"), home, away, hg, ag, pk: parsePK(F(o, "PK")) }); });
+  /* 負傷シート：日付・選手・負傷内容・離脱期間＋単位（または復帰予定日）・復帰日 */
+  D.inj = (got.inj || []).map((o, i) => { const name = F(o, "選手"), date = pDate(F(o, "日付")); if (!name || !date) return null;
+    const n = num(F(o, "離脱期間")), u = F(o, "単位") || "週", add = n == null ? null : u === "日" ? n : u === "か月" ? n * 30 : n * 7;
+    const back = pDate(F(o, "復帰予定日")) || (add != null ? new Date(date.getFullYear(), date.getMonth(), date.getDate() + Math.round(add)) : null);
+    return { i, name, date, what: F(o, "負傷内容"), n, u, back, ret: pDate(F(o, "復帰日")), memo: F(o, "メモ") }; }).filter(Boolean).sort((a, b) => a.date - b.date);
   D.matches = got.match.map((o, i) => {
     const home = F(o, "ホーム"), away = F(o, "アウェイ"); if (!home || !away) return null;
     const hg = num(F(o, "ホーム得点")), ag = num(F(o, "アウェイ得点")), pkr = parsePK(F(o, "PK")), date = pDate(F(o, "日付"));
@@ -716,6 +722,12 @@ const seasonLabel = s => s || "";
 
 /* ---------- ニュース（試合・移籍から自動で作る） ---------- */
 const NCAT = { MATCH: "試合", TRANSFER: "移籍", RECORD: "記録", CLUB: "クラブ" };
+const ICON_INJ = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z" fill="currentColor"/></svg>`;
+/* 負傷：その日に離脱中かどうか。「いま」は最後に記録がある日（試合・負傷の新しいほう） */
+const gameNow = () => { const lp = D.played[D.played.length - 1], li = (D.inj || []).slice(-1)[0]; return new Date(Math.max(lp ? +lp.date : 0, li ? +li.date : 0) || Date.now()); };
+const injAt = (name, d = gameNow()) => (D.inj || []).filter(x => same(x.name, name) && x.date <= d && d < (x.ret || x.back || new Date(8.64e15))).pop() || null;
+const injTerm = x => x.n != null ? `約${x.n}${x.u === "日" ? "日" : x.u === "か月" ? "か月" : "週間"}` : "";
+const md = d => `${d.getMonth() + 1}月${d.getDate()}日`;
 /* 記録達成（選手・チーム）。区切りの数字に届いた試合で1件 */
 const MS_P = { g: { u: "ゴール", en: "GOALS", th: [1, 10, 25, 50, 75, 100], step: 50, first: "初ゴール", fe: "FIRST GOAL" }, a: { u: "アシスト", en: "ASSISTS", th: [1, 10, 25, 50, 75, 100], step: 50, first: "初アシスト", fe: "FIRST ASSIST" },
   apps: { u: "試合出場", en: "APPS", th: [1, 50, 100], step: 50, first: "トップチームデビュー", fe: "DEBUT" }, cs: { u: "クリーンシート", en: "CLEAN SHEETS", th: [1, 10, 25, 50, 75, 100], step: 50, first: "初クリーンシート", fe: "FIRST CLEAN SHEET" } };
@@ -867,6 +879,7 @@ function buildNews() {
     const last = D.played.filter(m => m.season === s.season).pop();
     String(s.titles || "").split(/[、,，\/／]/).map(x => x.trim()).filter(Boolean).forEach((t, k) => N.push({ id: "c" + s.season + "-" + k, d: last && last.date, cat: "CLUB", title: t, season: s.season, top: 1, t: `${t} 優勝のお知らせ` }));
   });
+  (D.inj || []).forEach(x => N.push({ id: "i" + x.i, d: x.date, cat: "CLUB", inj: x, t: `${x.name}選手の負傷について` }));
   N.push(...milestones());
   return N.filter(n => n.d).sort((a, b) => b.d - a.d || (b.top || 0) - (a.top || 0) || (a.cat === "MATCH" ? -1 : 0));
 }
@@ -901,6 +914,9 @@ function newsThumb(n) {
       <div class="nm-t">${logo(h.home, "")}<b>${esc(shortOf(h.home))}</b></div>
       <div class="nm-c"><div class="nm-s">${res ? scoreTxt(n.m) : "VS"}</div><small>${res ? "FULL TIME" : dotY(n.m.date)}</small></div>
       <div class="nm-t">${logo(h.away, "")}<b>${esc(shortOf(h.away))}</b></div></div>`; }
+  if (n.inj) { const x = n.inj, pr = prof(x.name) || {};
+    return `<div class="nt nt-x is-inj"><div class="nx-bg">${logo(clubName(), "")}</div>${face(x.name)}
+      <div class="nx-t"><span class="nx-tag">MEDICAL UPDATE</span><b class="nx-h">INJURY</b><span class="nx-n">${esc(pr.roma || x.name)}</span>${pr.roma ? `<span class="nx-j">${esc(x.name)}</span>` : ""}<span class="nx-c">${logo(clubName(), "")}${esc(clubName())}</span></div></div>`; }
   if (n.tr) { const t = n.tr, pr = prof(t.name) || {};
     const w = { 加入: "WELCOME", レンタル加入: "WELCOME", ユース昇格: "PROMOTED", レンタル復帰: "RETURN", 退団: "THANK YOU", レンタル移籍: "ON LOAN", 契約延長: "RENEWED" }[t.kind] || "NEWS";
     const tag = t.kind === "ユース昇格" ? `ACADEMY GRADUATE${n.yno ? " #" + n.yno : ""}` : t.kind === "契約延長" && t.years ? `+${t.years} YEAR${t.years > 1 ? "S" : ""}` : t.kind === "レンタル移籍" && t.club ? `→ ${t.club}` : "";
@@ -927,6 +943,12 @@ function newsBody(n) {
     return P(`${d.getMonth() + 1}月${d.getDate()}日（${WD[d.getDay()]}）${kickoff(m) ? kickoff(m) + "キックオフ" : ""}の${esc(roundTxt(m))}で、${esc(clubName())}は${venue(m) ? esc(venue(m)) + "で" : m.ha === "H" ? "ホームで" : "アウェイで"}${esc(m.opp)}と対戦します。`)
       + (H.length ? P(`${esc(m.opp)}との対戦成績は${r.n}試合${r.w}勝${r.d}分${r.l}敗です。`) : P(`${esc(m.opp)}とは初めての対戦です。`))
       + `<p class="nbtn"><a class="btn" href="#/match/${m.id}">MATCH INFO</a></p>`; }
+  if (n.inj) { const x = n.inj, m = D.played.find(q => dKey(q.date) === dKey(x.date)), d = x.date;
+    const lead = m ? `${md(d)}（${WD[d.getDay()]}）に行われた${esc(roundTxt(m))} ${esc(m.opp)}戦で負傷した${esc(x.name)}選手について、検査の結果、下記のとおり診断されましたので、お知らせいたします。`
+      : `${esc(x.name)}選手が負傷しましたので、お知らせいたします。`;
+    const rows = [["負傷日", `${d.getFullYear()}年${md(d)}（${WD[d.getDay()]}）`], ["診断名", esc(x.what)], ["全治", [injTerm(x), x.back ? `（${md(x.back)}ごろ復帰予定）` : ""].join("")], ["復帰", x.ret ? `${md(x.ret)}に復帰しました` : ""]].filter(r => r[1]);
+    return P(lead) + `<dl class="inj-dl">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>` + (x.memo ? P(esc(x.memo)) : "")
+      + `<p class="nbtn">${m ? `<a class="btn" href="#/match/${m.id}">MATCH REPORT</a> ` : ""}<a class="btn" href="#/player/${encodeURIComponent(x.name)}">PLAYER PROFILE</a></p>`; }
   if (n.tr) { const t = n.tr, pr = prof(t.name) || {}, cl = t.club ? esc(t.club) + (leagueOf(t.club) ? `（${esc(leagueOf(t.club))}）` : "") : "";
     const ag = trAge(t);
     const who = `${esc(t.name)}選手${ag != null ? `（${ag}歳）` : ""}`;
@@ -1133,10 +1155,13 @@ function matchPreview(m, h) {
     const t = tot[nameKey(l.name)] || (tot[nameKey(l.name)] = { name: l.name, g: 0, a: 0, n: 0 }); t.g += l.s["得点"] || 0; t.a += l.s["アシスト"] || 0; t.n++; }));
   const top = k => Object.values(tot).filter(t => t[k] > 0).sort((a, b) => b[k] - a[k])[0];
   const kp = [["チーム得点王", top("g"), "g", "ゴール"], ["チームアシスト王", top("a"), "a", "アシスト"]].filter(x => x[1]);
-  if (!rows.length && !kp.length) return "";
+  /* 欠場予定：試合の日に負傷で離脱中の自チームの選手 */
+  const ab = m.date ? [...new Map((D.inj || []).filter(x => injAt(x.name, m.date) === x).map(x => [nameKey(x.name), x])).values()] : [];
+  if (!rows.length && !kp.length && !ab.length) return "";
   return `<div class="ph">PREVIEW<small>プレビュー</small></div>
     ${rows.length ? `<div class="pv"><div class="pv-h"><div>${logo(cl[0], "md")}</div><div>${logo(cl[1], "md")}</div></div>${rows.join("")}</div>` : ""}
-    ${kp.length ? `<div class="ph">KEY PLAYERS<small>注目選手</small></div><div class="kp">${kp.map(([lab, t, k, u]) => `<a class="kp-c" href="#/player/${encodeURIComponent(t.name)}">${face(t.name)}<div><span>${lab}</span><b>${esc(t.name)}</b><em>${t[k]}<small>${u}</small></em></div></a>`).join("")}</div>` : ""}`;
+    ${kp.length ? `<div class="ph">KEY PLAYERS<small>注目選手</small></div><div class="kp">${kp.map(([lab, t, k, u]) => `<a class="kp-c" href="#/player/${encodeURIComponent(t.name)}">${face(t.name)}<div><span>${lab}</span><b>${esc(t.name)}</b><em>${t[k]}<small>${u}</small></em></div></a>`).join("")}</div>` : ""}
+    ${ab.length ? `<div class="ph">ABSENCES<small>負傷で欠場予定の選手</small></div><div class="inj-ab">${ab.map(x => `<a href="#/player/${encodeURIComponent(x.name)}">${face(x.name)}<div><b>${esc(x.name)}</b><small>${esc(x.what || "負傷")}${x.back ? `・${md(x.back)}ごろ復帰予定` : ""}</small></div></a>`).join("")}</div>` : ""}`;
 }
 function headToHead(m) {
   const L = D.played.filter(x => same(x.opp, m.opp)); if (!L.length) return "";
@@ -1361,7 +1386,7 @@ function vSquad() {
   const lbl = { GK: ["GOALKEEPERS", "ゴールキーパー"], DF: ["DEFENDERS", "ディフェンダー"], MF: ["MIDFIELDERS", "ミッドフィルダー"], FW: ["FORWARDS", "フォワード"], 他: ["OTHERS", "その他"] };
   const card = (p, isLoan) => { const a = byN[nameKey(p.name)] || {}, lc = isLoan ? loanClub(p.name) : "", ls = isLoan ? D.loans.filter(x => same(x.name, p.name) && (!s || x.season === s)).pop() : null;
     return `<a class="pcard${isLoan ? " loan" : ""}" href="#/player/${encodeURIComponent(p.name)}">
-      <div class="ph-wrap">${p.no != null && !isLoan ? `<span class="no">${p.no}</span>` : ""}${isYouth(p) ? `<span class="acad">ACADEMY</span>` : ""}${face(p.name)}<span class="pos">${esc(p.pos || "")}</span></div>
+      <div class="ph-wrap">${p.no != null && !isLoan ? `<span class="no">${p.no}</span>` : ""}${isYouth(p) ? `<span class="acad">ACADEMY</span>` : ""}${!isLoan && injAt(p.name) ? `<span class="injb">${ICON_INJ}負傷中</span>` : ""}${face(p.name)}<span class="pos">${esc(p.pos || "")}</span></div>
       <div class="info"><b>${flag(p.nat)}${esc(p.name)}</b><small>${isLoan ? (lc ? `${esc(lc)}${leagueOf(lc) ? `（${esc(leagueOf(lc))}）` : ""}` : "期限付き移籍中") + (ls ? `<br>${ls.apps ?? 0}試合 ${ls.g ?? 0}得点 ${ls.a ?? 0}アシスト` : "")
         : a.apps ? `${a.apps}試合 ${a.g}得点 ${a.a}アシスト` : "出場なし"}</small></div></a>`; };
   const out = D.players.filter(p => /退団/.test(p.status));
@@ -1397,7 +1422,7 @@ function vPlayer(name) {
   const matches = a ? [...a.list].reverse() : [];
   const tr = D.trans.filter(t => same(t.name, name));
   return `<section class="phero"><div class="phero-in"><div>
-      ${p.no != null ? `<div class="bigno">${p.no}</div>` : ""}<h1>${esc(name)}</h1>${p.roma ? `<p class="roma">${esc(p.roma)}</p>` : ""}<div class="pos">${flag(p.nat)}${esc(p.pos || "")}${onLoan(p) ? "　期限付き移籍中" : /退団/.test(p.status || "") ? "　退団" : ""}</div>
+      ${p.no != null ? `<div class="bigno">${p.no}</div>` : ""}<h1>${esc(name)}</h1>${p.roma ? `<p class="roma">${esc(p.roma)}</p>` : ""}<div class="pos">${flag(p.nat)}${esc(p.pos || "")}${onLoan(p) ? "　期限付き移籍中" : /退団/.test(p.status || "") ? "　退団" : ""}</div>${(ij => ij ? `<div class="inj-st">${ICON_INJ}負傷離脱中${ij.what ? `（${esc(ij.what)}）` : ""}${ij.back ? `<small>${md(ij.back)}ごろ復帰予定</small>` : ""}</div>` : "")(injAt(name))}
       ${isYouth(p) ? `<span class="acad-tag">ACADEMY GRADUATE</span>` : ""}
     </div><div class="photo">${face(name)}</div></div></section>
   <div class="wrap">
