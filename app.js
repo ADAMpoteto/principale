@@ -725,7 +725,13 @@ function rkCard(M, P, label) {
 const seasonLabel = s => s || "";
 
 /* ---------- ニュース（試合・移籍から自動で作る） ---------- */
-const NCAT = { MATCH: "試合", TRANSFER: "移籍", RECORD: "記録", CLUB: "クラブ" };
+const NCAT = { RESULT: "試合結果", PREVIEW: "試合情報", TRANSFER: "移籍", CONTRACT: "契約更新", ACADEMY: "アカデミー", RECORD: "記録", AWARD: "表彰", TITLE: "タイトル", MEDICAL: "メディカル", CLUB: "クラブ" };
+/* 表示用のカテゴリー（n.cat は並び順などの判定用にそのまま使う） */
+const ncat = n => n.cat === "MATCH" ? (n.kind === "result" ? "RESULT" : "PREVIEW")
+  : n.cat === "TRANSFER" ? (n.tr && n.tr.kind === "契約延長" ? "CONTRACT" : n.tr && n.tr.kind === "ユース昇格" ? "ACADEMY" : "TRANSFER")
+  : n.cat === "RECORD" ? (n.ms && /^(MOM|TOTW|MONTHLY MVP)$/.test(n.ms.en || "") ? "AWARD" : n.ms && n.ms.en === "CHAMPIONS" ? "TITLE" : "RECORD")
+  : n.inj ? "MEDICAL" : n.title ? "TITLE" : "CLUB";
+const catTag = n => `<span class="cat c-${ncat(n)}">${NCAT[ncat(n)]}</span>`;
 const ICON_INJ = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z" fill="currentColor"/></svg>`;
 /* 負傷：その日に離脱中かどうか。「いま」は最後に記録がある日（試合・負傷の新しいほう） */
 const gameNow = () => { const lp = D.played[D.played.length - 1], li = (D.inj || []).slice(-1)[0]; return new Date(Math.max(lp ? +lp.date : 0, li ? +li.date : 0) || Date.now()); };
@@ -931,8 +937,8 @@ function newsThumb(n) {
       <div class="nx-t">${tag ? `<span class="nx-tag">${esc(tag)}</span>` : ""}<b class="nx-h">${w}</b><span class="nx-n">${esc(pr.roma || t.name)}</span>${pr.roma ? `<span class="nx-j">${esc(t.name)}</span>` : ""}<span class="nx-c">${logo(clubName(), "")}${esc(clubName())}</span></div></div>`; }
   return `<div class="nt nt-c2">${ICON.cup}<div class="nt-w">CHAMPIONS<small>${esc(n.title || "")}</small></div></div>`;
 }
-const newsCard = n => `<a class="ncard" href="#/news/${encodeURIComponent(n.id)}">${newsThumb(n)}<div class="nb"><div class="nmeta"><time>${dotY(n.d)}</time><span class="cat c-${n.cat}">${NCAT[n.cat]}</span></div><b>${esc(n.t)}</b></div></a>`;
-const newsList = L => `<div class="news">${L.map(n => `<a href="#/news/${encodeURIComponent(n.id)}"><time>${dotY(n.d)}</time><span class="cat c-${n.cat}">${NCAT[n.cat]}</span><b>${esc(n.t)}</b></a>`).join("")}</div>`;
+const newsCard = n => `<a class="ncard" href="#/news/${encodeURIComponent(n.id)}">${newsThumb(n)}<div class="nb"><div class="nmeta"><time>${dotY(n.d)}</time>${catTag(n)}</div><b>${esc(n.t)}</b></div></a>`;
+const newsList = L => `<div class="news">${L.map(n => `<a href="#/news/${encodeURIComponent(n.id)}"><time>${dotY(n.d)}</time>${catTag(n)}<b>${esc(n.t)}</b></a>`).join("")}</div>`;
 function newsBody(n) {
   const P = s => `<p>${s}</p>`;
   if (n.ms && n.ms.html) return n.ms.html;
@@ -988,7 +994,7 @@ function vNewsDetail(id) {
   const all = buildNews(), i = all.findIndex(n => n.id === id), n = all[i];
   if (!n) return band("NEWS", "ニュース") + `<div class="wrap narrow">${empty("記事が見つかりません。")}</div>`;
   const pv = all[i + 1], nx = all[i - 1];
-  return band("NEWS", "ニュース") + `<div class="wrap narrow"><article class="art"><div class="nmeta"><time>${dotY(n.d)}</time><span class="cat c-${n.cat}">${NCAT[n.cat]}</span></div>
+  return band("NEWS", "ニュース") + `<div class="wrap narrow"><article class="art"><div class="nmeta"><time>${dotY(n.d)}</time>${catTag(n)}</div>
     <h1>${esc(n.t)}</h1><div class="art-th">${newsThumb(n)}</div><div class="art-b">${newsBody(n)}</div></article>
     <nav class="mnav">${pv ? `<a class="mnav-a" href="#/news/${encodeURIComponent(pv.id)}"><small>‹ 前の記事</small><b>${esc(pv.t)}</b></a>` : "<span></span>"}<a class="btn" href="#/news">NEWS</a>${nx ? `<a class="mnav-a" href="#/news/${encodeURIComponent(nx.id)}"><small>次の記事 ›</small><b>${esc(nx.t)}</b></a>` : "<span></span>"}</nav></div>`;
 }
@@ -1052,9 +1058,9 @@ function vHome() {
 
 function vNews(id) {
   if (id) return vNewsDetail(id);
-  const all = buildNews(), cats = ["ALL", ...Object.keys(NCAT).filter(c => all.some(n => n.cat === c))];
+  const all = buildNews(), cats = ["ALL", ...Object.keys(NCAT).filter(c => all.some(n => ncat(n) === c))];
   if (!cats.includes(ST.ncat)) ST.ncat = "ALL";
-  const L = all.filter(n => ST.ncat === "ALL" || n.cat === ST.ncat);
+  const L = all.filter(n => ST.ncat === "ALL" || ncat(n) === ST.ncat);
   return band("NEWS", "ニュース") + `<div class="wrap">
     <div class="pills" id="ncat">${cats.map(c => `<button class="pill${c === ST.ncat ? " on" : ""}" data-c="${c}">${c === "ALL" ? "すべて" : NCAT[c]}</button>`).join("")}</div>
     ${L.length ? `<div class="ngrid">${L.slice(0, 60).map(newsCard).join("")}</div>` : `<div class="panel">${empty("ニュースはまだありません。")}</div>`}</div>`;
