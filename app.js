@@ -105,6 +105,10 @@ async function fetchSheet(key) {
 const D = { staff: [], rankHist: {}, clubs: {}, loans: [], conf: {}, matches: [], played: [], players: [], growth: [], trans: [], table: [], seasons: [], lineups: [], seasonList: [], err: "" };
 const ST = { season: null, comp: "すべて", mtab: "facts", trSeason: null };
 const clubName = () => D.conf["クラブ名"] || DEFAULT_CLUB;
+/* 買収前のクラブ名（設定の「旧クラブ名」）。旧名のアカデミー・トップチームも自クラブの歴史として扱う */
+const oldName = () => D.conf["旧クラブ名"] || "";
+const renameDate = () => pDate(D.conf["クラブ名変更日"]) || (proYear() ? new Date(proYear(), 6, 1) : null);
+const isOwn = v => !!v && (v.includes(clubName()) || (!!oldName() && v.includes(oldName())));
 const shortName = () => D.conf["略称"] || clubName();
 function isMe(club) { const k = nameKey(club); return !!k && (k === nameKey(clubName()) || k === nameKey(D.conf["略称"]) || k === nameKey(DEFAULT_CLUB) || /^自分/.test(club)); }
 /* チーム列：チーム名（推奨）または 自分／相手 */
@@ -747,10 +751,10 @@ function milestones() {
     Object.values(add).forEach(x => { const p = P[nameKey(x.name)] || (P[nameKey(x.name)] = { g: 0, a: 0, apps: 0, cs: 0 });
       Object.keys(MS_P).forEach(k => { const nw = newcomer(x.name);
         hit(MS_P[k], p[k], p[k] + x[k]).filter(v => !(v === 1 && !nw)).forEach(v => N.push({ id: `r-${k}-${nameKey(x.name)}-${v}`, d: m.date, cat: "RECORD", m0: m, ms: { who: x.name, k, v, def: MS_P[k], pro: !nw },
-        t: v === 1 && MS_P[k].first ? `${x.name}選手 ${MS_P[k].first}` : `${x.name}選手 ${nw ? "" : "プロ化後"}通算${v}${MS_P[k].u}達成` })); p[k] += x[k]; }); });
+        t: v === 1 && MS_P[k].first ? `${x.name}選手 ${MS_P[k].first}` : `${x.name}選手 ${nw ? "" : clubName() + "での"}通算${v}${MS_P[k].u}達成` })); p[k] += x[k]; }); });
     const tx = { w: m.res === "W" ? 1 : 0, g: m.gf, n: 1, cs: m.ga === 0 ? 1 : 0 };
     Object.keys(MS_T).forEach(k => { hit(MS_T[k], T[k], T[k] + tx[k]).forEach(v => N.push({ id: `r-t${k}-${v}`, d: m.date, cat: "RECORD", m0: m, ms: { club: true, k, v, def: MS_T[k], pro: true },
-      t: `${clubName()} プロ化後通算${v}${MS_T[k].u}達成` })); T[k] += tx[k]; });
+      t: `${clubName()} 通算${v}${MS_T[k].u}達成` })); T[k] += tx[k]; });
   });
   return N.concat(milestones2(), milestones3());
 }
@@ -859,7 +863,7 @@ function milestones2() {
     chk("goal", m.scorers.filter(x => !/オウン/.test(x.name)).map(x => x.name));
     /* MOM */
     if (m.mom && !(m.momL && m.momL.side === "opp")) { const k = nameKey(m.mom), c = (mom[k] = (mom[k] || 0) + 1);
-      if (c === 5 || (c >= 10 && c % 10 === 0)) { const pp = newcomer(m.mom) ? "" : "プロ化後"; push(m, `r-mom-${k}-${c}`, `${m.mom}選手 ${pp}通算${c}回目のMOM`, { who: m.mom, big: c, en: "MOM", txt: `${m.mom}選手が${pp ? "プロ化後の" : ""}通算${c}回目のマン・オブ・ザ・マッチに選ばれました。` }); } }
+      if (c === 5 || (c >= 10 && c % 10 === 0)) { const pp = newcomer(m.mom) ? "" : clubName() + "での"; push(m, `r-mom-${k}-${c}`, `${m.mom}選手 ${pp}通算${c}回目のMOM`, { who: m.mom, big: c, en: "MOM", txt: `${m.mom}選手が${pp}通算${c}回目のマン・オブ・ザ・マッチに選ばれました。` }); } }
   });
   return N;
 }
@@ -879,6 +883,8 @@ function buildNews() {
     const last = D.played.filter(m => m.season === s.season).pop();
     String(s.titles || "").split(/[、,，\/／]/).map(x => x.trim()).filter(Boolean).forEach((t, k) => N.push({ id: "c" + s.season + "-" + k, d: last && last.date, cat: "CLUB", title: t, season: s.season, top: 1, t: `${t} 優勝のお知らせ` }));
   });
+  /* 買収・クラブ名変更（最初のニュース） */
+  if (oldName() && renameDate()) N.push({ id: "rename", d: renameDate(), cat: "CLUB", rename: true, t: `クラブ名変更のお知らせ` });
   (D.inj || []).forEach(x => N.push({ id: "i" + x.i, d: x.date, cat: "CLUB", inj: x, t: `${x.name}選手の負傷について` }));
   N.push(...milestones());
   return N.filter(n => n.d).sort((a, b) => b.d - a.d || (b.top || 0) - (a.top || 0) || (a.cat === "MATCH" ? -1 : 0));
@@ -914,6 +920,7 @@ function newsThumb(n) {
       <div class="nm-t">${logo(h.home, "")}<b>${esc(shortOf(h.home))}</b></div>
       <div class="nm-c"><div class="nm-s">${res ? scoreTxt(n.m) : "VS"}</div><small>${res ? "FULL TIME" : dotY(n.m.date)}</small></div>
       <div class="nm-t">${logo(h.away, "")}<b>${esc(shortOf(h.away))}</b></div></div>`; }
+  if (n.rename) return `<div class="nt nt-rn"><div class="rn-c">${logo(oldName(), "")}<span>${esc(oldName())}</span></div><i class="rn-ar"></i><div class="rn-c">${logo(clubName(), "")}<span>${esc(clubName())}</span></div><b class="rn-h">NEW ERA</b></div>`;
   if (n.inj) { const x = n.inj, pr = prof(x.name) || {};
     return `<div class="nt nt-x is-inj"><div class="nx-bg">${logo(clubName(), "")}</div>${face(x.name)}
       <div class="nx-t"><span class="nx-tag">MEDICAL UPDATE</span><b class="nx-h">INJURY</b><span class="nx-n">${esc(pr.roma || x.name)}</span>${pr.roma ? `<span class="nx-j">${esc(x.name)}</span>` : ""}<span class="nx-c">${logo(clubName(), "")}${esc(clubName())}</span></div></div>`; }
@@ -930,8 +937,8 @@ function newsBody(n) {
   const P = s => `<p>${s}</p>`;
   if (n.ms && n.ms.html) return n.ms.html;
   if (n.ms) { const s = n.ms, m = n.m0, d = m.date, when = `${d.getMonth() + 1}月${d.getDate()}日（${WD[d.getDay()]}）の${esc(roundTxt(m))} ${esc(m.opp)}戦`;
-    const txt = s.txt ? `${when}で、${esc(s.txt)}` : s.club ? (s.v === 1 && s.def.first ? `${when}で、${esc(clubName())}は${s.def.first}を記録しました。` : `${when}で、${esc(clubName())}はプロ化後の公式戦通算${s.v}${s.def.u}を達成しました。`)
-      : (s.v === 1 && s.def.first ? `${when}で、${esc(s.who)}選手が${s.def.first}${s.k === "apps" ? "を果たしました" : "を記録しました"}。` : `${when}で、${esc(s.who)}選手が${s.pro ? "プロ化後の" : ""}公式戦通算${s.v}${s.def.u}を達成しました。`);
+    const txt = s.txt ? `${when}で、${esc(s.txt)}` : s.club ? (s.v === 1 && s.def.first ? `${when}で、${esc(clubName())}は${s.def.first}を記録しました。` : `${when}で、${esc(clubName())}は${esc(oldName() ? "クラブ名変更後の" : "")}公式戦通算${s.v}${s.def.u}を達成しました。`)
+      : (s.v === 1 && s.def.first ? `${when}で、${esc(s.who)}選手が${s.def.first}${s.k === "apps" ? "を果たしました" : "を記録しました"}。` : `${when}で、${esc(s.who)}選手が${s.pro ? esc(clubName()) + "での" : ""}公式戦通算${s.v}${s.def.u}を達成しました。`);
     return P(txt) + `<p class="nbtn"><a class="btn" href="#/match/${m.id}">MATCH REPORT</a>${s.club ? "" : ` <a class="btn" href="#/player/${encodeURIComponent(s.who)}">PLAYER PROFILE</a>`}</p>`; }
   if (n.m && n.kind === "result") { const m = n.m, d = m.date;
     const v = { W: "勝利しました", D: "引き分けました", L: "敗れました" }[m.res];
@@ -943,6 +950,11 @@ function newsBody(n) {
     return P(`${d.getMonth() + 1}月${d.getDate()}日（${WD[d.getDay()]}）${kickoff(m) ? kickoff(m) + "キックオフ" : ""}の${esc(roundTxt(m))}で、${esc(clubName())}は${venue(m) ? esc(venue(m)) + "で" : m.ha === "H" ? "ホームで" : "アウェイで"}${esc(m.opp)}と対戦します。`)
       + (H.length ? P(`${esc(m.opp)}との対戦成績は${r.n}試合${r.w}勝${r.d}分${r.l}敗です。`) : P(`${esc(m.opp)}とは初めての対戦です。`))
       + `<p class="nbtn"><a class="btn" href="#/match/${m.id}">MATCH INFO</a></p>`; }
+  if (n.rename) { const d = n.d, st = D.conf["ホームスタジアム"], f = D.conf["創設年"];
+    const rows = [["新クラブ名", esc(clubName())], ["旧クラブ名", esc(oldName())], ["変更日", `${d.getFullYear()}年${md(d)}`], f ? ["創設", `${esc(f)}年（${esc(oldName())}として）`] : null, st ? ["ホームスタジアム", esc(st)] : null].filter(Boolean);
+    return P(`このたび、${esc(oldName())}は新たなオーナーグループによる買収が完了し、新体制のもとで歩みを始めることとなりました。これにともない、${d.getFullYear()}年${md(d)}付でクラブ名を「${esc(clubName())}」に変更いたしましたので、お知らせいたします。`)
+      + P(`${esc(oldName())}のアカデミーとトップチームは、そのまま${esc(clubName())}に引き継がれます。これまで${esc(oldName())}を支えてくださった皆さまに心より感謝申し上げるとともに、新しい${esc(clubName())}への変わらぬご声援をよろしくお願いいたします。`)
+      + `<dl class="inj-dl">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl><p class="nbtn"><a class="btn" href="#/club">CLUB</a></p>`; }
   if (n.inj) { const x = n.inj, m = D.played.find(q => dKey(q.date) === dKey(x.date)), d = x.date;
     const lead = m ? `${md(d)}（${WD[d.getDay()]}）に行われた${esc(roundTxt(m))} ${esc(m.opp)}戦で負傷した${esc(x.name)}選手について、検査の結果、下記のとおり診断されましたので、お知らせいたします。`
       : `${esc(x.name)}選手が負傷しましたので、お知らせいたします。`;
@@ -1456,7 +1468,7 @@ function playerFirsts(all) {
   const L = [...all.list].sort((x, y) => (x.m.date || 0) - (y.m.date || 0)), k = nameKey(all.name);
   const g = o => o.l.s["得点"] || (o.m._sc && o.m._sc[k]) || 0, as = o => o.l.s["アシスト"] || (o.m._as && o.m._as[k]) || 0;
   const F3 = [["初出場", L[0]], ["初得点", L.find(o => g(o) > 0)], ["初アシスト", L.find(o => as(o) > 0)]];
-  return sec("FIRSTS", newcomer(all.name) ? `${clubName()}での初記録` : "プロ化後の初記録") + `<div class="firsts">${F3.map(([t, o]) => o
+  return sec("FIRSTS", `${clubName()}での初記録`) + `<div class="firsts">${F3.map(([t, o]) => o
     ? `<a href="#/match/${o.m.id}"><span>${t}</span><b>${fmtD(o.m.date)}</b><small>${esc(o.m.comp || "")}${o.m.round ? " " + esc(o.m.round) : ""}</small><small>vs ${esc(o.m.opp)}　${o.m.gf}-${o.m.ga}</small></a>`
     : `<div class="none"><span>${t}</span><b>-</b><small>まだ記録はありません</small></div>`).join("")}</div>`;
 }
@@ -1506,7 +1518,7 @@ function vHistory() {
     return `<li class="hx${o.champ ? " champ" : ""}${o.pro ? " pro" : ""}${o.cur ? " cur" : ""}">
       <div class="hx-se">${esc(o.se)}</div><i class="hx-dot"></i>
       <div class="hx-card"><div class="hx-head"><b class="hx-t">${o.t || "-"}<small>部</small></b><div class="hx-lgw"><span class="hx-lg">${esc(o.lg)}</span>${res(o)}</div></div>
-        ${o.pro ? `<p class="hx-pro">EFL入り・プロクラブに</p>` : ""}
+        ${o.pro ? `<p class="hx-pro">${oldName() ? `${esc(oldName())}から${esc(clubName())}へ。新体制で始動` : "EFL入り・プロクラブに"}</p>` : ""}
         ${rows.length ? `<dl class="hx-dl">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>` : ""}
         ${o.memo ? `<p class="hx-memo">${esc(o.memo)}</p>` : ""}</div></li>`; };
   return band("HISTORY", "ヒストリー") + `<div class="wrap">
@@ -1533,7 +1545,7 @@ const seasonOfYear = y => `${y}-${String(y + 1).slice(2)}`;
 const proYear = () => parseInt(D.conf["最初のシーズン"], 10) || null;
 /* 生え抜きの初期メンバーが、トップチーム（アマチュア含む）に上がった年 */
 function seniorFrom(p) {
-  if (!p || !p.birth || !(p.schools || []).some(x => x[0] === "高校" && x[1] && x[1].includes(clubName()))) return null;
+  if (!p || !p.birth || !(p.schools || []).some(x => x[0] === "高校" && isOwn(x[1]))) return null;
   const y0 = p.birth.getFullYear() + ((p.birth.getMonth() < 3 || (p.birth.getMonth() === 3 && p.birth.getDate() === 1)) ? 0 : 1);
   const jY = parseInt(p.joined, 10) || 9999;
   return seasonOfYear(Math.min(y0 + 18, jY));
@@ -1546,12 +1558,15 @@ function historyRows(p, name, bySeason) {
   const y0 = p.birth ? p.birth.getFullYear() + ((p.birth.getMonth() < 3 || (p.birth.getMonth() === 3 && p.birth.getDate() === 1)) ? 0 : 1) : null;
   const pY = promo ? parseInt(promo.season, 10) : null, jY = parseInt(p.joined, 10) || null;
   /* トップチームに上がった年：昇格の記録 → なければU-18卒業の年（加入年より遅ければ加入年） */
-  const ownU18 = (p.schools || []).some(x => x[0] === "高校" && x[1] && x[1].includes(me));
+  const ownU18 = (p.schools || []).some(x => x[0] === "高校" && isOwn(x[1]));
   const topY = pY || (ownU18 && y0 ? Math.min(y0 + 18, jY || 9999) : null);
-  (p.schools || []).forEach(([lb, v, a, n]) => { if (v) { const own = v.includes(me), end = y0 ? (lb === "高校" && own && topY ? topY : y0 + a + n) : null;
-    R.push({ p: y0 ? `${y0 + a}〜${end}` : lb, c: v, lg: own ? me : "", note: own ? "" : lb, school: !own, own }); } });
+  (p.schools || []).forEach(([lb, v, a, n]) => { if (v) { const own = isOwn(v), end = y0 ? (lb === "高校" && own && topY ? topY : y0 + a + n) : null;
+    R.push({ p: y0 ? `${y0 + a}〜${end}` : lb, c: v, lg: own ? (v.includes(me) ? me : oldName()) : "", note: own ? "" : lb, school: !own, own }); } });
   if ((/ユース/.test(p.origin || "") || promo) && !(p.schools || []).some(x => x[0] === "高校" && x[1])) R.push({ p: `${y0 ? y0 + 15 : ""}〜${yr(promo ? promo.season : p.joined)}`, c: me + " ユース", lg: me, note: "" });
   let cur = { p0: topY ? String(topY) : yr(p.joined || (bySeason.length ? bySeason[bySeason.length - 1].se : "")), c: me, note: "" };
+  /* クラブ名変更前からトップチームにいた選手は、旧クラブ名の期間を分ける */
+  const rnY = oldName() && renameDate() ? renameDate().getFullYear() : null;
+  if (rnY && topY && topY < rnY) { R.push({ p: `${topY}〜${rnY}`, c: oldName(), lg: oldName(), note: "", own: true }); cur.p0 = String(rnY); }
   const close = (to) => { if (cur) { R.push({ p: `${cur.p0}〜${yr(to)}`, c: cur.c, note: cur.note }); cur = null; } };
   T.forEach(t => {
     if (t.kind === "レンタル移籍" && t.club) { close(t.season); cur = { p0: yr(t.season), c: t.club, note: "期限付き移籍" }; }
@@ -1606,7 +1621,7 @@ function vClub() {
     ${pol.length ? sec("PHILOSOPHY", "クラブの方針") + `<ol class="policy">${pol.map((p, i) => `<li><b>${pad(i + 1)}</b><span>${esc(p)}</span></li>`).join("")}</ol>` : ""}
     ${mgr ? sec("MANAGER", "監督") + `<div class="mgr">${face(mgr.name)}<div><span>MANAGER</span><b><a href="#/staff/${encodeURIComponent(mgr.name)}" style="color:inherit">${flag(mgr.nat)}${esc(mgr.name)}</a></b>${mgr.memo ? `<p>${esc(mgr.memo)}</p>` : ""}
       <a class="btn" href="#/staff/${encodeURIComponent(mgr.name)}">PROFILE</a></div></div>` : ""}
-    <a class="hist-link" href="#/history"><span><b>HISTORY</b><small>ヒストリー・獲得タイトル</small></span><em>20部から${esc(clubName())}が歩んできた道のり</em><i>›</i></a>
+    <a class="hist-link" href="#/history"><span><b>HISTORY</b><small>ヒストリー・獲得タイトル</small></span><em>${esc(clubName())}が歩んできた道のり</em><i>›</i></a>
     ${sec("ALL-TIME", "通算成績")}${all.n ? `<div class="tiles"><div class="tile"><span>試合</span><b>${all.n}</b></div><div class="tile"><span>成績</span><b class="rec">${all.w}<small>勝</small>${all.d}<small>分</small>${all.l}<small>敗</small></b></div>
       <div class="tile"><span>得点</span><b>${all.gf}</b></div><div class="tile"><span>失点</span><b>${all.ga}</b></div><div class="tile"><span>勝率</span><b>${fmtN(all.w / all.n * 100, 1)}<small>%</small></b></div>
       ${big ? `<div class="tile"><span>最多得点差勝利</span><b>${big.gf}-${big.ga}</b><em>${esc(big.opp)}　${dotY(big.date)}</em></div>` : ""}</div>` : `<div class="panel">${empty("まだ試合がありません。")}</div>`}

@@ -1427,3 +1427,14 @@ a.ps-r:hover b{color:var(--blue)}
 .inj-ab div{display:flex;flex-direction:column;min-width:0}
 .inj-ab b{font-size:14px}.inj-ab small{font-size:12px;color:var(--tx3);margin-top:2px}
 .nt-x.is-inj .nx-tag{background:#c8102e;color:#fff}
+
+/* クラブ名変更のサムネイル */
+.nt-rn{background:radial-gradient(90% 120% at 50% 40%,#1f4a6e 0%,#0f2236 60%,#09141f 100%);justify-content:center;gap:6cqw}
+.rn-c{position:relative;display:flex;flex-direction:column;align-items:center;gap:1.6cqw;width:24cqw}
+.rn-c .logo{width:20cqw;height:20cqw;object-fit:contain}
+.rn-c .logo.ph{font-size:5cqw}
+.rn-c span{font-family:var(--en);font-weight:800;font-size:2.6cqw;color:#fff;letter-spacing:.04em;text-transform:uppercase;text-align:center}
+.rn-c:first-child{opacity:.62;filter:grayscale(.5)}
+.rn-ar{position:relative;width:8cqw;height:1cqw;background:var(--blue,#2e95d6)}
+.rn-ar::after{content:"";position:absolute;right:-1cqw;top:50%;width:3cqw;height:3cqw;border-top:1cqw solid var(--blue,#2e95d6);border-right:1cqw solid var(--blue,#2e95d6);transform:translateY(-50%) rotate(45deg)}
+.rn-h{position:absolute;left:0;right:0;bottom:5cqw;text-align:center;font-family:var(--en);font-style:italic;font-weight:800;font-size:3.4cqw;letter-spacing:.3em;color:rgba(255,255,255,.85)}
