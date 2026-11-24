@@ -1438,3 +1438,17 @@ a.ps-r:hover b{color:var(--blue)}
 .rn-ar{position:relative;width:8cqw;height:1cqw;background:var(--blue,#2e95d6)}
 .rn-ar::after{content:"";position:absolute;right:-1cqw;top:50%;width:3cqw;height:3cqw;border-top:1cqw solid var(--blue,#2e95d6);border-right:1cqw solid var(--blue,#2e95d6);transform:translateY(-50%) rotate(45deg)}
 .rn-h{position:absolute;left:0;right:0;bottom:5cqw;text-align:center;font-family:var(--en);font-style:italic;font-weight:800;font-size:3.4cqw;letter-spacing:.3em;color:rgba(255,255,255,.85)}
+
+/* ニュースのカテゴリー（細分化） */
+.cat.c-RESULT{background:var(--navy);color:#fff;border-color:var(--navy)}
+.cat.c-PREVIEW{border-color:var(--navy);color:var(--navy);background:#fff}
+.cat.c-TRANSFER{border-color:var(--blue);color:var(--blue)}
+.cat.c-CONTRACT{border-color:#5f6b77;color:#5f6b77}
+.cat.c-ACADEMY{border-color:#1f8a4c;color:#1f8a4c}
+.cat.c-AWARD{border-color:#b8860b;background:#b8860b;color:#fff}
+.cat.c-TITLE{border-color:#b8860b;color:#9a7209}
+.cat.c-MEDICAL{border-color:#c8102e;color:#c8102e}
+.cat.c-CLUB{border-color:#bc002d;color:#bc002d}
+.news .cat.c-RESULT{background:var(--navy);color:#fff}
+.cat{white-space:nowrap;flex:none}
+@media (max-width:700px){#ncat.pills{flex-wrap:nowrap;width:auto;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}#ncat.pills::-webkit-scrollbar{display:none}#ncat .pill{flex:none;white-space:nowrap}}
