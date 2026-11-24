@@ -1453,3 +1453,12 @@ a.ps-r:hover b{color:var(--blue)}
 .cat{white-space:nowrap;flex:none}
 @media (max-width:700px){#ncat.pills{display:grid;grid-template-columns:repeat(4,1fr);width:100%;overflow:visible;gap:0;border:0;background:none}#ncat .pill{border:1px solid var(--line2);margin:0 -1px -1px 0;background:var(--white);white-space:nowrap;padding:10px 2px;font-size:12px;text-align:center}#ncat .pill.on{background:var(--navy);color:#fff;border-color:var(--navy)}}
 .cat.c-FIRST{border-color:#1f8a4c;background:#1f8a4c;color:#fff}
+
+/* 得点バッジ：ボール1つ＋数字（アシストと同じ形） */
+.lp-ph .b-g{left:calc(100% - 12px);bottom:-5px;height:19px;min-width:19px;padding:0;border-radius:10px;background:#fff;gap:0;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+.lp-ph .b-g i{display:grid;place-items:center;width:19px;height:19px}
+.lp-ph .b-g img{width:15px;height:15px;padding:0;background:none;box-shadow:none;border-radius:0;filter:none;display:block}
+.lp-ph .b-g img+img{margin-left:0}
+.lp-ph .b-g b{padding:0 4px 0 0;color:var(--navy)}
+/* 写真がない選手は背番号 */
+.face.num.ph{font-family:var(--en);font-weight:800}
