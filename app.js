@@ -1331,7 +1331,9 @@ function matchLineup(m) {
   const h = homeAway(m), L = side => side === "me" ? m.lu : m.luOpp, B = side => side === "me" ? m.bench : m.benchOpp;
   const club = side => side === "me" ? clubName() : m.opp;
   const link = (l, inner, cls) => l.side !== "opp" ? `<a class="${cls}" href="#/player/${encodeURIComponent(l.name)}">${inner}</a>` : `<div class="${cls}">${inner}</div>`;
-  const gIcon = l => l.s["得点"] ? `<i class="lp-g">${ICON.ball.repeat(Math.min(3, l.s["得点"]))}</i>` : "";
+  /* 控え欄：ゴールとアシストを「アイコン＋数」で */
+  const gIcon = l => { const g = l.s["得点"] ?? m.ev.filter(e => isGoal(e) && e.kind !== "オウンゴール" && mine(l, e)).length, a = l.s["アシスト"] ?? m.ev.filter(e => isGoal(e) && e.side === l.side && same(e.rel, l.name)).length;
+    return (g ? `<span class="sb-st">${ICON.ball}${g > 1 ? `<b>${g}</b>` : ""}</span>` : "") + (a ? `<span class="sb-st a"><img src="images/icon/boot.png" alt="">${a > 1 ? `<b>${a}</b>` : ""}</span>` : ""); };
   /* ピッチ上のバッジ（FotMob風）：右上 評価／右下 ゴール／左下 アシスト／左 カード／左上 交代時間 */
   const mine = (l, e) => e.side === l.side && same(e.player, l.name);
   const BOOT = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 15.5c0-1 .6-1.8 1.6-2l4.4-.9 2.2-4.6h4l.8 3.4 5.2 1.6c.8.3 1.3 1 1.3 1.9v1.6H2.5z" fill="currentColor"/><path d="M4 19h2M9 19h2M14 19h2M19 19h2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`;
