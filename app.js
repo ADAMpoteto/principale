@@ -898,11 +898,7 @@ function buildNews() {
   /* 買収・クラブ名変更（最初のニュース） */
   if (oldName() && renameDate()) N.push({ id: "rename", d: renameDate(), cat: "CLUB", rename: true, t: `クラブ名変更のお知らせ` });
   (D.inj || []).forEach(x => N.push({ id: "i" + x.i, d: x.date, cat: "CLUB", inj: x, t: `${x.name}選手の負傷について` }));
-  /* 同じ試合で同じ通算記録に届いた選手は1件にまとめる */
-  const G = {};
-  milestones().forEach(n => { const s = n.ms; if (n.cat === "RECORD" && s && s.k && s.v > 1 && !s.club && !s.firsts && s.who && n.m0) { const key = `${n.m0.id}|${s.k}|${s.v}`; if (G[key]) { G[key].ms.group.push(s.who); return; } s.group = [s.who]; G[key] = n; } N.push(n); });
-  Object.values(G).filter(n => n.ms.group.length > 1).forEach(n => { const g = n.ms.group, d = n.ms.def;
-    n.t = `${g[0]}選手ら${g.length}選手 通算${n.ms.v}${d.u}達成`; n.ms.club = true; n.ms.txt = `${g.join("選手、")}選手の${g.length}選手が、${clubName()}での公式戦通算${n.ms.v}${d.u}を達成しました。`; n.id = n.id.replace(/^r-[^-]+-[^-]+/, `r-${n.ms.k}-g${n.m0.id}`); });
+  N.push(...milestones());
   return N.filter(n => n.d).sort((a, b) => b.d - a.d || (b.top || 0) - (a.top || 0) || (a.cat === "MATCH" ? -1 : 0));
 }
 /* サムネイル（画像の代わりに、試合ならエンブレムとスコア、移籍なら選手） */
