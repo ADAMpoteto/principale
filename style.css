@@ -1462,3 +1462,12 @@ a.ps-r:hover b{color:var(--blue)}
 .lp-ph .b-g b{padding:0 4px 0 0;color:var(--navy)}
 /* 写真がない選手は背番号 */
 .face.num.ph{font-family:var(--en);font-weight:800}
+
+/* 通算成績 */
+.t.at td.l{white-space:normal}
+.at-c{display:inline-flex;align-items:center;gap:8px;font-weight:700}
+.at-c .logo.at-cl,.at-c .at-cl{width:22px;height:22px;object-fit:contain;flex:none}
+.at-c .logo.ph{font-size:8px}
+.tile em a:hover{text-decoration:underline}
+.tiles.at-4{grid-template-columns:repeat(4,1fr)}.tiles.at-3{grid-template-columns:repeat(3,1fr)}
+@media (max-width:700px){.tiles.at-4,.tiles.at-3{grid-template-columns:repeat(2,1fr)}.tiles.at-3 .tile:last-child:nth-child(odd){grid-column:span 2}.t.at th,.t.at td{padding-left:4px;padding-right:4px;font-size:12px}}
