@@ -1191,9 +1191,21 @@ function matchPreview(m, h) {
     ${ab.length ? `<div class="ph">ABSENCES<small>負傷で欠場予定の選手</small></div><div class="inj-ab">${ab.map(x => `<a href="#/player/${encodeURIComponent(x.name)}">${face(x.name)}<div><b>${esc(x.name)}</b><small>${esc(x.what || "負傷")}${x.back ? `・${md(x.back)}ごろ復帰予定` : ""}</small></div></a>`).join("")}</div>` : ""}`;
 }
 function headToHead(m) {
-  const L = D.played.filter(x => same(x.opp, m.opp)); if (!L.length) return "";
-  const r = record(L);
-  return `<div class="ph">対戦成績<small>${r.w}勝 ${r.d}分 ${r.l}敗</small></div><div class="mlist h2h">${L.slice(-5).reverse().map(matchRow).join("")}</div>`;
+  const L = D.played.filter(x => same(x.opp, m.opp) && x !== m && (!m.date || !x.date || x.date < m.date)); if (!L.length) return "";
+  const r = record(L), pc = v => r.n ? v / r.n * 100 : 0, me = clubName();
+  const ha = k => { const q = record(L.filter(x => x.ha === k)); return q.n ? `${q.w}勝${q.d}分${q.l}敗` : "-"; };
+  const bw = L.filter(x => x.res === "W").sort((a, b) => (b.gf - b.ga) - (a.gf - a.ga) || b.gf - a.gf)[0];
+  const sc = {}; L.forEach(x => x.scorers.filter(y => !/オウン/.test(y.name)).forEach(y => { const k = nameKey(y.name); (sc[k] = sc[k] || { name: y.name, n: 0 }).n += y.n; }));
+  const top = Object.values(sc).sort((a, b) => b.n - a.n).slice(0, 3);
+  const cell = (k, v) => `<div><span>${k}</span><b>${v}</b></div>`;
+  return `<div class="ph">対戦成績<small>通算${r.n}試合</small></div>
+    <div class="h2s"><div class="h2s-top"><div class="h2s-t">${logo(me, "md")}<b>${r.w}</b><small>${esc(shortOf(me))} 勝利</small></div>
+      <div class="h2s-t d"><b>${r.d}</b><small>引き分け</small></div><div class="h2s-t">${logo(m.opp, "md")}<b>${r.l}</b><small>${esc(shortOf(m.opp))} 勝利</small></div></div>
+      <div class="h2s-bar"><i class="w" style="width:${pc(r.w)}%"></i><i class="d" style="width:${pc(r.d)}%"></i><i class="l" style="width:${pc(r.l)}%"></i></div>
+      <div class="h2s-g">${cell("得点", `${r.gf}<small>（1試合 ${fmtN(r.gf / r.n, 1)}）</small>`)}${cell("失点", `${r.ga}<small>（1試合 ${fmtN(r.ga / r.n, 1)}）</small>`)}
+        ${cell("ホーム", ha("H"))}${cell("アウェイ", ha("A"))}${bw ? cell("最多得点差勝利", `<a href="#/match/${bw.id}">${bw.gf}-${bw.ga}<small>（${dotY(bw.date)}）</small></a>`) : ""}
+        ${top.length ? cell("この相手からの得点", top.map(t => `<a class="nw" href="#/player/${encodeURIComponent(t.name)}">${esc(t.name)}<small> ${t.n}点</small></a>`).join("、")) : ""}</div></div>
+    <div class="ph">直近の対戦<small>RECENT</small></div><div class="mlist h2h">${L.slice(-5).reverse().map(matchRow).join("")}</div>`;
 }
 function matchFacts(m, h) {
   const evs = m.ev.filter(e => e.kind !== "その他" || e.note || e.video);
