@@ -735,7 +735,8 @@ const ncat = n => n.cat === "MATCH" ? (n.kind === "result" ? "RESULT" : "PREVIEW
 const catTag = n => `<span class="cat c-${ncat(n)}">${NCAT[ncat(n)]}</span>`;
 const ICON_INJ = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z" fill="currentColor"/></svg>`;
 /* 負傷：その日に離脱中かどうか。「いま」は最後に記録がある日（試合・負傷の新しいほう） */
-const gameNow = () => { const lp = D.played[D.played.length - 1], li = (D.inj || []).slice(-1)[0]; return new Date(Math.max(lp ? +lp.date : 0, li ? +li.date : 0) || Date.now()); };
+/* 復帰日が入っていれば、その日までは時間が進んでいる */
+const gameNow = () => { const lp = D.played[D.played.length - 1], t = [lp ? +lp.date : 0, ...(D.inj || []).map(x => Math.max(+x.date, x.ret ? +x.ret : 0))]; return new Date(Math.max(...t) || Date.now()); };
 const injAt = (name, d = gameNow()) => (D.inj || []).filter(x => same(x.name, name) && x.date <= d && d < (x.ret || x.back || new Date(8.64e15))).pop() || null;
 const injTerm = x => x.n != null ? `約${x.n}${x.u === "日" ? "日" : x.u === "か月" ? "か月" : "週間"}` : "";
 const md = d => `${d.getMonth() + 1}月${d.getDate()}日`;
