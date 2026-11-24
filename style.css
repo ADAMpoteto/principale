@@ -1493,3 +1493,10 @@ a.ps-r:hover b{color:var(--blue)}
 .art-pv{margin:20px 0;border:1px solid var(--line)}
 .h2s-first{display:flex;align-items:center;justify-content:center;gap:24px;padding:22px 18px;text-align:center}
 .h2s-first .logo.md{width:44px;height:44px}.h2s-first p{margin:0;display:flex;flex-direction:column;gap:4px}.h2s-first b{font-size:16px}.h2s-first small{font-size:12px;color:var(--tx3)}
+
+/* 写真がない選手の背番号を大きく */
+.lp-ph .face.num.ph{font-family:var(--en);font-weight:800;font-size:20px;line-height:1;letter-spacing:-.02em}
+.sb-ph .face.num.ph{font-family:var(--en);font-weight:800;font-size:18px}
+.ps-r .face.num.ph{font-family:var(--en);font-weight:800;font-size:14px}
+@media (max-width:700px){.lp-ph .face.num.ph{font-size:16px}}
+.lpm-field .lp-ph .face.num.ph{font-size:17px}

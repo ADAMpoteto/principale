@@ -975,7 +975,7 @@ function newsBody(n) {
       ["対戦カード", `${esc(h.home)} vs ${esc(h.away)}`], ["開催", m.ha === "H" ? "ホーム" : m.ha === "A" ? "アウェイ" : "中立地"], venue(m) ? ["会場", esc(venue(m))] : null].filter(Boolean);
     return `<dl class="inj-dl">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl><div class="art-pv">${headToHead(m)}</div><p class="nbtn"><a class="btn" href="#/match/${m.id}">MATCH INFO</a></p>`; }
   if (n.rename) { const d = n.d, st = D.conf["ホームスタジアム"], f = D.conf["創設年"];
-    const rows = [["新クラブ名", esc(clubName())], ["旧クラブ名", esc(oldName())], ["変更日", `${d.getFullYear()}年${md(d)}`], f ? ["創設", `${esc(f)}年（${esc(oldName())}として）`] : null, st ? ["ホームスタジアム", esc(st)] : null].filter(Boolean);
+    const rows = [["新クラブ名", esc(clubName())], ["旧クラブ名", esc(oldName())], ["変更日", `${d.getFullYear()}年${md(d)}`], f ? ["設立", `${esc(f)}年`] : null, st ? ["ホームスタジアム", esc(st)] : null].filter(Boolean);
     return P(`このたび、${esc(oldName())}は新たなオーナーグループによる買収が完了し、新体制のもとで歩みを始めることとなりました。これにともない、${d.getFullYear()}年${md(d)}付でクラブ名を「${esc(clubName())}」に変更いたしましたので、お知らせいたします。`)
       + P(`${esc(oldName())}のアカデミーとトップチームは、そのまま${esc(clubName())}に引き継がれます。これまで${esc(oldName())}を支えてくださった皆さまに心より感謝申し上げるとともに、新しい${esc(clubName())}への変わらぬご声援をよろしくお願いいたします。`)
       + `<dl class="inj-dl">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl><p class="nbtn"><a class="btn" href="#/club">CLUB</a></p>`; }
