@@ -1620,6 +1620,43 @@ function vTransfers() {
     ${T.length ? "" : `<div class="panel">${empty("このシーズンの移籍はありません。")}</div>`}</div>`;
 }
 
+/* クラブの通算成績：全体・ホーム／アウェイ・大会別・対戦相手別・記録 */
+function allTime(all, big) {
+  const L = D.played;
+  if (!all.n) return sec("ALL-TIME", "通算成績") + `<div class="panel">${empty("まだ試合がありません。")}</div>`;
+  const pc = (a, b) => b ? fmtN(a / b * 100, 1) : "-", av = (a, b) => b ? fmtN(a / b, 2) : "-";
+  const head = `<thead><tr><th class="l" style="padding-left:16px"></th><th>試合</th><th>勝</th><th>分</th><th>敗</th><th>得点</th><th>失点</th><th>得失差</th><th>勝率</th></tr></thead>`;
+  const row = (lab, r) => `<tr><td class="l" style="padding-left:16px">${lab}</td><td>${r.n}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td><td>${r.gf}</td><td>${r.ga}</td><td>${r.gf - r.ga > 0 ? "+" : ""}${r.gf - r.ga}</td><td>${pc(r.w, r.n)}%</td></tr>`;
+  const tbl = rows => `<div class="tw"><table class="t at">${head}<tbody>${rows.join("")}</tbody></table></div>`;
+  const H = L.filter(m => m.ha === "H"), A = L.filter(m => m.ha === "A"), N0 = L.filter(m => m.ha !== "H" && m.ha !== "A");
+  const comps = [...new Set(L.map(m => m.comp))].map(c => [c, L.filter(m => m.comp === c)]).sort((a, b) => b[1].length - a[1].length);
+  const opp = [...new Set(L.map(m => m.opp))].map(o => [o, L.filter(m => same(m.opp, o))]).sort((a, b) => b[1].length - a[1].length || record(b[1]).w - record(a[1]).w);
+  /* 連続記録 */
+  let w = 0, u = 0, c = 0, sc = 0, bw = 0, bu = 0, bc = 0, bs = 0;
+  L.forEach(m => { w = m.res === "W" ? w + 1 : 0; u = m.res === "L" ? 0 : u + 1; c = m.ga === 0 ? c + 1 : 0; sc = m.gf > 0 ? sc + 1 : 0; bw = Math.max(bw, w); bu = Math.max(bu, u); bc = Math.max(bc, c); bs = Math.max(bs, sc); });
+  const most = [...L].sort((a, b) => b.gf - a.gf || (b.gf - b.ga) - (a.gf - a.ga))[0];
+  const pk = L.filter(m => m.pk), pkW = pk.filter(m => m.res === "W").length;
+  const att = H.filter(m => m.att), topA = [...att].sort((a, b) => b.att - a.att)[0];
+  const pos = L.map(m => tv(m, "me", "ボール支配率")).filter(v => v != null);
+  const fm = {}; L.forEach(m => { const f = m.form && m.form.me; if (f) fm[f] = (fm[f] || 0) + 1; }); const fTop = Object.entries(fm).sort((a, b) => b[1] - a[1])[0];
+  const tile = (k, v, e) => `<div class="tile"><span>${k}</span><b>${v}</b>${e ? `<em>${e}</em>` : ""}</div>`;
+  const mLink = m => `<a href="#/match/${m.id}" style="color:inherit">${esc(m.opp)}　${dotY(m.date)}</a>`;
+  return sec("ALL-TIME", "通算成績") + `<div class="tiles at-4">
+      ${tile("試合", all.n)}${tile("成績", `${all.w}<small>勝</small>${all.d}<small>分</small>${all.l}<small>敗</small>`).replace("<b>", '<b class="rec">')}
+      ${tile("勝率", `${pc(all.w, all.n)}<small>%</small>`)}${tile("勝点", all.pts, `1試合平均 ${av(all.pts, all.n)}`)}
+      ${tile("得点", all.gf, `1試合平均 ${av(all.gf, all.n)}`)}${tile("失点", all.ga, `1試合平均 ${av(all.ga, all.n)}`)}
+      ${tile("得失点差", `${all.gf - all.ga > 0 ? "+" : ""}${all.gf - all.ga}`)}${tile("クリーンシート", all.cs, `${pc(all.cs, all.n)}%の試合`)}</div>
+    ${sec("HOME / AWAY", "ホーム・アウェイ別")}${tbl([H.length ? row("ホーム", record(H)) : "", A.length ? row("アウェイ", record(A)) : "", N0.length ? row("中立地", record(N0)) : ""])}
+    ${sec("COMPETITIONS", "大会別")}${tbl(comps.map(([c, l]) => row(`<span class="at-c">${compLogo(c, "at-cl")}${esc(c)}</span>`, record(l))))}
+    ${sec("TEAM RECORDS", "チーム記録")}<div class="tiles at-3">
+      ${big ? tile("最多得点差勝利", `${big.gf}-${big.ga}`, mLink(big)) : ""}${most && most.gf ? tile("1試合最多得点", `${most.gf}<small>点</small>`, mLink(most)) : ""}
+      ${tile("最多連勝", `${bw}<small>連勝</small>`)}${tile("最長無敗", `${bu}<small>試合</small>`)}${tile("最多連続無失点", `${bc}<small>試合</small>`)}${tile("最多連続得点", `${bs}<small>試合</small>`)}
+      ${pk.length ? tile("PK戦", `${pkW}<small>勝</small>${pk.length - pkW}<small>敗</small>`) : ""}
+      ${pos.length ? tile("平均ボール支配率", `${fmtN(pos.reduce((a, b) => a + b, 0) / pos.length, 1)}<small>%</small>`) : ""}
+      ${att.length ? tile("ホーム平均観客数", `${fmtN(att.reduce((a, m) => a + m.att, 0) / att.length)}<small>人</small>`, topA ? `最多 ${fmtN(topA.att)}人（${esc(topA.opp)}戦）` : "") : ""}
+      ${fTop ? tile("最多使用フォーメーション", esc(fTop[0]), `${fTop[1]}試合`) : ""}</div>
+    ${sec("OPPONENTS", "対戦相手別")}${tbl(opp.map(([o, l]) => row(`<span class="at-c">${logo(o, "at-cl")}${esc(o)}</span>`, record(l))))}`;
+}
 function vClub() {
   const titles = [];
   D.seasons.forEach(x => String(x.titles || "").split(/[、,，\/／]/).map(t => t.trim()).filter(Boolean).forEach(t => titles.push({ t, s: x.season })));
@@ -1637,9 +1674,7 @@ function vClub() {
     ${mgr ? sec("MANAGER", "監督") + `<div class="mgr">${face(mgr.name)}<div><span>MANAGER</span><b><a href="#/staff/${encodeURIComponent(mgr.name)}" style="color:inherit">${flag(mgr.nat)}${esc(mgr.name)}</a></b>${mgr.memo ? `<p>${esc(mgr.memo)}</p>` : ""}
       <a class="btn" href="#/staff/${encodeURIComponent(mgr.name)}">PROFILE</a></div></div>` : ""}
     <a class="hist-link" href="#/history"><span><b>HISTORY</b><small>ヒストリー・獲得タイトル</small></span><em>${esc(clubName())}が歩んできた道のり</em><i>›</i></a>
-    ${sec("ALL-TIME", "通算成績")}${all.n ? `<div class="tiles"><div class="tile"><span>試合</span><b>${all.n}</b></div><div class="tile"><span>成績</span><b class="rec">${all.w}<small>勝</small>${all.d}<small>分</small>${all.l}<small>敗</small></b></div>
-      <div class="tile"><span>得点</span><b>${all.gf}</b></div><div class="tile"><span>失点</span><b>${all.ga}</b></div><div class="tile"><span>勝率</span><b>${fmtN(all.w / all.n * 100, 1)}<small>%</small></b></div>
-      ${big ? `<div class="tile"><span>最多得点差勝利</span><b>${big.gf}-${big.ga}</b><em>${esc(big.opp)}　${dotY(big.date)}</em></div>` : ""}</div>` : `<div class="panel">${empty("まだ試合がありません。")}</div>`}
+    ${allTime(all, big)}
     ${recs.length ? sec("RECORDS", "通算記録") + `<div class="sgrid sgrid3">${recs.join("")}</div>` : ""}</div>`;
 }
 
