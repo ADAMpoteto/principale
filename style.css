@@ -1509,3 +1509,21 @@ a.ps-r:hover b{color:var(--blue)}
 .mrow .s{position:relative;width:76px;text-align:center;display:flex;justify-content:center}
 .mrow .s .pk{position:absolute;left:0;right:0;top:100%;margin-top:3px;text-align:center;white-space:nowrap}
 @media (max-width:600px){.mrow .s{width:64px}}
+
+/* 大会名と節を2行に */
+.rb{display:inline-flex;flex-direction:column;line-height:1.3;vertical-align:middle}
+.rb>span{display:block;white-space:nowrap}
+.mr-meta{align-items:center}
+.mh-cn .rb{align-items:center}.mh-cn .rb>span{margin:0;padding:0;border:0}.mh-cn .rb>span+span{font-size:12px;opacity:.85}
+.g-comp .rb,.kv-comp .rb{align-items:center}
+.nm-top .rb{align-items:flex-start}
+
+/* 順位表：大会エンブレム */
+.tb-head{display:flex;align-items:center;gap:16px;padding:20px 0 16px}
+.tb-head .tb-cl{width:56px;height:56px;object-fit:contain;flex:none}
+.tb-head div{display:flex;flex-direction:column;gap:2px}
+.tb-head b{font-size:22px;line-height:1.2}
+.tb-head small{font-family:var(--en);font-size:13px;font-weight:700;color:var(--tx3);letter-spacing:.06em}
+.pill .pill-cl{width:16px;height:16px;object-fit:contain;margin-right:6px;vertical-align:-3px}
+@media (max-width:600px){.tb-head .tb-cl{width:44px;height:44px}.tb-head b{font-size:18px}}
+.mh-cn .rb{margin:0;padding:0;border:0;align-items:center}
