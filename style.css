@@ -1527,3 +1527,24 @@ a.ps-r:hover b{color:var(--blue)}
 .pill .pill-cl{width:16px;height:16px;object-fit:contain;margin-right:6px;vertical-align:-3px}
 @media (max-width:600px){.tb-head .tb-cl{width:44px;height:44px}.tb-head b{font-size:18px}}
 .mh-cn .rb{margin:0;padding:0;border:0;align-items:center}
+
+/* ===== スマホの見た目の調整 ===== */
+.phero .pos .ph-st{display:inline-block;white-space:nowrap;margin-left:10px;font-size:.8em;padding:1px 8px;border:1px solid rgba(255,255,255,.5);letter-spacing:.06em}
+.t .sn,.crow .lab .sn{display:none}
+.nw{white-space:nowrap}
+.mh-goals .h li{flex-direction:row;justify-content:flex-end;text-align:right}
+.mh-goals li{flex-wrap:wrap;column-gap:6px;row-gap:0}
+.m-only,.rk-card .all.m-only,.ps-more.m-only{display:none}
+@media (max-width:600px){
+  .kv-club::after{right:-10%;width:12%}
+  .kv-vs{gap:6px;padding:0 18px 0 4px}.kv-vs div{width:auto;flex:1;min-width:0;font-size:14px}.kv-vs .logo.xl{width:80px;height:80px}.kv-vs b{font-size:36px;flex:none}
+  .t .mh{display:none}.t .fn{display:none}.t .sn{display:inline}
+  .crow .lab .fn{display:none}.crow .lab .sn{display:inline}
+  .ps-r.m-more{display:none}.ps-c.open .ps-r.m-more{display:grid}.ps-more.m-only{display:block}
+  .sgrid .rk-row:nth-of-type(n+3){display:none}.rk-card .all.m-only{display:block}
+  .ev small{font-size:11px;line-height:1.4}
+  .foot nav{display:grid;grid-template-columns:1fr 1fr;gap:22px 20px;width:100%}
+  .tiles>.tile:last-child:nth-child(odd){grid-column:1/-1}
+  .kp-c .face.ph{background:#fff;color:var(--navy);font-size:18px;font-family:var(--en);font-weight:800;opacity:1}
+}
+@media (max-width:600px){.t.lt th,.t.lt td{padding-left:5px;padding-right:5px;font-size:12px}.t.lt th:first-child,.t.lt td:first-child{padding-left:10px}.t.lt .club .logo{display:none}}
