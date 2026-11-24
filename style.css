@@ -1451,4 +1451,4 @@ a.ps-r:hover b{color:var(--blue)}
 .cat.c-CLUB{border-color:#bc002d;color:#bc002d}
 .news .cat.c-RESULT{background:var(--navy);color:#fff}
 .cat{white-space:nowrap;flex:none}
-@media (max-width:700px){#ncat.pills{flex-wrap:nowrap;width:auto;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}#ncat.pills::-webkit-scrollbar{display:none}#ncat .pill{flex:none;white-space:nowrap}}
+@media (max-width:700px){#ncat.pills{display:grid;grid-template-columns:repeat(4,1fr);width:100%;overflow:visible;gap:0;border:0;background:none}#ncat .pill{border:1px solid var(--line2);margin:0 -1px -1px 0;background:var(--white);white-space:nowrap;padding:10px 2px;font-size:12px;text-align:center}#ncat .pill.on{background:var(--navy);color:#fff;border-color:var(--navy)}}
