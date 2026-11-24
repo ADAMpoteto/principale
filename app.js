@@ -1192,7 +1192,8 @@ function matchPreview(m, h) {
     ${ab.length ? `<div class="ph">ABSENCES<small>負傷で欠場予定の選手</small></div><div class="inj-ab">${ab.map(x => `<a href="#/player/${encodeURIComponent(x.name)}">${face(x.name)}<div><b>${esc(x.name)}</b><small>${esc(x.what || "負傷")}${x.back ? `・${md(x.back)}ごろ復帰予定` : ""}</small></div></a>`).join("")}</div>` : ""}`;
 }
 function headToHead(m) {
-  const L = D.played.filter(x => same(x.opp, m.opp) && x !== m && (!m.date || !x.date || x.date < m.date)); if (!L.length) return "";
+  const L = D.played.filter(x => same(x.opp, m.opp) && x !== m && (!m.date || !x.date || x.date < m.date));
+  if (!L.length) return `<div class="ph">対戦成績<small>HEAD TO HEAD</small></div><div class="h2s h2s-first">${logo(clubName(), "md")}<p><b>${esc(clubName())}として初めての対戦</b><small>${esc(m.opp)}との対戦記録はまだありません</small></p>${logo(m.opp, "md")}</div>`;
   const r = record(L), pc = v => r.n ? v / r.n * 100 : 0, me = clubName();
   const ha = k => { const q = record(L.filter(x => x.ha === k)); return q.n ? `${q.w}勝${q.d}分${q.l}敗` : "-"; };
   const bw = L.filter(x => x.res === "W").sort((a, b) => (b.gf - b.ga) - (a.gf - a.ga) || b.gf - a.gf)[0];
