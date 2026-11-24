@@ -455,6 +455,8 @@ const wdl = m => `<span class="wdl ${m.res}" aria-label="${{ W: "勝ち", D: "�
 const scoreTxt = m => m.ha === "A" ? `${m.ga} - ${m.gf}` : `${m.gf} - ${m.ga}`;
 const homeAway = m => m.ha === "A" ? { home: m.opp, away: clubName(), hs: "opp", as: "me" } : { home: clubName(), away: m.opp, hs: "me", as: "opp" };
 const roundTxt = m => [m.comp, m.round].filter(Boolean).join(" ");
+/* 画面表示用：大会名と節を2行に分ける */
+const roundBr = m => `<span class="rb"><span>${esc(m.comp || "")}</span>${m.round ? `<span>${esc(m.round)}</span>` : ""}</span>`;
 
 /* =====================================================================
    集計
@@ -699,7 +701,7 @@ function matchRow(m) {
     : `<span class="up">${kickoff(m) || ""}</span>`;
   return `<a class="mrow" href="#/match/${m.id}">
     <div class="d"><b>${dotD(m.date)}</b><span>${m.date ? WDE[m.date.getDay()] : ""}</span></div>
-    <div class="t">${logo(m.opp, "md")}<div><small class="mr-meta"><span class="ha ${m.ha}">${m.ha === "H" ? "HOME" : m.ha === "A" ? "AWAY" : ""}</span>${compLogo(m.comp, "sm")}<span class="mr-comp">${esc(roundTxt(m))}</span></small><b>${clubName2(m.opp)}</b></div></div>
+    <div class="t">${logo(m.opp, "md")}<div><small class="mr-meta"><span class="ha ${m.ha}">${m.ha === "H" ? "HOME" : m.ha === "A" ? "AWAY" : ""}</span>${compLogo(m.comp, "sm")}<span class="mr-comp">${roundBr(m)}</span></small><b>${clubName2(m.opp)}</b></div></div>
     <div class="s">${right}</div></a>`;
 }
 function standing(season, comp, mini) {
@@ -941,7 +943,7 @@ function newsThumb(n) {
       <div class="nx-t">${tag ? `<span class="nx-tag${tag === "CLUB RECORD" ? " gold" : ""}">${esc(tag)}</span>` : ""}${head}${s.club ? "" : `<span class="nx-n">${esc(pr.roma || s.who)}</span>${pr.roma ? `<span class="nx-j">${esc(s.who)}</span>` : ""}`}<span class="nx-c">${logo(clubName(), "")}${esc(clubName())}</span></div></div>`; }
   if (n.m) { const h = homeAway(n.m);
     const res = n.kind === "result";
-    return `<div class="nt nt-m2"><div class="nm-top">${compLogo(n.m.comp, "nm-cl")}<span>${esc(n.m.comp)}${n.m.round ? "　" + esc(n.m.round) : ""}</span></div>
+    return `<div class="nt nt-m2"><div class="nm-top">${compLogo(n.m.comp, "nm-cl")}${roundBr(n.m)}</div>
       <div class="nm-t">${logo(h.home, "")}<b>${esc(shortOf(h.home))}</b></div>
       <div class="nm-c"><div class="nm-s">${res ? scoreTxt(n.m) : "VS"}</div><small>${res ? "FULL TIME" : dotY(n.m.date)}</small></div>
       <div class="nm-t">${logo(h.away, "")}<b>${esc(shortOf(h.away))}</b></div></div>`; }
@@ -1022,7 +1024,7 @@ function vNewsDetail(id) {
 function gameCard(m, lab) {
   const h = homeAway(m), d = m.date;
   return `<div class="gcard${m.played ? "" : " up"}"><div class="g-lab">${lab}</div>
-    <div class="g-comp">${esc(roundTxt(m))}</div>
+    <div class="g-comp">${roundBr(m)}</div>
     <div class="g-date"><b>${d ? `${d.getMonth() + 1}/${d.getDate()}` : ""}</b><span>${d ? WDE[d.getDay()] : ""}</span>${kickoff(m) ? `<em>${kickoff(m)}</em>` : ""}<span class="g-ha ${m.ha}">${m.ha === "H" ? "HOME" : m.ha === "A" ? "AWAY" : ""}</span></div>
     ${venue(m) ? `<div class="g-venue"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>${esc(venue(m))}</div>` : ""}
     <div class="g-vs"><div class="g-club">${logo(h.home, "lg")}<span>${esc(h.home)}</span></div>
@@ -1044,7 +1046,7 @@ function vHome() {
   const me = D.table.find(t => t.season === s && isMe(t.club));
   const nextHome = upc.find(m => m.ha === "H") || next;
   const kv = nextHome ? (() => { const h = homeAway(nextHome), d = nextHome.date; return `<section class="kv"><div class="kv-in">
-      <div class="kv-txt">${D.conf["スローガン"] ? `<p class="kv-sl">${slogan(D.conf["スローガン"])}</p>` : ""}<p class="kv-lab">${nextHome.ha === "H" ? "NEXT HOME GAME" : "NEXT MATCH"}</p><p class="kv-comp">${esc(roundTxt(nextHome))}</p>
+      <div class="kv-txt">${D.conf["スローガン"] ? `<p class="kv-sl">${slogan(D.conf["スローガン"])}</p>` : ""}<p class="kv-lab">${nextHome.ha === "H" ? "NEXT HOME GAME" : "NEXT MATCH"}</p><p class="kv-comp">${roundBr(nextHome)}</p>
         <p class="kv-date"><b>${dotD(d)}</b><span>${d ? WDE[d.getDay()] : ""}</span>${kickoff(nextHome) ? `<em>${kickoff(nextHome)} KICK OFF</em>` : ""}</p>
         <p class="kv-venue">${esc(venue(nextHome) || "")}</p><a class="btn w" href="#/match/${nextHome.id}">MATCH INFO</a></div>
       <div class="kv-vs"><div>${logo(h.home, "xl")}<span>${esc(h.home)}</span></div><b>VS</b><div>${logo(h.away, "xl")}<span>${esc(h.away)}</span></div></div></div></section>`; })()
@@ -1150,7 +1152,7 @@ function vMatch(id) {
   const resLab = { W: "WIN", L: "LOSE", D: "DRAW" }[m.res];
   const info = [["KICK OFF", "キックオフ", m.played ? kickoff(m) : ""], ["STADIUM", "スタジアム", venue(m)], ["WEATHER", "天気", m.weather ? `${WX[m.weather] || ""}${esc(m.weather)}` : ""], ["ATTENDANCE", "観客数", m.att ? fmtN(m.att) + "人" : ""]].filter(x => x[2]);
   return `<section class="mh"><div class="mh-in">
-      <div class="mh-top">${compLogo(m.comp, "mh-cl")}<div class="mh-cn">${esc(m.comp)}${m.round ? `<span>${esc(m.round)}</span>` : ""}</div></div>
+      <div class="mh-top">${compLogo(m.comp, "mh-cl")}<div class="mh-cn">${roundBr(m)}</div></div>
       <div class="mh-date">${dotY(m.date)}</div>
       <div class="mh-vs">${team(h.home, "HOME")}
         <div class="mh-c">${m.played ? `<div class="mh-score"><b>${m.ha === "A" ? m.ga : m.gf}</b><i></i><b>${m.ha === "A" ? m.gf : m.ga}</b></div>
@@ -1402,8 +1404,8 @@ function vTable() {
   const s = ST.season || D.seasonList[0];
   const st = standing(s, ST.tcomp, false);
   return band("STANDINGS", "順位表", true) + `<div class="wrap narrow">
-    ${st && st.comps.length > 1 ? `<div class="pills" id="tcomp">${st.comps.map(c => `<button class="pill${c === st.comp ? " on" : ""}" data-c="${esc(c)}">${esc(c)}</button>`).join("")}</div>` : ""}
-    ${st ? sec(st.comp, s) + st.html : `<div class="panel">${empty("順位表はまだありません。")}</div>`}
+    ${st && st.comps.length > 1 ? `<div class="pills" id="tcomp">${st.comps.map(c => `<button class="pill${c === st.comp ? " on" : ""}" data-c="${esc(c)}">${compLogo(c, "pill-cl")}${esc(c)}</button>`).join("")}</div>` : ""}
+    ${st ? `<div class="tb-head">${compLogo(st.comp, "tb-cl")}<div><b>${esc(st.comp)}</b><small>${esc(s)}シーズン</small></div></div>` + st.html : `<div class="panel">${empty("順位表はまだありません。")}</div>`}
     ${st && (D.rankHist[s + "\t" + st.comp] || []).length > 1 ? sec("POSITION", "順位の推移") + `<div class="chart">${rankChart(D.rankHist[s + "\t" + st.comp], D.table.filter(r => r.season === s && r.comp === st.comp).length)}</div>` : ""}
 </div>`;
 }
@@ -1513,7 +1515,7 @@ function playerFirsts(all) {
   const g = o => o.l.s["得点"] || (o.m._sc && o.m._sc[k]) || 0, as = o => o.l.s["アシスト"] || (o.m._as && o.m._as[k]) || 0;
   const F3 = [["初出場", L[0]], ["初得点", L.find(o => g(o) > 0)], ["初アシスト", L.find(o => as(o) > 0)]];
   return sec("FIRSTS", `${clubName()}での初記録`) + `<div class="firsts">${F3.map(([t, o]) => o
-    ? `<a href="#/match/${o.m.id}"><span>${t}</span><b>${fmtD(o.m.date)}</b><small>${esc(o.m.comp || "")}${o.m.round ? " " + esc(o.m.round) : ""}</small><small>vs ${esc(o.m.opp)}　${o.m.gf}-${o.m.ga}</small></a>`
+    ? `<a href="#/match/${o.m.id}"><span>${t}</span><b>${fmtD(o.m.date)}</b><small>${roundBr(o.m)}</small><small>vs ${esc(o.m.opp)}　${o.m.gf}-${o.m.ga}</small></a>`
     : `<div class="none"><span>${t}</span><b>-</b><small>まだ記録はありません</small></div>`).join("")}</div>`;
 }
 /* 在籍していたシーズン */
