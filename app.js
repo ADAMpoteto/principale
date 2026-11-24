@@ -964,7 +964,7 @@ function newsBody(n) {
   if (n.m) { const m = n.m, d = m.date, H = D.played.filter(x => same(x.opp, m.opp) && x.date < m.date), r = record(H);
     return P(`${d.getMonth() + 1}月${d.getDate()}日（${WD[d.getDay()]}）${kickoff(m) ? kickoff(m) + "キックオフ" : ""}の${esc(roundTxt(m))}で、${esc(clubName())}は${venue(m) ? esc(venue(m)) + "で" : m.ha === "H" ? "ホームで" : "アウェイで"}${esc(m.opp)}と対戦します。`)
       + (H.length ? P(`${esc(m.opp)}との対戦成績は${r.n}試合${r.w}勝${r.d}分${r.l}敗です。`) : P(`${esc(m.opp)}とは初めての対戦です。`))
-      + `<p class="nbtn"><a class="btn" href="#/match/${m.id}">MATCH INFO</a></p>`; }
+      + `<div class="art-pv">${headToHead(m)}</div><p class="nbtn"><a class="btn" href="#/match/${m.id}">MATCH INFO</a></p>`; }
   if (n.rename) { const d = n.d, st = D.conf["ホームスタジアム"], f = D.conf["創設年"];
     const rows = [["新クラブ名", esc(clubName())], ["旧クラブ名", esc(oldName())], ["変更日", `${d.getFullYear()}年${md(d)}`], f ? ["創設", `${esc(f)}年（${esc(oldName())}として）`] : null, st ? ["ホームスタジアム", esc(st)] : null].filter(Boolean);
     return P(`このたび、${esc(oldName())}は新たなオーナーグループによる買収が完了し、新体制のもとで歩みを始めることとなりました。これにともない、${d.getFullYear()}年${md(d)}付でクラブ名を「${esc(clubName())}」に変更いたしましたので、お知らせいたします。`)
@@ -1121,9 +1121,9 @@ function vMatch(id) {
   const club = c => `<div class="club">${logo(c, "lg")}<span>${esc(c)}</span></div>`;
   const tabs = [["facts", "SUMMARY", "概要"], ["stats", "TEAM STATS", "チームスタッツ"], ["pstats", "PLAYER STATS", "選手スタッツ"], ["lineup", "LINE-UP", "メンバー"]];
   let body = "";
-  if (m.played) body = ST.mtab === "facts" ? matchFacts(m, h) : ST.mtab === "stats" ? matchStats(m, h, false) : ST.mtab === "pstats" ? matchPlayerStats(m, h) : matchLineup(m);
+  if (m.played) body = ST.mtab === "facts" ? matchFacts(m, h) + headToHead(m) : ST.mtab === "stats" ? matchStats(m, h, false) : ST.mtab === "pstats" ? matchPlayerStats(m, h) : matchLineup(m);
   /* 試合前でもスタメンが入っていれば表示 */
-  else body = (ytInfo(m.video) ? `<div class="ph">VIDEO<small>動画</small></div><div class="hlw">${ytBox(m.video, "hl")}</div>` : "") + matchPreview(m, h) + (m.lu.length || m.luOpp.length ? `<div class="ph">LINE-UP<small>メンバー</small></div>${matchLineup(m)}` : "") + headToHead(m);
+  else body = (ytInfo(m.video) ? `<div class="ph">VIDEO<small>動画</small></div><div class="hlw">${ytBox(m.video, "hl")}</div>` : "") + matchPreview(m, h) + (m.lu.length || m.luOpp.length ? `<div class="ph">LINE-UP<small>メンバー</small></div>${matchLineup(m)}` : "");
   /* 得点者：ホームは右寄せ、アウェイは左寄せでスコアの下に */
   const gl = side => { const E = evGoals(side);
     if (E.length) { /* 1選手1行：時間をまとめる */ const G = []; E.forEach(e => { let g = G.find(x => same(x.name, e.player)); if (!g) G.push(g = { name: e.player, t: [] });
@@ -1184,9 +1184,10 @@ function matchPreview(m, h) {
   const kp = [["チーム得点王", top("g"), "g", "ゴール"], ["チームアシスト王", top("a"), "a", "アシスト"]].filter(x => x[1]);
   /* 欠場予定：試合の日に負傷で離脱中の自チームの選手 */
   const ab = m.date ? [...new Map((D.inj || []).filter(x => injAt(x.name, m.date) === x).map(x => [nameKey(x.name), x])).values()] : [];
-  if (!rows.length && !kp.length && !ab.length) return "";
+  if (!rows.length && !kp.length && !ab.length && !headToHead(m)) return "";
   return `<div class="ph">PREVIEW<small>プレビュー</small></div>
     ${rows.length ? `<div class="pv"><div class="pv-h"><div>${logo(cl[0], "md")}</div><div>${logo(cl[1], "md")}</div></div>${rows.join("")}</div>` : ""}
+    ${headToHead(m)}
     ${kp.length ? `<div class="ph">KEY PLAYERS<small>注目選手</small></div><div class="kp">${kp.map(([lab, t, k, u]) => `<a class="kp-c" href="#/player/${encodeURIComponent(t.name)}">${face(t.name)}<div><span>${lab}</span><b>${esc(t.name)}</b><em>${t[k]}<small>${u}</small></em></div></a>`).join("")}</div>` : ""}
     ${ab.length ? `<div class="ph">ABSENCES<small>負傷で欠場予定の選手</small></div><div class="inj-ab">${ab.map(x => `<a href="#/player/${encodeURIComponent(x.name)}">${face(x.name)}<div><b>${esc(x.name)}</b><small>${esc(x.what || "負傷")}${x.back ? `・${md(x.back)}ごろ復帰予定` : ""}</small></div></a>`).join("")}</div>` : ""}`;
 }
