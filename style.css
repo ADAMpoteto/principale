@@ -1490,3 +1490,4 @@ a.ps-r:hover b{color:var(--blue)}
 .h2s-g a{color:inherit}.h2s-g a:hover{color:var(--blue)}
 @media (max-width:700px){.h2s{padding:14px 14px 4px}.h2s-g{grid-template-columns:1fr}.h2s-g>div:nth-child(n){margin:0}.h2s-t b{font-size:32px}}
 .h2s-g a.nw{white-space:nowrap}
+.art-pv{margin:20px 0;border:1px solid var(--line)}
