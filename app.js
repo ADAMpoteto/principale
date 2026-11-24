@@ -961,10 +961,10 @@ function newsBody(n) {
     if (m.scorers.length) s += P(`得点者：${m.scorers.map(x => esc(x.name) + (x.n > 1 ? `（${x.n}点）` : "")).join("、")}`);
     if (m.mom) s += P(`マン・オブ・ザ・マッチ：${esc(m.mom)}`);
     return s + `<p class="nbtn"><a class="btn" href="#/match/${m.id}">MATCH REPORT</a></p>`; }
-  if (n.m) { const m = n.m, d = m.date, H = D.played.filter(x => same(x.opp, m.opp) && x.date < m.date), r = record(H);
-    return P(`${d.getMonth() + 1}月${d.getDate()}日（${WD[d.getDay()]}）${kickoff(m) ? kickoff(m) + "キックオフ" : ""}の${esc(roundTxt(m))}で、${esc(clubName())}は${venue(m) ? esc(venue(m)) + "で" : m.ha === "H" ? "ホームで" : "アウェイで"}${esc(m.opp)}と対戦します。`)
-      + (H.length ? P(`${esc(m.opp)}との対戦成績は${r.n}試合${r.w}勝${r.d}分${r.l}敗です。`) : P(`${esc(m.opp)}とは初めての対戦です。`))
-      + `<div class="art-pv">${headToHead(m)}</div><p class="nbtn"><a class="btn" href="#/match/${m.id}">MATCH INFO</a></p>`; }
+  if (n.m) { const m = n.m, d = m.date, h = homeAway(m);
+    const rows = [["大会", esc(roundTxt(m))], ["日時", `${d.getFullYear()}年${md(d)}（${WD[d.getDay()]}）${kickoff(m) ? "　" + kickoff(m) + " キックオフ" : ""}`],
+      ["対戦カード", `${esc(h.home)} vs ${esc(h.away)}`], ["開催", m.ha === "H" ? "ホーム" : m.ha === "A" ? "アウェイ" : "中立地"], venue(m) ? ["会場", esc(venue(m))] : null].filter(Boolean);
+    return `<dl class="inj-dl">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl><div class="art-pv">${headToHead(m)}</div><p class="nbtn"><a class="btn" href="#/match/${m.id}">MATCH INFO</a></p>`; }
   if (n.rename) { const d = n.d, st = D.conf["ホームスタジアム"], f = D.conf["創設年"];
     const rows = [["新クラブ名", esc(clubName())], ["旧クラブ名", esc(oldName())], ["変更日", `${d.getFullYear()}年${md(d)}`], f ? ["創設", `${esc(f)}年（${esc(oldName())}として）`] : null, st ? ["ホームスタジアム", esc(st)] : null].filter(Boolean);
     return P(`このたび、${esc(oldName())}は新たなオーナーグループによる買収が完了し、新体制のもとで歩みを始めることとなりました。これにともない、${d.getFullYear()}年${md(d)}付でクラブ名を「${esc(clubName())}」に変更いたしましたので、お知らせいたします。`)
