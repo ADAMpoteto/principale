@@ -1500,3 +1500,12 @@ a.ps-r:hover b{color:var(--blue)}
 .ps-r .face.num.ph{font-family:var(--en);font-weight:800;font-size:14px}
 @media (max-width:700px){.lp-ph .face.num.ph{font-size:16px}}
 .lpm-field .lp-ph .face.num.ph{font-size:17px}
+
+/* 試合一覧：結果／日程の切り替え、PKで行がずれないように */
+.mtog{display:grid;grid-template-columns:1fr 1fr;margin:0 0 16px;border:1px solid var(--navy)}
+.mtog button{border:0;background:var(--white);color:var(--navy);font:inherit;font-weight:700;font-size:15px;padding:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.mtog button small{font-family:var(--en);font-size:12px;color:var(--tx3)}
+.mtog button.on{background:var(--navy);color:#fff}.mtog button.on small{color:rgba(255,255,255,.7)}
+.mrow .s{position:relative;width:76px;text-align:center;display:flex;justify-content:center}
+.mrow .s .pk{position:absolute;left:0;right:0;top:100%;margin-top:3px;text-align:center;white-space:nowrap}
+@media (max-width:600px){.mrow .s{width:64px}}

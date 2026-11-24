@@ -1091,14 +1091,19 @@ function vMatches() {
   const comps = ["すべて", ...new Set(M.map(m => m.comp))];
   if (!comps.includes(ST.comp)) ST.comp = "すべて";
   const L = M.filter(m => ST.comp === "すべて" || m.comp === ST.comp);
-  const groups = {}; L.forEach(m => { const k = m.date ? `${m.date.getFullYear()}.${pad(m.date.getMonth() + 1)}` : "-"; (groups[k] = groups[k] || []).push(m); });
-  const r = record(L.filter(m => m.played));
+  /* 試合結果は新しい順、今後の日程は近い順 */
+  const P = L.filter(m => m.played).sort((a, b) => b.date - a.date), U = L.filter(m => !m.played).sort((a, b) => (a.date || 0) - (b.date || 0));
+  if (!["res", "fix"].includes(ST.mview)) ST.mview = P.length ? "res" : "fix";
+  const V = ST.mview === "res" ? P : U;
+  const groups = {}; V.forEach(m => { const k = m.date ? `${m.date.getFullYear()}.${pad(m.date.getMonth() + 1)}` : "-"; (groups[k] = groups[k] || []).push(m); });
+  const r = record(P);
   return band("MATCHES", "試合日程・結果", true) + `<div class="wrap narrow">
+    <div class="mtog" id="mview"><button data-v="res" class="${ST.mview === "res" ? "on" : ""}">試合結果<small>${P.length}</small></button><button data-v="fix" class="${ST.mview === "fix" ? "on" : ""}">今後の日程<small>${U.length}</small></button></div>
     ${comps.length > 2 ? `<div class="pills" id="comp-pills">${comps.map(c => `<button class="pill${c === ST.comp ? " on" : ""}" data-c="${esc(c)}">${esc(c)}</button>`).join("")}</div>` : ""}
-    ${r.n ? `<p class="mrec">${r.n}試合　${r.w}勝 ${r.d}分 ${r.l}敗　得点 ${r.gf}　失点 ${r.ga}</p>` : ""}
-    <div class="mlist">${Object.keys(groups).map(g => `<div class="mh">${esc(g)}</div>${groups[g].map(matchRow).join("")}`).join("") || `<div class="panel">${empty("試合はまだありません。")}</div>`}</div></div>`;
+    ${ST.mview === "res" && r.n ? `<p class="mrec">${r.n}試合　${r.w}勝 ${r.d}分 ${r.l}敗　得点 ${r.gf}　失点 ${r.ga}</p>` : ""}
+    <div class="mlist">${Object.keys(groups).map(g => `<div class="mh">${esc(g)}</div>${groups[g].map(matchRow).join("")}`).join("") || `<div class="panel">${empty(ST.mview === "res" ? "試合結果はまだありません。" : "今後の試合はありません。")}</div>`}</div></div>`;
 }
-function bMatches() { document.querySelectorAll("#comp-pills .pill").forEach(b => b.onclick = () => { ST.comp = b.dataset.c; render(); }); }
+function bMatches() { document.querySelectorAll("#comp-pills .pill").forEach(b => b.onclick = () => { ST.comp = b.dataset.c; render(); }); document.querySelectorAll("#mview button").forEach(b => b.onclick = () => { ST.mview = b.dataset.v; render(); }); }
 
 /* ---- 試合詳細 ---- */
 const CMP = [
