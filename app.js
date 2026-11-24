@@ -725,7 +725,7 @@ function rkCard(M, P, label) {
 const seasonLabel = s => s || "";
 
 /* ---------- ニュース（試合・移籍から自動で作る） ---------- */
-const NCAT = { RESULT: "試合結果", PREVIEW: "試合情報", TRANSFER: "移籍", CONTRACT: "契約更新", ACADEMY: "アカデミー", FIRST: "初記録", RECORD: "記録", AWARD: "表彰", TITLE: "タイトル", MEDICAL: "メディカル", CLUB: "クラブ" };
+const NCAT = { CLUB: "クラブ", PREVIEW: "試合情報", RESULT: "試合結果", TRANSFER: "移籍", CONTRACT: "契約更新", ACADEMY: "アカデミー", MEDICAL: "メディカル", TITLE: "タイトル", AWARD: "表彰", RECORD: "記録", FIRST: "初記録" };
 /* 表示用のカテゴリー（n.cat は並び順などの判定用にそのまま使う） */
 const ncat = n => n.cat === "MATCH" ? (n.kind === "result" ? "RESULT" : "PREVIEW")
   : n.cat === "TRANSFER" ? (n.tr && n.tr.kind === "契約延長" ? "CONTRACT" : n.tr && n.tr.kind === "ユース昇格" ? "ACADEMY" : "TRANSFER")
