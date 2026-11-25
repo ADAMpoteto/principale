@@ -1629,12 +1629,14 @@ button.all{display:block;width:100%;border:0;background:none;font:inherit;cursor
 .pst-c{background:var(--white);border:1px solid var(--line);break-inside:avoid;margin-bottom:16px}
 .pst-c h3{display:flex;align-items:baseline;gap:10px;margin:0;padding:11px 16px;border-bottom:2px solid var(--navy);font-size:12px;font-weight:700;color:var(--tx3)}
 .pst-c h3 b{font-family:var(--en);font-size:17px;letter-spacing:.04em;color:var(--tx)}
-.pst-r{display:grid;grid-template-columns:auto 1fr auto;align-items:baseline;column-gap:10px;padding:9px 16px;border-top:1px solid var(--line)}
+.pst-r{display:grid;grid-template-columns:1fr auto;grid-template-areas:"k v" "k s";align-items:center;column-gap:12px;padding:9px 16px;border-top:1px solid var(--line)}
 .pst-c h3+.pst-r{border-top:0}
-.pst-r span{font-size:13px;font-weight:700;color:var(--tx2);white-space:nowrap}
-.pst-r em{font-style:normal;font-size:11px;color:var(--tx3);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:clip}
-.pst-r b{font-family:var(--en);font-size:21px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums;text-align:right;min-width:3.2em;white-space:nowrap}
+.pst-r span{grid-area:k;font-size:13px;font-weight:700;color:var(--tx2)}
+.pst-r b{grid-area:v;font-family:var(--en);font-size:21px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
 .pst-r b small{font-family:var(--font);font-size:11px;font-weight:700;color:var(--tx3);margin-left:2px}
-.pst-r.rate i{grid-column:1/-1;display:block;height:4px;background:var(--bg);margin-top:6px;position:relative}
+.pst-r em{grid-area:s;font-style:normal;font-size:11px;line-height:1.3;color:var(--tx3);text-align:right;white-space:nowrap}
+.pst-r em:empty{display:none}
+.pst-r.rate{grid-template-areas:"k v" "k s" "bar bar"}
+.pst-r.rate i{grid-area:bar;display:block;height:4px;background:var(--bg);margin-top:6px;position:relative}
 .pst-r.rate i::before{content:"";position:absolute;inset:0 auto 0 0;width:var(--pw);background:var(--blue)}
 @media (max-width:700px){.pst{columns:1;margin-top:12px}.pst-c{margin-bottom:12px}}
