@@ -1520,21 +1520,21 @@ function vPlayer(name) {
 /* 選手ページのシーズン成績（カテゴリー別） */
 function pStatCats(a, p) {
   const S = k => a.has[k] ? a.s[k] ?? 0 : null, min = a.min || 0;
-  const p90 = v => v && min >= 90 ? `90分あたり ${fmtN(v / min * 90, 2)}` : "";
+  const p90 = v => v && min >= 90 ? `${fmtN(v / min * 90, 2)} / 90分` : "";
   const n = (k, v, o = {}) => v == null ? null : { k, v: typeof v === "number" ? fmtN(v, o.d ?? 0) : v, u: o.u || "", sub: o.sub ?? "" };
   const rate = (k, x, y, lbl) => x == null || !y ? null : { k, bar: x / y * 100, sub: `${fmtN(x)} / ${fmtN(y)}${lbl ? ` ${lbl}` : ""}` };
   const gk = /GK/.test(a.pos || p.pos || "") || (S("セーブ") || 0) > 0;
   const sh = S("シュート"), on = S("枠内シュート"), xg = S("ゴール期待値"), ps = S("パス"), pok = S("パス成功"), dr = S("ドリブル"), dok = S("ドリブル成功"), tk = S("タックル"), tok = S("タックル成功");
   const sub = a.apps - a.starts, dist = S("走行距離");
   const C = [
-    ["出場", "APPEARANCES", [n("出場時間", a.has["出場時間"] ? min : null, { u: "分", sub: a.apps ? `1試合平均 ${fmtN(min / a.apps, 0)}分` : "" }), n("先発", a.starts, { u: "試合" }), n("途中出場", sub, { u: "試合" }), n("MOM", a.mom, { u: "回" })]],
+    ["出場", "APPEARANCES", [n("出場時間", a.has["出場時間"] ? min : null, { u: "分", sub: a.apps ? `${fmtN(min / a.apps, 0)}分 / 試合` : "" }), n("先発", a.starts, { u: "試合" }), n("途中出場", sub, { u: "試合" }), n("MOM", a.mom, { u: "回" })]],
     ["攻撃", "ATTACK", [n("得点", a.g, { sub: p90(a.g) }), n("ゴール期待値", xg, { d: 2, sub: xg != null ? `得点との差 ${a.g - xg >= 0 ? "+" : ""}${fmtN(a.g - xg, 2)}` : "" }), n("シュート", sh, { sub: p90(sh) }), n("枠内シュート", on),
       rate("枠内率", on, sh), rate("決定率", sh ? a.g : null, sh, "")]],
     ["パス", "PASSING", [n("アシスト", a.a, { sub: p90(a.a) }), n("キーパス", S("キーパス"), { sub: p90(S("キーパス")) }), n("パス", ps, { sub: p90(ps) }), rate("パス成功率", pok != null && ps && pok <= ps ? pok : null, ps)]],
     ["ドリブル", "DRIBBLING", [n("ドリブル", dr), n("ドリブル成功", dok, { sub: p90(dok) }), rate("ドリブル成功率", dok != null && dr && dok <= dr ? dok : null, dr)]],
     ["守備", "DEFENDING", [n("タックル", tk), n("タックル成功", tok, { sub: p90(tok) }), rate("タックル成功率", tok != null && tk && tok <= tk ? tok : null, tk), n("インターセプト", S("インターセプト"), { sub: p90(S("インターセプト")) }), n("ブロック", S("ブロック")), n("クリア", S("クリア"))]],
     gk ? ["ゴールキーパー", "GOALKEEPING", [n("セーブ", S("セーブ"), { sub: p90(S("セーブ")) }), n("失点", S("失点"), { sub: p90(S("失点")) }), n("クリーンシート", a.cs, { u: "試合" })]] : null,
-    ["その他", "OTHERS", [n("走行距離", dist, { d: 1, u: "km", sub: dist != null && a.apps ? `1試合平均 ${fmtN(dist / a.apps, 1)}km` : "" }), n("警告", a.yc), n("退場", a.rc)]]
+    ["その他", "OTHERS", [n("走行距離", dist, { d: 1, u: "km", sub: dist != null && a.apps ? `${fmtN(dist / a.apps, 1)}km / 試合` : "" }), n("警告", a.yc), n("退場", a.rc)]]
   ];
   if (gk) C.splice(1, 0, C.splice(5, 1)[0]);
   /* 全部0のカテゴリーは出さない（GKの攻撃など） */
