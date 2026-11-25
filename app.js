@@ -957,7 +957,7 @@ function newsThumb(n) {
       <div class="nx-t"><span class="nx-tag">MEDICAL UPDATE</span><b class="nx-h">INJURY</b><span class="nx-n">${esc(pr.roma || x.name)}</span>${pr.roma ? `<span class="nx-j">${esc(x.name)}</span>` : ""}<span class="nx-c">${logo(clubName(), "")}${esc(clubName())}</span></div></div>`; }
   if (n.tr) { const t = n.tr, pr = prof(t.name) || {};
     const w = { 加入: "WELCOME", レンタル加入: "WELCOME", ユース昇格: "PROMOTED", レンタル復帰: "RETURN", 退団: "THANK YOU", レンタル移籍: "ON LOAN", 契約延長: "RENEWED" }[t.kind] || "NEWS";
-    const tag = t.kind === "ユース昇格" ? `ACADEMY GRADUATE${n.yno ? " #" + n.yno : ""}` : t.kind === "契約延長" && t.years ? `+${t.years} YEAR${t.years > 1 ? "S" : ""}` : t.kind === "レンタル移籍" && t.club ? `→ ${t.club}` : "";
+    const tag = t.kind === "ユース昇格" ? `ACADEMY${n.yno ? " #" + n.yno : ""}` : t.kind === "契約延長" && t.years ? `+${t.years} YEAR${t.years > 1 ? "S" : ""}` : t.kind === "レンタル移籍" && t.club ? `→ ${t.club}` : "";
     return `<div class="nt nt-x${t.kind === "ユース昇格" ? " is-acad" : t.kind === "退団" ? " is-out" : ""}"><div class="nx-bg">${logo(clubName(), "")}</div>${face(t.name)}
       <div class="nx-t">${tag ? `<span class="nx-tag">${esc(tag)}</span>` : ""}<b class="nx-h">${w}</b><span class="nx-n">${esc(pr.roma || t.name)}</span>${pr.roma ? `<span class="nx-j">${esc(t.name)}</span>` : ""}<span class="nx-c">${logo(clubName(), "")}${esc(clubName())}</span></div></div>`; }
   return `<div class="nt nt-c2">${ICON.cup}<div class="nt-w">CHAMPIONS<small>${esc(n.title || "")}</small></div></div>`;
