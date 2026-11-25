@@ -1574,3 +1574,17 @@ button.all{display:block;width:100%;border:0;background:none;font:inherit;cursor
   .t th.fm,.t td.fm{display:none}
 }
 .tiles.hx-sum.hx-2{grid-template-columns:1fr 1fr!important}.tiles.hx-sum.hx-2 .tile{grid-column:auto!important}
+
+/* 順位表：スマホのショート／フル切り替え */
+.tb-tog{display:none}
+@media (max-width:600px){
+  .tb-tog{display:grid;grid-template-columns:1fr 1fr;width:132px;margin-left:auto;flex:none;border:1px solid var(--navy)}
+  .tb-tog button{border:0;background:var(--white);color:var(--navy);font:inherit;font-size:13px;font-weight:700;padding:7px;cursor:pointer}
+  .tb-tog button.on{background:var(--navy);color:#fff}
+  .tb-v.short .t .sx{display:none}
+  .tb-v.full .tw .t th,.tb-v.full .tw .t td{padding-left:3px;padding-right:3px;font-size:11.5px}
+  .tb-v.full .t td.club .logo{width:18px;height:18px}
+  .tb-v.short .tw .t th,.tb-v.short .tw .t td{font-size:13.5px;padding-top:11px;padding-bottom:11px}
+}
+@media (max-width:600px){.tb-head .tb-tog{display:grid;flex-direction:row;gap:0}}
+@media (max-width:600px){.tb-tog{width:140px}.tb-tog button{white-space:nowrap;padding:7px 4px}.tb-head .tb-tog{align-self:center}}
