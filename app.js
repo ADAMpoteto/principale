@@ -449,6 +449,13 @@ function identity() {
 const pLink = (name, inner) => `<a href="#/player/${encodeURIComponent(name)}">${inner || esc(name)}</a>`;
 
 /* ---------- 評価バッジ ---------- */
+/* 途中出場は、交代で下がった選手のポジションで出場したとみなす（連続交代もたどる） */
+function playedPos(m, l, depth = 0) {
+  if (!l || l.role === "先発" || depth > 5) return l ? l.pos : "";
+  const e = (m.ev || []).find(e => e.kind === "交代" && e.side === l.side && same(e.player, l.name));
+  const out = e && e.rel ? m.lu.find(x => x.side === l.side && same(x.name, e.rel)) : null;
+  return out ? playedPos(m, out, depth + 1) || l.pos : l.pos;
+}
 function rtCls(r) { return r == null ? "r0" : r >= 9 ? "r9" : r >= 8 ? "r8" : r >= 7 ? "r7" : r >= 6 ? "r6" : "r5"; }
 const rt = r => r == null ? "" : `<span class="rt ${rtCls(r)}">${fmtN(r, 1)}</span>`;
 const wdl = m => `<span class="wdl ${m.res}" aria-label="${{ W: "勝ち", D: "引き分け", L: "負け" }[m.res]}">${{ W: "W", D: "D", L: "L" }[m.res]}</span>`;
@@ -528,7 +535,6 @@ const PM = [
   { k: "MOM", f: p => p.mom, u: "回", d: 0 },
   { k: "出場", f: p => p.apps, u: "試合", d: 0 },
   { k: "出場時間", f: p => p.has["出場時間"] ? p.min : null, u: "分", d: 0 },
-  { k: "ゴール期待値", f: p => p.s["ゴール期待値"], u: "", d: 2 },
   { k: "シュート", f: p => p.s["シュート"], u: "", d: 0 },
   { k: "枠内シュート", f: p => p.s["枠内シュート"], u: "", d: 0 },
   { k: "キーパス", f: p => p.s["キーパス"], u: "", d: 0 },
@@ -1295,7 +1301,7 @@ function matchPlayerStats(m, h) {
     if (!L.length) return "";
     let rank = 0, prev = null;
     const rows = L.map((x, i) => { if (x.v !== prev) { rank = i + 1; prev = x.v; } const op = x.l.side === "opp", c = op ? m.opp : clubName();
-      const inner = `<span class="ps-rk">${rank}</span>${face(x.l.name, "ps-f", x.l.no)}<span class="ps-nm"><b>${esc(x.l.name)}</b><small>${logo(c, "xs")}${esc(shortOf(c))}${x.l.pos ? "　" + esc(x.l.pos) : ""}</small></span>${k === "評価" ? `<span class="ps-v">${rtChip(x.v)}</span>` : `<span class="ps-v">${fmtN(x.v, d)}${u === "%" ? "%" : ""}</span>`}`;
+      const inner = `<span class="ps-rk">${rank}</span>${face(x.l.name, "ps-f", x.l.no)}<span class="ps-nm"><b>${esc(x.l.name)}</b><small>${logo(c, "xs")}${esc(shortOf(c))}${playedPos(m, x.l) ? "　" + esc(playedPos(m, x.l)) : ""}</small></span>${k === "評価" ? `<span class="ps-v">${rtChip(x.v)}</span>` : `<span class="ps-v">${fmtN(x.v, d)}${u === "%" ? "%" : ""}</span>`}`;
       const cls = `ps-r${rank === 1 ? " is-1" : ""}${i >= 5 ? " more" : i >= 3 ? " m-more" : ""}`;
       return op ? `<div class="${cls}">${inner}</div>` : `<a class="${cls}" href="#/player/${encodeURIComponent(x.l.name)}">${inner}</a>`; }).join("");
     return `<div class="ps-c"><h3>${esc(k)}${u && u !== "%" ? `<small>（${u}）</small>` : ""}</h3>${rows}${L.length > 3 ? `<button class="ps-more${L.length > 5 ? "" : " m-only"}" type="button" onclick="this.parentNode.classList.toggle('open');this.textContent=this.parentNode.classList.contains('open')?'閉じる':'すべて見る（${L.length}人）'">すべて見る（${L.length}人）</button>` : ""}</div>`; }).join("");
@@ -1308,7 +1314,7 @@ function matchRatings(m, h) {
   const best = Math.max(-1, ...[...m.lu, ...m.luOpp].map(l => l.rating ?? -1));
   const col = side => { const L = all(side), c = side === "me" ? clubName() : m.opp; if (!L.length) return "";
     return `<div class="pr-col"><div class="pr-h">${logo(c, "sm")}<b>${esc(c)}</b><small>平均 ${fmtN(L.reduce((a, l) => a + l.rating, 0) / L.length, 2)}</small></div>
-      ${L.map(l => { const inner = `<span class="pr-no">${l.no ?? ""}</span><span class="pr-nm"><b>${esc(l.name)}</b><small>${esc(l.pos || "")}${l.role === "途中出場" ? "　途中出場" : ""}${l.s["出場時間"] != null ? "　" + l.s["出場時間"] + "分" : ""}</small></span>${l.rating === best ? `<span class="pr-best">BEST</span>` : ""}${rtChip(l.rating)}`;
+      ${L.map(l => { const inner = `<span class="pr-no">${l.no ?? ""}</span><span class="pr-nm"><b>${esc(l.name)}</b><small>${esc(playedPos(m, l) || "")}${l.role === "途中出場" ? "　途中出場" : ""}${l.s["出場時間"] != null ? "　" + l.s["出場時間"] + "分" : ""}</small></span>${l.rating === best ? `<span class="pr-best">BEST</span>` : ""}${rtChip(l.rating)}`;
         return side === "me" ? `<a class="pr-row" href="#/player/${encodeURIComponent(l.name)}">${inner}</a>` : `<div class="pr-row">${inner}</div>`; }).join("")}</div>`; };
   const a = col(h.hs), b = col(h.as);
   return a || b ? `<div class="ph">選手評価<small>PLAYER RATINGS</small></div><div class="pr">${a}${b}</div>` : "";
@@ -1407,7 +1413,7 @@ function matchLineup(m) {
   const row = l => { const used = l.role === "途中出場", e = used ? subEv(l) : null;
     const info = used ? `<small class="sb-io">${ICON.sub}${e && e.rel ? `<span>OUT ${esc(e.rel)}</span>` : "<span>途中出場</span>"}</small>` : `<small class="sb-io off">出場なし</small>`;
     const tag = used ? `<span class="sb-min">${e && e.min ? esc(String(e.min)).replace(/分$/, "") + "'" : l.s["出場時間"] != null ? l.s["出場時間"] + "分" : "IN"}</span>` : "";
-    return link(l, `<span class="sb-ph">${face(l.name, "", l.no)}${l.no != null ? `<em>${l.no}</em>` : ""}</span><span class="sb-tx"><span class="sb-nm"><i>${esc(l.pos || "")}</i>${hurtIn(m, l) ? INJ_MARK : ""}${esc(l.name)}${gIcon(l)}</span>${info}</span>${tag}${rtChip(l.rating)}`, "sb" + (used ? "" : " off")); };
+    return link(l, `<span class="sb-ph">${face(l.name, "", l.no)}${l.no != null ? `<em>${l.no}</em>` : ""}</span><span class="sb-tx"><span class="sb-nm"><i>${esc((used ? playedPos(m, l) : l.pos) || "")}</i>${hurtIn(m, l) ? INJ_MARK : ""}${esc(l.name)}${gIcon(l)}</span>${info}</span>${tag}${rtChip(l.rating)}`, "sb" + (used ? "" : " off")); };
   const col = side => { const list = [...L(side).filter(l => l.role !== "先発"), ...B(side)].map((l, i) => [l, i]).sort((a, b) => (+b[0].s["出場時間"] || 0) - (+a[0].s["出場時間"] || 0) || a[1] - b[1]).map(x => x[0]);
     return `<div class="sb-col"><div class="sb-h">${logo(club(side), "sm")}<b>${esc(club(side))}</b><small>${list.length}名</small></div>${list.length ? list.map(row).join("") : `<div class="sb-none">記録なし</div>`}</div>`; };
   return `<div class="lu" data-t="${t0}">` + pitch + `<div class="sb-sec"><div class="sb-title">SUBSTITUTES<small>控え</small></div><div class="sb-cols">${col(h.hs)}${col(h.as)}</div></div></div>`;
@@ -1514,7 +1520,7 @@ function vPlayer(name) {
       ${matches.map(({ m, l }, i) => { const st = [l.s["出場時間"] != null ? `${l.s["出場時間"]}分` : l.role !== "先発" ? "途中出場" : "", l.s["得点"] ? `${l.s["得点"]}得点` : "", l.s["アシスト"] ? `${l.s["アシスト"]}アシスト` : ""].filter(Boolean);
         return `<a class="pmr${i >= 5 ? " more" : ""}" href="#/match/${m.id}"><div class="pmr-d"><b>${dotD(m.date)}</b>${roundBr(m)}</div>
         <div class="pmr-m">${logo(m.opp, "md")}<div><b class="pmr-o">${esc(m.opp)}</b><span class="pmr-s"><span class="res ${m.res}">${m.gf}-${m.ga}</span>${m.pk ? `<small>PK ${m.pk.a}-${m.pk.b}</small>` : ""}</span><span class="pmr-r">${rt(l.rating)}</span>
-        <small class="pmr-x"><i>${esc(l.pos || "")}</i>${st.map(x => `<span>${x}</span>`).join("")}</small></div></div></a>`; }).join("")}${matches.length > 5 ? `<button type="button" class="pm-more" onclick="const c=this.parentNode;c.classList.toggle('open');this.textContent=c.classList.contains('open')?'閉じる':'すべて見る（${matches.length}試合）'">すべて見る（${matches.length}試合）</button>` : ""}</div>` : ""}
+        <small class="pmr-x"><i>${esc(playedPos(m, l) || "")}</i>${st.map(x => `<span>${x}</span>`).join("")}</small></div></div></a>`; }).join("")}${matches.length > 5 ? `<button type="button" class="pm-more" onclick="const c=this.parentNode;c.classList.toggle('open');this.textContent=c.classList.contains('open')?'閉じる':'すべて見る（${matches.length}試合）'">すべて見る（${matches.length}試合）</button>` : ""}</div>` : ""}
     ${bySeason.length ? sec("CAREER", "シーズン別成績") + `<div class="tw"><table class="t"><thead><tr><th class="l" style="padding-left:16px">シーズン</th><th>出場</th><th>得点</th><th>アシスト</th><th>平均評価</th><th>MOM</th></tr></thead><tbody>
       ${bySeason.map(({ se, x }) => `<tr><td class="l" style="padding-left:16px">${esc(se)}</td><td>${x.apps}</td><td>${x.g}</td><td>${x.a}</td><td>${rt(x.rating)}</td><td>${x.mom}</td></tr>`).join("")}
       ${all && bySeason.length > 1 ? `<tr class="me"><td class="l" style="padding-left:16px">通算</td><td>${all.apps}</td><td>${all.g}</td><td>${all.a}</td><td>${rt(all.rating)}</td><td>${all.mom}</td></tr>` : ""}</tbody></table></div>` : ""}
