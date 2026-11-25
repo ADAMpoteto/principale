@@ -1472,10 +1472,8 @@ function vPlayer(name) {
   const ovr = p.ovr ?? lastG.ovr, pot = p.pot ?? lastG.pot, val = p.value ?? lastV.value;
   const hw = [p.height ? p.height + "cm" : "", p.weight ? p.weight + "kg" : ""].filter(Boolean).join(" / ");
   const info = [["生年月日", p.birth ? `${fmtD(p.birth)}（${age(p.birth)}歳）` : ""], ["出身地", p.pref], ["身長 / 体重", hw], ["利き足", p.foot]].filter(x => x[1]);
-  const tiles = a ? [["出場", a.apps, "試合"], ["得点", a.g], ["アシスト", a.a], ["平均評価", a.rating != null ? fmtN(a.rating, 2) : null], ["出場時間", a.has["出場時間"] ? fmtN(a.min) : null, "分"], ["MOM", a.mom, "回"],
-    ["ゴール期待値", a.s["ゴール期待値"] != null ? fmtN(a.s["ゴール期待値"], 2) : null], ["シュート", a.s["シュート"]], ["キーパス", a.s["キーパス"]],
-    ["パス成功率", a.s["パス"] ? fmtN(a.s["パス成功"] / a.s["パス"] * 100, 1) : null, "%"], ["ドリブル成功", a.s["ドリブル成功"]], ["タックル成功", a.s["タックル成功"]],
-    ["インターセプト", a.s["インターセプト"]], ["セーブ", a.s["セーブ"]], ["クリーンシート", /GK/.test(a.pos || p.pos) ? a.cs : null], ["警告", a.yc || null], ["退場", a.rc || null]].filter(x => x[1] != null && x[1] !== "") : [];
+  const tiles = a ? [["出場", a.apps, "試合"], ["得点", a.g], ["アシスト", a.a], ["平均評価", a.rating != null ? fmtN(a.rating, 2) : "-"]] : [];
+  const statCats = a ? pStatCats(a, p) : [];
   const ratings = a ? a.list.filter(x => x.l.rating != null).map(x => ({ m: x.m, r: x.l.rating })) : [];
   const ovrChart = G.length >= 2 ? lineChart([
     { name: "総合値", color: "#2E86C8", pts: G.filter(g => g.ovr != null && g.date).map(g => ({ x: g.date, v: g.ovr, tip: `<b>${fmtD(g.date)}</b><br>総合値 ${g.ovr}${g.pot ? ` / ポテンシャル ${g.pot}` : ""}${g.value ? `<br>市場価値 ${money(g.value)}` : ""}` })) },
@@ -1495,7 +1493,10 @@ function vPlayer(name) {
     ${p.memo ? `<p style="color:var(--tx2);margin:12px 0 0">${esc(p.memo)}</p>` : ""}
     ${playerFirsts(all)}${playerTitles(p, name, bySeason)}${playerHistory(p, name, bySeason)}
     <h2 class="sec"><b>SEASON STATS</b><small>シーズン成績</small><span style="margin-left:auto">${seasonSel()}</span></h2>
-    ${tiles.length ? `<div class="tiles" style="--c:${Math.ceil(tiles.length / Math.ceil(tiles.length / 7))}">${tiles.map(([k, v, u]) => `<div class="tile"><span>${k}</span><b>${typeof v === "number" ? fmtN(v) : esc(v)}${u ? `<small>${u}</small>` : ""}</b></div>`).join("")}</div>` : `<div class="panel">${empty("このシーズンの出場はありません。")}</div>`}
+    ${tiles.length ? `<div class="tiles t4">${tiles.map(([k, v, u]) => `<div class="tile"><span>${k}</span><b>${typeof v === "number" ? fmtN(v) : esc(v)}${u ? `<small>${u}</small>` : ""}</b></div>`).join("")}</div>
+      ${statCats.length ? `<div class="pst">${statCats.map(([t, en, rows]) => `<div class="pst-c"><h3><b>${en}</b>${t}</h3>${rows.map(r => r.bar != null
+        ? `<div class="pst-r rate"><span>${r.k}</span><em>${r.sub || ""}</em><b>${fmtN(r.bar, 1)}<small>%</small></b><i style="--pw:${Math.min(100, r.bar)}%"></i></div>`
+        : `<div class="pst-r"><span>${r.k}</span><em>${r.sub || ""}</em><b>${r.v}${r.u ? `<small>${r.u}</small>` : ""}</b></div>`).join("")}</div>`).join("")}</div>` : ""}` : `<div class="panel">${empty("このシーズンの出場はありません。")}</div>`}
     ${ratings.length ? sec("RATING", "試合ごとの評価") + `<div class="chart">${ratingChart(ratings.slice(-30))}</div>` : ""}
     ${ovrChart ? sec("GROWTH", "能力値の推移") + `<div class="chart">${ovrChart}</div>` : ""}
     ${valChart ? sec("MARKET VALUE", "市場価値の推移") + `<div class="chart">${valChart}</div>` : ""}
@@ -1514,6 +1515,31 @@ function vPlayer(name) {
           <td>${x.apps ?? ""}</td><td>${x.g ?? ""}</td><td>${x.a ?? ""}</td><td class="mh">${rt(x.rating)}</td><td class="mh">${dotY(x.date)}</td></tr>`).join("")}</tbody></table></div>`; })()}
     ${tr.length ? sec("TRANSFER", "移籍歴") + `<div class="tblock">${tr.map(trRow).join("")}</div>` : ""}
     <p class="back"><a class="btn" href="#/squad">PLAYERS</a></p></div>`;
+}
+
+/* 選手ページのシーズン成績（カテゴリー別） */
+function pStatCats(a, p) {
+  const S = k => a.has[k] ? a.s[k] ?? 0 : null, min = a.min || 0;
+  const p90 = v => v && min >= 90 ? `90分あたり ${fmtN(v / min * 90, 2)}` : "";
+  const n = (k, v, o = {}) => v == null ? null : { k, v: typeof v === "number" ? fmtN(v, o.d ?? 0) : v, u: o.u || "", sub: o.sub ?? "" };
+  const rate = (k, x, y, lbl) => x == null || !y ? null : { k, bar: x / y * 100, sub: `${fmtN(x)} / ${fmtN(y)}${lbl ? ` ${lbl}` : ""}` };
+  const gk = /GK/.test(a.pos || p.pos || "") || (S("セーブ") || 0) > 0;
+  const sh = S("シュート"), on = S("枠内シュート"), xg = S("ゴール期待値"), ps = S("パス"), pok = S("パス成功"), dr = S("ドリブル"), dok = S("ドリブル成功"), tk = S("タックル"), tok = S("タックル成功");
+  const sub = a.apps - a.starts, dist = S("走行距離");
+  const C = [
+    ["出場", "APPEARANCES", [n("出場時間", a.has["出場時間"] ? min : null, { u: "分", sub: a.apps ? `1試合平均 ${fmtN(min / a.apps, 0)}分` : "" }), n("先発", a.starts, { u: "試合" }), n("途中出場", sub, { u: "試合" }), n("MOM", a.mom, { u: "回" })]],
+    ["攻撃", "ATTACK", [n("得点", a.g, { sub: p90(a.g) }), n("ゴール期待値", xg, { d: 2, sub: xg != null ? `得点との差 ${a.g - xg >= 0 ? "+" : ""}${fmtN(a.g - xg, 2)}` : "" }), n("シュート", sh, { sub: p90(sh) }), n("枠内シュート", on),
+      rate("枠内率", on, sh), rate("決定率", sh ? a.g : null, sh, "")]],
+    ["パス", "PASSING", [n("アシスト", a.a, { sub: p90(a.a) }), n("キーパス", S("キーパス"), { sub: p90(S("キーパス")) }), n("パス", ps, { sub: p90(ps) }), rate("パス成功率", pok != null && ps && pok <= ps ? pok : null, ps)]],
+    ["ドリブル", "DRIBBLING", [n("ドリブル", dr), n("ドリブル成功", dok, { sub: p90(dok) }), rate("ドリブル成功率", dok != null && dr && dok <= dr ? dok : null, dr)]],
+    ["守備", "DEFENDING", [n("タックル", tk), n("タックル成功", tok, { sub: p90(tok) }), rate("タックル成功率", tok != null && tk && tok <= tk ? tok : null, tk), n("インターセプト", S("インターセプト"), { sub: p90(S("インターセプト")) }), n("ブロック", S("ブロック")), n("クリア", S("クリア"))]],
+    gk ? ["ゴールキーパー", "GOALKEEPING", [n("セーブ", S("セーブ"), { sub: p90(S("セーブ")) }), n("失点", S("失点"), { sub: p90(S("失点")) }), n("クリーンシート", a.cs, { u: "試合" })]] : null,
+    ["その他", "OTHERS", [n("走行距離", dist, { d: 1, u: "km", sub: dist != null && a.apps ? `1試合平均 ${fmtN(dist / a.apps, 1)}km` : "" }), n("警告", a.yc), n("退場", a.rc)]]
+  ];
+  if (gk) C.splice(1, 0, C.splice(5, 1)[0]);
+  /* 全部0のカテゴリーは出さない（GKの攻撃など） */
+  const zero = r => r.bar != null ? false : r.v === "0" || r.v === "0.0" || r.v === "0.00";
+  return C.filter(Boolean).map(([t, en, rows]) => [t, en, rows.filter(Boolean)]).filter(c => c[2].length && (c[0] === "出場" || c[2].some(r => !zero(r))));
 }
 
 /* このチームでの初出場・初得点・初アシスト */
