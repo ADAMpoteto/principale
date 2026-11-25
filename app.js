@@ -597,7 +597,8 @@ function teamMetrics(L) {
 function ratingChart(items) {   /* items: [{m, r}] 試合ごとの評価 */
   if (!items.length) return "";
   const W = 640, H = 170, pl = 26, pr = 6, pt = 10, pb = 22, n = items.length;
-  const bw = Math.min(26, (W - pl - pr) / n - 4), step = (W - pl - pr) / n;
+  /* 試合が少ないときも間隔を空けすぎない（1試合の幅は最大40）。左から並べる */
+  const step = Math.min(40, (W - pl - pr) / n), bw = Math.min(26, step - 6);
   const y = v => pt + (1 - (v - 4) / 6) * (H - pt - pb);
   let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="試合ごとの評価">`;
   [5, 6, 7, 8, 9, 10].forEach(v => { s += `<line class="gl" x1="${pl}" x2="${W - pr}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${pl - 6}" y="${y(v) + 3}" text-anchor="end">${v}</text>`; });
@@ -1499,10 +1500,11 @@ function vPlayer(name) {
     ${ovrChart ? sec("GROWTH", "能力値の推移") + `<div class="chart">${ovrChart}</div>` : ""}
     ${valChart ? sec("MARKET VALUE", "市場価値の推移") + `<div class="chart">${valChart}</div>` : ""}
     ${matches.length ? sec("MATCHES", "出場試合") + `<div class="panel">
-      ${matches.map(({ m, l }, i) => `<a class="mrow${i >= 5 ? " more" : ""}" href="#/match/${m.id}"><div class="d"><b>${dotD(m.date)}</b><span>${esc(m.comp)}</span></div>
-        <div class="t">${logo(m.opp, "md")}<div><small>${esc(l.pos)}${l.s["出場時間"] != null ? `　${l.s["出場時間"]}分` : l.role !== "先発" ? "　途中出場" : ""}${l.s["得点"] ? `　${l.s["得点"]}得点` : ""}${l.s["アシスト"] ? `　${l.s["アシスト"]}アシスト` : ""}</small>
-        <b>${esc(m.opp)}　<span class="res ${m.res}" style="min-width:auto;height:22px;font-size:15px">${m.gf}-${m.ga}</span></b></div></div>
-        <div class="s">${rt(l.rating)}</div></a>`).join("")}${matches.length > 5 ? `<button type="button" class="pm-more" onclick="const c=this.parentNode;c.classList.toggle('open');this.textContent=c.classList.contains('open')?'閉じる':'すべて見る（${matches.length}試合）'">すべて見る（${matches.length}試合）</button>` : ""}</div>` : ""}
+      ${matches.map(({ m, l }, i) => { const st = [l.s["出場時間"] != null ? `${l.s["出場時間"]}分` : l.role !== "先発" ? "途中出場" : "", l.s["得点"] ? `${l.s["得点"]}得点` : "", l.s["アシスト"] ? `${l.s["アシスト"]}アシスト` : ""].filter(Boolean);
+        return `<a class="pmr${i >= 5 ? " more" : ""}" href="#/match/${m.id}"><div class="pmr-d"><b>${dotD(m.date)}</b>${roundBr(m)}</div>
+        <div class="pmr-m">${logo(m.opp, "md")}<div><b class="pmr-o">${esc(m.opp)}</b><span class="pmr-s"><span class="res ${m.res}">${m.gf}-${m.ga}</span>${m.pk ? `<small>PK ${m.pk.a}-${m.pk.b}</small>` : ""}</span>
+        <small class="pmr-x"><i>${esc(l.pos || "")}</i>${st.map(x => `<span>${x}</span>`).join("")}</small></div></div>
+        <div class="pmr-r">${rt(l.rating)}</div></a>`; }).join("")}${matches.length > 5 ? `<button type="button" class="pm-more" onclick="const c=this.parentNode;c.classList.toggle('open');this.textContent=c.classList.contains('open')?'閉じる':'すべて見る（${matches.length}試合）'">すべて見る（${matches.length}試合）</button>` : ""}</div>` : ""}
     ${bySeason.length ? sec("CAREER", "シーズン別成績") + `<div class="tw"><table class="t"><thead><tr><th class="l" style="padding-left:16px">シーズン</th><th>出場</th><th>得点</th><th>アシスト</th><th>平均評価</th><th>MOM</th></tr></thead><tbody>
       ${bySeason.map(({ se, x }) => `<tr><td class="l" style="padding-left:16px">${esc(se)}</td><td>${x.apps}</td><td>${x.g}</td><td>${x.a}</td><td>${rt(x.rating)}</td><td>${x.mom}</td></tr>`).join("")}
       ${all && bySeason.length > 1 ? `<tr class="me"><td class="l" style="padding-left:16px">通算</td><td>${all.apps}</td><td>${all.g}</td><td>${all.a}</td><td>${rt(all.rating)}</td><td>${all.mom}</td></tr>` : ""}</tbody></table></div>` : ""}

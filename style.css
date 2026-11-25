@@ -1605,3 +1605,22 @@ button.all{display:block;width:100%;border:0;background:none;font:inherit;cursor
 }
 .lp-nm .injm{width:13px;height:13px;margin-right:3px;vertical-align:-2px}.lp-nm .injm svg{width:10px;height:10px}
 .sb-nm i.injm{min-width:0;width:16px;height:16px;color:#d0102e;letter-spacing:0;font-size:0}
+
+/* 選手ページの出場試合 */
+.pmr{display:grid;grid-template-columns:96px minmax(0,1fr) auto;align-items:center;gap:16px;padding:14px 16px;background:var(--white);border-bottom:1px solid var(--line);color:inherit}
+.pmr:hover .pmr-o{color:var(--blue)}
+.pmr-d{display:flex;flex-direction:column;gap:3px}
+.pmr-d>b{font-family:var(--en);font-weight:800;font-size:22px;line-height:1}
+.pmr-d .rb{font-size:11px;color:var(--tx3);font-weight:700;line-height:1.3}
+.pmr-m{display:flex;align-items:center;gap:12px;min-width:0}
+.pmr-m .logo{width:36px;height:36px;flex:none;object-fit:contain}
+.pmr-m>div{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:10px;row-gap:4px;align-items:center;min-width:0;flex:1}
+.pmr-o{font-size:15px;line-height:1.3;overflow-wrap:anywhere}
+.pmr-s{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.pmr-s .res{min-width:auto;height:22px;font-size:14px;padding:0 7px}
+.pmr-s small{font-size:10px;color:var(--tx3);font-weight:700;white-space:nowrap}
+.pmr-x{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px 10px;font-size:12px;color:var(--tx3);font-weight:700}
+.pmr-x i{font-style:normal;font-family:var(--en);color:var(--blue)}
+.pmr-x span{white-space:nowrap}
+.panel .pmr.more{display:none}.panel.open .pmr.more{display:grid}
+@media (max-width:600px){.pmr{grid-template-columns:62px minmax(0,1fr) auto;gap:10px;padding:12px}.pmr-d>b{font-size:18px}.pmr-m{gap:8px}.pmr-m .logo{width:30px;height:30px}.pmr-o{font-size:14px}}
