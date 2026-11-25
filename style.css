@@ -376,7 +376,7 @@ table.t{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
 .pcard .ph-wrap .face.ph,.phero .photo .face.ph{font-size:0;color:transparent;background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20100%20125%22%3E%3Cg%20fill%3D%22%231c2833%22%20fill-opacity%3D%22.16%22%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2242%22%20r%3D%2221%22/%3E%3Cpath%20d%3D%22M8%20125c0-28%2018-46%2042-46s42%2018%2042%2046z%22/%3E%3C/g%3E%3C/svg%3E") center bottom/86% auto no-repeat}
 .phero .photo .face.ph{filter:invert(1);opacity:.5}
 .mrow .d span{display:block;overflow-wrap:anywhere}
-@media (max-width:600px){.chart{overflow-x:auto}.chart svg{min-width:560px}}
+@media (max-width:600px){.chart{overflow:visible;padding:12px 8px 8px}.chart svg{min-width:0}.chart .ax{font-size:13px}}
 
 /* 年度の選択（ページ上部の帯） */
 .band-in{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap}
@@ -1541,7 +1541,7 @@ a.ps-r:hover b{color:var(--blue)}
   .t .mh{display:none}.t .fn{display:none}.t .sn{display:inline}
   .crow .lab .fn{display:none}.crow .lab .sn{display:inline}
   .ps-r.m-more{display:none}.ps-c.open .ps-r.m-more{display:grid}.ps-more.m-only{display:block}
-  .sgrid .rk-row:nth-of-type(n+3){display:none}.rk-card .all.m-only{display:block}
+  .rk-card:not(.open) .rk-row.m-more{display:none}.rk-card .all.m-only{display:block}
   .ev small{font-size:11px;line-height:1.4}
   .foot nav{display:grid;grid-template-columns:1fr 1fr;gap:22px 20px;width:100%}
   .tiles>.tile:last-child:nth-child(odd){grid-column:1/-1}
@@ -1556,3 +1556,21 @@ a.ps-r:hover b{color:var(--blue)}
 .sb-st b{font-family:var(--en);font-weight:800;font-size:12px;color:var(--navy)}
 .sb-ph .face.num.ph+em{display:none}
 .fs-sc{white-space:nowrap}
+
+/* 記録カード：その場で全員を開く */
+.rk-card .rk-row.more{display:none}.rk-card.open .rk-row.more{display:flex}
+button.all{display:block;width:100%;border:0;background:none;font:inherit;cursor:pointer}
+/* 選手ページの出場試合：直近5試合＋すべて見る */
+.panel .mrow.more{display:none}.panel.open .mrow.more{display:grid}
+.pm-more{display:block;width:100%;border:0;border-top:1px solid var(--line);background:var(--white);padding:14px;font:inherit;font-size:13px;font-weight:700;color:var(--blue);cursor:pointer}
+.tiles.hx-2{grid-template-columns:repeat(2,1fr)}
+/* スマホ：横スクロールをなくす */
+@media (max-width:600px){
+  .tw{overflow-x:visible}
+  .tw .t{width:100%;min-width:0;table-layout:auto}
+  .tw .t th,.tw .t td{padding-left:4px;padding-right:4px;font-size:12px}
+  .tw .t th:first-child,.tw .t td:first-child{padding-left:10px}
+  .tw .t td.l,.tw .t th.l{white-space:normal}
+  .t th.fm,.t td.fm{display:none}
+}
+.tiles.hx-sum.hx-2{grid-template-columns:1fr 1fr!important}.tiles.hx-sum.hx-2 .tile{grid-column:auto!important}

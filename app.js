@@ -712,17 +712,17 @@ function standing(season, comp, mini) {
   let rows = T;
   if (mini) { const i = T.findIndex(r => isMe(r.club)); const a = Math.max(0, Math.min(T.length - 6, i - 2)); rows = i < 0 ? T.slice(0, 6) : T.slice(a, a + 6); }
   const gd = r => r.gf != null && r.ga != null ? (r.gf - r.ga > 0 ? "+" : "") + (r.gf - r.ga) : "";
-  return { comp: c, comps, html: `<div class="tw"><table class="t"><thead><tr><th class="pos">順位</th><th class="l">クラブ</th><th>試合</th>${mini ? "" : "<th>勝</th><th>分</th><th>負</th><th>得点</th><th>失点</th>"}<th>得失差</th><th>勝点</th>${!mini && T.some(r => r.form && r.form.length) ? "<th>直近5試合</th>" : ""}</tr></thead><tbody>
+  return { comp: c, comps, html: `<div class="tw"><table class="t"><thead><tr><th class="pos">順位</th><th class="l">クラブ</th><th>試合</th>${mini ? "" : "<th>勝</th><th>分</th><th>負</th><th>得点</th><th>失点</th>"}<th>得失差</th><th>勝点</th>${!mini && T.some(r => r.form && r.form.length) ? "<th class=\"fm\">直近5試合</th>" : ""}</tr></thead><tbody>
     ${rows.map(r => `<tr class="${isMe(r.club) ? "me" : ""}"><td class="pos">${r.rank ?? ""}</td><td class="club l"><div>${logo(r.club, "sm")}<span>${clubName2(r.club)}</span></div></td><td>${r.p ?? ""}</td>
-      ${mini ? "" : `<td>${r.w ?? ""}</td><td>${r.d ?? ""}</td><td>${r.l ?? ""}</td><td>${r.gf ?? ""}</td><td>${r.ga ?? ""}</td>`}<td>${gd(r)}</td><td><b>${r.pts ?? ""}</b></td>${!mini && T.some(r => r.form && r.form.length) ? `<td><span class="form5">${(r.form || []).map(x => `<span class="wdl ${x}">${x}</span>`).join("")}</span></td>` : ""}</tr>`).join("")}</tbody></table></div>` };
+      ${mini ? "" : `<td>${r.w ?? ""}</td><td>${r.d ?? ""}</td><td>${r.l ?? ""}</td><td>${r.gf ?? ""}</td><td>${r.ga ?? ""}</td>`}<td>${gd(r)}</td><td><b>${r.pts ?? ""}</b></td>${!mini && T.some(r => r.form && r.form.length) ? `<td class="fm"><span class="form5">${(r.form || []).map(x => `<span class="wdl ${x}">${x}</span>`).join("")}</span></td>` : ""}</tr>`).join("")}</tbody></table></div>` };
 }
 function rkCard(M, P, label) {
   const R = ranked(P, M); if (!R.length) return "";
   const f = R[0], v = x => fmtN(x, M.d) + (M.u === "%" ? "%" : "");
   return `<div class="rk-card"><a class="rk-top" href="#/player/${encodeURIComponent(f.p.name)}"><div class="who"><h3>${esc(label || M.k)}</h3><b>${esc(f.p.name)}</b><small>${esc(f.p.pos || "")}</small></div>
       ${face(f.p.name)}<div class="big${v(f.v).length >= 5 ? " l5" : v(f.v).length >= 4 ? " l4" : ""}">${v(f.v)}</div></a>
-    ${R.slice(1, 5).map((x, i) => `<a class="rk-row" href="#/player/${encodeURIComponent(x.p.name)}"><span class="n">${i + 2}</span><span class="nm">${esc(x.p.name)}</span><span class="val">${v(x.v)}</span></a>`).join("")}
-    ${R.length > 3 ? `<a class="all${R.length > 5 ? "" : " m-only"}" href="#/stats/${encodeURIComponent(M.k)}">ランキングを見る</a>` : ""}</div>`;
+    ${R.slice(1).map((x, i) => `<a class="rk-row${i >= 4 ? " more" : i >= 2 ? " m-more" : ""}" href="#/player/${encodeURIComponent(x.p.name)}"><span class="n">${i + 2}</span><span class="nm">${esc(x.p.name)}</span><span class="val">${v(x.v)}</span></a>`).join("")}
+    ${R.length > 3 ? `<button type="button" class="all${R.length > 5 ? "" : " m-only"}" onclick="const c=this.parentNode;c.classList.toggle('open');this.textContent=c.classList.contains('open')?'閉じる':'ランキングを見る（${R.length}人）'">ランキングを見る（${R.length}人）</button>` : ""}</div>`;
 }
 const seasonLabel = s => s || "";
 
@@ -1496,10 +1496,10 @@ function vPlayer(name) {
     ${ovrChart ? sec("GROWTH", "能力値の推移") + `<div class="chart">${ovrChart}</div>` : ""}
     ${valChart ? sec("MARKET VALUE", "市場価値の推移") + `<div class="chart">${valChart}</div>` : ""}
     ${matches.length ? sec("MATCHES", "出場試合") + `<div class="panel">
-      ${matches.slice(0, 40).map(({ m, l }) => `<a class="mrow" href="#/match/${m.id}"><div class="d"><b>${dotD(m.date)}</b><span>${esc(m.comp)}</span></div>
+      ${matches.map(({ m, l }, i) => `<a class="mrow${i >= 5 ? " more" : ""}" href="#/match/${m.id}"><div class="d"><b>${dotD(m.date)}</b><span>${esc(m.comp)}</span></div>
         <div class="t">${logo(m.opp, "md")}<div><small>${esc(l.pos)}${l.s["出場時間"] != null ? `　${l.s["出場時間"]}分` : l.role !== "先発" ? "　途中出場" : ""}${l.s["得点"] ? `　${l.s["得点"]}得点` : ""}${l.s["アシスト"] ? `　${l.s["アシスト"]}アシスト` : ""}</small>
         <b>${esc(m.opp)}　<span class="res ${m.res}" style="min-width:auto;height:22px;font-size:15px">${m.gf}-${m.ga}</span></b></div></div>
-        <div class="s">${rt(l.rating)}</div></a>`).join("")}</div>` : ""}
+        <div class="s">${rt(l.rating)}</div></a>`).join("")}${matches.length > 5 ? `<button type="button" class="pm-more" onclick="const c=this.parentNode;c.classList.toggle('open');this.textContent=c.classList.contains('open')?'閉じる':'すべて見る（${matches.length}試合）'">すべて見る（${matches.length}試合）</button>` : ""}</div>` : ""}
     ${bySeason.length ? sec("CAREER", "シーズン別成績") + `<div class="tw"><table class="t"><thead><tr><th class="l" style="padding-left:16px">シーズン</th><th>出場</th><th>得点</th><th>アシスト</th><th>平均評価</th><th>MOM</th></tr></thead><tbody>
       ${bySeason.map(({ se, x }) => `<tr><td class="l" style="padding-left:16px">${esc(se)}</td><td>${x.apps}</td><td>${x.g}</td><td>${x.a}</td><td>${rt(x.rating)}</td><td>${x.mom}</td></tr>`).join("")}
       ${all && bySeason.length > 1 ? `<tr class="me"><td class="l" style="padding-left:16px">通算</td><td>${all.apps}</td><td>${all.g}</td><td>${all.a}</td><td>${rt(all.rating)}</td><td>${all.mom}</td></tr>` : ""}</tbody></table></div>` : ""}
@@ -1571,8 +1571,7 @@ function vHistory() {
         ${rows.length ? `<dl class="hx-dl">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>` : ""}
         ${o.memo ? `<p class="hx-memo">${esc(o.memo)}</p>` : ""}</div></li>`; };
   return band("HISTORY", "ヒストリー") + `<div class="wrap">
-    <div class="tiles hx-sum"><div class="tile"><span>スタート</span><b>${Math.max(...T)}<small>部</small></b></div><div class="tile"><span>現在</span><b>${Math.min(...T)}<small>部</small></b></div>
-      <div class="tile"><span>最多連続昇格</span><b>${up}<small>回</small></b></div><div class="tile"><span>リーグ優勝</span><b>${nL}<small>回</small></b></div><div class="tile"><span>カップ戦優勝</span><b>${nC}<small>回</small></b></div></div>
+    <div class="tiles hx-sum hx-2"><div class="tile"><span>リーグ優勝</span><b>${nL}<small>回</small></b></div><div class="tile"><span>カップ戦優勝</span><b>${nC}<small>回</small></b></div></div>
     ${sec("ROAD TO PREMIER LEAGUE", "プレミアリーグへの道")}<ol class="hxl">${[...S].reverse().map(node).join("")}</ol>
     ${sec("TITLES", "獲得タイトル")}${titleBoard(S, tc)}
   </div>`;
