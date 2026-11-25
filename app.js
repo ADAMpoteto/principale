@@ -1472,7 +1472,8 @@ function vPlayer(name) {
   const ovr = p.ovr ?? lastG.ovr, pot = p.pot ?? lastG.pot, val = p.value ?? lastV.value;
   const hw = [p.height ? p.height + "cm" : "", p.weight ? p.weight + "kg" : ""].filter(Boolean).join(" / ");
   const info = [["生年月日", p.birth ? `${fmtD(p.birth)}（${age(p.birth)}歳）` : ""], ["出身地", p.pref], ["身長 / 体重", hw], ["利き足", p.foot]].filter(x => x[1]);
-  const tiles = a ? [["出場", a.apps, "試合"], ["平均評価", a.rating != null ? fmtN(a.rating, 2) : "-"], ["得点", a.g], ["アシスト", a.a]] : [];
+  const tiles = a ? [["出場", a.apps, "試合"], ["平均評価", a.rating != null ? fmtN(a.rating, 2) : "-"],
+    ...(isGK(a, p) ? [["セーブ率", (r => r != null ? fmtN(r, 1) : "-")(saveRate(a)), "%"], ["クリーンシート", a.cs, "試合"]] : [["得点", a.g], ["アシスト", a.a]])] : [];
   const statCats = a ? pStatCats(a, p) : [];
   const ratings = a ? a.list.filter(x => x.l.rating != null).map(x => ({ m: x.m, r: x.l.rating })) : [];
   const ovrChart = G.length >= 2 ? lineChart([
@@ -1517,13 +1518,17 @@ function vPlayer(name) {
     <p class="back"><a class="btn" href="#/squad">PLAYERS</a></p></div>`;
 }
 
+/* GK判定・失点・セーブ率（失点が未入力なら出場したGK試合の失点で補う） */
+const isGK = (a, p) => /GK/.test(a.pos || p.pos || "") || (a.has["セーブ"] && a.s["セーブ"] > 0);
+const gkGA = a => a.has["失点"] ? a.s["失点"] || 0 : a.list.some(x => /GK/.test(x.l.pos || "")) ? sum(a.list.filter(x => /GK/.test(x.l.pos || "")), x => x.m.ga || 0) : null;
+function saveRate(a) { const sv = a.has["セーブ"] ? a.s["セーブ"] || 0 : null, ga = gkGA(a); return sv == null || ga == null || sv + ga === 0 ? null : sv / (sv + ga) * 100; }
 /* 選手ページのシーズン成績（カテゴリー別） */
 function pStatCats(a, p) {
   const S = k => a.has[k] ? a.s[k] ?? 0 : null, min = a.min || 0;
   const p90 = v => v && min >= 90 ? `${fmtN(v / min * 90, 2)} / 90分` : "";
   const n = (k, v, o = {}) => v == null ? null : { k, v: typeof v === "number" ? fmtN(v, o.d ?? 0) : v, u: o.u || "", sub: o.sub ?? "" };
   const rate = (k, x, y, lbl) => x == null || !y ? null : { k, bar: x / y * 100, sub: `${fmtN(x)} / ${fmtN(y)}${lbl ? ` ${lbl}` : ""}` };
-  const gk = /GK/.test(a.pos || p.pos || "") || (S("セーブ") || 0) > 0;
+  const gk = isGK(a, p);
   const sh = S("シュート"), on = S("枠内シュート"), xg = S("ゴール期待値"), ps = S("パス"), pok = S("パス成功"), dr = S("ドリブル"), dok = S("ドリブル成功"), tk = S("タックル"), tok = S("タックル成功");
   const sub = a.apps - a.starts, dist = S("走行距離");
   const C = [
@@ -1533,7 +1538,7 @@ function pStatCats(a, p) {
     ["パス", "PASSING", [n("アシスト", a.a, { sub: p90(a.a) }), n("キーパス", S("キーパス"), { sub: p90(S("キーパス")) }), n("パス", ps, { sub: p90(ps) }), rate("パス成功率", pok != null && ps && pok <= ps ? pok : null, ps)]],
     ["ドリブル", "DRIBBLING", [n("ドリブル", dr), n("ドリブル成功", dok, { sub: p90(dok) }), rate("ドリブル成功率", dok != null && dr && dok <= dr ? dok : null, dr)]],
     ["守備", "DEFENDING", [n("タックル", tk), n("タックル成功", tok, { sub: p90(tok) }), rate("タックル成功率", tok != null && tk && tok <= tk ? tok : null, tk), n("インターセプト", S("インターセプト"), { sub: p90(S("インターセプト")) }), n("ブロック", S("ブロック")), n("クリア", S("クリア"))]],
-    gk ? ["ゴールキーパー", "GOALKEEPING", [n("セーブ", S("セーブ"), { sub: p90(S("セーブ")) }), n("失点", S("失点"), { sub: p90(S("失点")) }), n("クリーンシート", a.cs, { u: "試合" })]] : null,
+    gk ? ["ゴールキーパー", "GOALKEEPING", [n("セーブ", S("セーブ"), { sub: p90(S("セーブ")) }), (r => r == null ? null : { k: "セーブ率", bar: r, sub: `${fmtN(S("セーブ"))} / ${fmtN(S("セーブ") + gkGA(a))}` })(saveRate(a)), n("失点", gkGA(a), { sub: p90(gkGA(a)) }), n("クリーンシート", a.cs, { u: "試合" })]] : null,
     ["その他", "OTHERS", [n("走行距離", dist, { d: 1, u: "km", sub: dist != null && a.apps ? `${fmtN(dist / a.apps, 1)}km / 試合` : "" }), n("警告", a.yc), n("退場", a.rc)]]
   ];
   if (gk) C.splice(1, 0, C.splice(5, 1)[0]);
