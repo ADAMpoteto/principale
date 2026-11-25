@@ -1541,9 +1541,7 @@ function pStatCats(a, p) {
     ["その他", "OTHERS", [n("走行距離", dist, { d: 1, u: "km", sub: dist != null && a.apps ? `${fmtN(dist / a.apps, 1)}km / 試合` : "" }), n("警告", a.yc), n("退場", a.rc)]]
   ];
   if (gk) C.splice(1, 0, C.splice(5, 1)[0]);
-  /* 全部0のカテゴリーは出さない（GKの攻撃など） */
-  const zero = r => r.bar != null ? false : r.v === "0" || r.v === "0.0" || r.v === "0.00";
-  return C.filter(Boolean).map(([t, en, rows]) => [t, en, rows.filter(Boolean)]).filter(c => c[2].length && (c[0] === "出場" || c[2].some(r => !zero(r))));
+  return C.filter(Boolean).map(([t, en, rows]) => [t, en, rows.filter(Boolean)]).filter(c => c[2].length);
 }
 
 /* このチームでの初出場・初得点・初アシスト */
