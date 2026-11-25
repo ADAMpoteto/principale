@@ -1487,7 +1487,7 @@ function vPlayer(name) {
   const tr = D.trans.filter(t => same(t.name, name));
   return `<section class="phero"><div class="phero-in"><div>
       ${p.no != null ? `<div class="bigno">${p.no}</div>` : ""}<h1>${esc(name)}</h1>${p.roma ? `<p class="roma">${esc(p.roma)}</p>` : ""}<div class="pos">${flag(p.nat)}${esc(p.pos || "")}${onLoan(p) ? `<span class="ph-st">期限付き移籍中</span>` : /退団/.test(p.status || "") ? `<span class="ph-st">退団</span>` : ""}</div>${(ij => ij ? `<div class="inj-st">${ICON_INJ}負傷離脱中${ij.what ? `（${esc(ij.what)}）` : ""}${ij.back ? `<small>${md(ij.back)}ごろ復帰予定</small>` : ""}</div>` : "")(injAt(name))}
-      ${isYouth(p) ? `<span class="acad-tag">ACADEMY GRADUATE</span>` : ""}
+      ${isYouth(p) ? `<span class="acad-tag">ACADEMY</span>` : ""}
     </div><div class="photo">${face(name)}</div></div></section>
   <div class="wrap">
     ${info.length ? sec("PROFILE", "プロフィール") + `<div class="prof p4" style="--n:${info.length}">${info.map(([k, v]) => `<div><span>${k}</span><b>${esc(v)}</b></div>`).join("")}</div>` : ""}
