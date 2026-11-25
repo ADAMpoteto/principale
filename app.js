@@ -712,9 +712,9 @@ function standing(season, comp, mini) {
   let rows = T;
   if (mini) { const i = T.findIndex(r => isMe(r.club)); const a = Math.max(0, Math.min(T.length - 6, i - 2)); rows = i < 0 ? T.slice(0, 6) : T.slice(a, a + 6); }
   const gd = r => r.gf != null && r.ga != null ? (r.gf - r.ga > 0 ? "+" : "") + (r.gf - r.ga) : "";
-  return { comp: c, comps, html: `<div class="tw"><table class="t"><thead><tr><th class="pos">順位</th><th class="l">クラブ</th><th>試合</th>${mini ? "" : "<th>勝</th><th>分</th><th>負</th><th>得点</th><th>失点</th>"}<th>得失差</th><th>勝点</th>${!mini && T.some(r => r.form && r.form.length) ? "<th class=\"fm\">直近5試合</th>" : ""}</tr></thead><tbody>
+  return { comp: c, comps, html: `<div class="tw"><table class="t"><thead><tr><th class="pos">順位</th><th class="l">クラブ</th><th>試合</th>${mini ? "" : `<th class="sx">勝</th><th class="sx">分</th><th class="sx">負</th><th class="sx">得点</th><th class="sx">失点</th>`}<th>得失差</th><th>勝点</th>${!mini && T.some(r => r.form && r.form.length) ? "<th class=\"fm\">直近5試合</th>" : ""}</tr></thead><tbody>
     ${rows.map(r => `<tr class="${isMe(r.club) ? "me" : ""}"><td class="pos">${r.rank ?? ""}</td><td class="club l"><div>${logo(r.club, "sm")}<span>${clubName2(r.club)}</span></div></td><td>${r.p ?? ""}</td>
-      ${mini ? "" : `<td>${r.w ?? ""}</td><td>${r.d ?? ""}</td><td>${r.l ?? ""}</td><td>${r.gf ?? ""}</td><td>${r.ga ?? ""}</td>`}<td>${gd(r)}</td><td><b>${r.pts ?? ""}</b></td>${!mini && T.some(r => r.form && r.form.length) ? `<td class="fm"><span class="form5">${(r.form || []).map(x => `<span class="wdl ${x}">${x}</span>`).join("")}</span></td>` : ""}</tr>`).join("")}</tbody></table></div>` };
+      ${mini ? "" : `<td class="sx">${r.w ?? ""}</td><td class="sx">${r.d ?? ""}</td><td class="sx">${r.l ?? ""}</td><td class="sx">${r.gf ?? ""}</td><td class="sx">${r.ga ?? ""}</td>`}<td>${gd(r)}</td><td><b>${r.pts ?? ""}</b></td>${!mini && T.some(r => r.form && r.form.length) ? `<td class="fm"><span class="form5">${(r.form || []).map(x => `<span class="wdl ${x}">${x}</span>`).join("")}</span></td>` : ""}</tr>`).join("")}</tbody></table></div>` };
 }
 function rkCard(M, P, label) {
   const R = ranked(P, M); if (!R.length) return "";
@@ -1408,11 +1408,11 @@ function vTable() {
   const st = standing(s, ST.tcomp, false);
   return band("STANDINGS", "順位表", true) + `<div class="wrap narrow">
     ${st && st.comps.length > 1 ? `<div class="pills" id="tcomp">${st.comps.map(c => `<button class="pill${c === st.comp ? " on" : ""}" data-c="${esc(c)}">${compLogo(c, "pill-cl")}${esc(c)}</button>`).join("")}</div>` : ""}
-    ${st ? `<div class="tb-head">${compLogo(st.comp, "tb-cl")}<div><b>${esc(st.comp)}</b><small>${esc(s)}シーズン</small></div></div>` + st.html : `<div class="panel">${empty("順位表はまだありません。")}</div>`}
+    ${st ? `<div class="tb-v ${ST.tview === "full" ? "full" : "short"}"><div class="tb-head">${compLogo(st.comp, "tb-cl")}<div><b>${esc(st.comp)}</b><small>${esc(s)}シーズン</small></div><div class="tb-tog" id="tview"><button data-v="short" class="${ST.tview !== "full" ? "on" : ""}">ショート</button><button data-v="full" class="${ST.tview === "full" ? "on" : ""}">フル</button></div></div>` + st.html + `</div>` : `<div class="panel">${empty("順位表はまだありません。")}</div>`}
     ${st && (D.rankHist[s + "\t" + st.comp] || []).length > 1 ? sec("POSITION", "順位の推移") + `<div class="chart">${rankChart(D.rankHist[s + "\t" + st.comp], D.table.filter(r => r.season === s && r.comp === st.comp).length)}</div>` : ""}
 </div>`;
 }
-function bTable() { document.querySelectorAll("#tcomp .pill").forEach(b => b.onclick = () => { ST.tcomp = b.dataset.c; render(); }); }
+function bTable() { document.querySelectorAll("#tcomp .pill").forEach(b => b.onclick = () => { ST.tcomp = b.dataset.c; render(); }); document.querySelectorAll("#tview button").forEach(b => b.onclick = () => { ST.tview = b.dataset.v; const v = document.querySelector(".tb-v"); v.classList.toggle("full", ST.tview === "full"); v.classList.toggle("short", ST.tview !== "full"); document.querySelectorAll("#tview button").forEach(x => x.classList.toggle("on", x === b)); }); }
 
 function vStats(arg) {
   const s = ST.season, L = ofSeason(s), P = playerAgg(L);
