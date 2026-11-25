@@ -1472,7 +1472,7 @@ function vPlayer(name) {
   const ovr = p.ovr ?? lastG.ovr, pot = p.pot ?? lastG.pot, val = p.value ?? lastV.value;
   const hw = [p.height ? p.height + "cm" : "", p.weight ? p.weight + "kg" : ""].filter(Boolean).join(" / ");
   const info = [["生年月日", p.birth ? `${fmtD(p.birth)}（${age(p.birth)}歳）` : ""], ["出身地", p.pref], ["身長 / 体重", hw], ["利き足", p.foot]].filter(x => x[1]);
-  const tiles = a ? [["出場", a.apps, "試合"], ["得点", a.g], ["アシスト", a.a], ["平均評価", a.rating != null ? fmtN(a.rating, 2) : "-"]] : [];
+  const tiles = a ? [["出場", a.apps, "試合"], ["平均評価", a.rating != null ? fmtN(a.rating, 2) : "-"], ["得点", a.g], ["アシスト", a.a]] : [];
   const statCats = a ? pStatCats(a, p) : [];
   const ratings = a ? a.list.filter(x => x.l.rating != null).map(x => ({ m: x.m, r: x.l.rating })) : [];
   const ovrChart = G.length >= 2 ? lineChart([
