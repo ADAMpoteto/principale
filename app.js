@@ -735,6 +735,9 @@ const ncat = n => n.cat === "MATCH" ? (n.kind === "result" ? "RESULT" : "PREVIEW
   : n.cat === "RECORD" ? (n.ms && n.ms.firsts ? "FIRST" : n.ms && /^(MOM|TOTW|MONTHLY MVP|AWARD)$/.test(n.ms.en || "") ? "AWARD" : n.ms && n.ms.en === "CHAMPIONS" ? "TITLE" : "RECORD")
   : n.inj ? "MEDICAL" : n.title ? "TITLE" : "CLUB";
 const catTag = n => `<span class="cat c-${ncat(n)}">${NCAT[ncat(n)]}</span>`;
+const INJ_MARK = `<i class="injm" title="負傷"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5.5v13M5.5 12h13" stroke="currentColor" stroke-width="4.2" stroke-linecap="round"/></svg></i>`;
+/* 試合中に負傷した選手：試合経過の「負傷」か、負傷シートの日付が試合の日 */
+const hurtIn = (m, l) => (m.ev || []).some(e => e.kind === "負傷" && e.side === l.side && same(e.player, l.name)) || (l.side !== "opp" && (D.inj || []).some(x => same(x.name, l.name) && m.date && dKey(x.date) === dKey(m.date)));
 const ICON_INJ = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z" fill="currentColor"/></svg>`;
 /* 負傷：その日に離脱中かどうか。「いま」は最後に記録がある日（試合・負傷の新しいほう） */
 /* 復帰日が入っていれば、その日までは時間が進んでいる */
@@ -1234,7 +1237,7 @@ function matchFacts(m, h) {
     "ポスト・バー": SVG('<path d="M4 20V5h16v15"/><circle cx="17" cy="8" r="2.4" fill="currentColor"/>'), 
     オフサイド: SVG('<path d="M6 21V4"/><path d="M6 4h11l-2.5 4L17 12H6"/>'), ビッグチャンス: SVG('<path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/>'),
     PK失敗: SVG('<circle cx="12" cy="12" r="8"/><path d="M8 8l8 8M16 8l-8 8"/>'), 負傷: SVG('<path d="M12 5v14M5 12h14"/>'), VAR: SVG('<rect x="3" y="5" width="18" height="12" rx="1.5"/><path d="M8 21h8"/>') };
-  const icon = e => `<span class="ico${e.kind === "シュート（枠外）" ? " miss" : ""}">${isGoal(e) ? ICON.ball : e.kind === "警告" ? `<i class="cardY"></i>` : e.kind === "退場" ? `<i class="cardR"></i>` : e.kind === "交代" ? ICON.sub : EI[e.kind] || ""}</span>`;
+  const icon = e => `<span class="ico${e.kind === "シュート（枠外）" ? " miss" : ""}">${isGoal(e) ? ICON.ball : e.kind === "負傷" ? INJ_MARK : e.kind === "警告" ? `<i class="cardY"></i>` : e.kind === "退場" ? `<i class="cardR"></i>` : e.kind === "交代" ? ICON.sub : EI[e.kind] || ""}</span>`;
   const LBL = { セーブ: "セーブ", "シュート（枠外）": "シュート（枠外）", "シュート（セーブ）": "シュート（セーブされる）", "シュート（ブロック）": "シュート（ブロックされる）", "ポスト・バー": "ポスト・バー直撃", オフサイド: "オフサイド", ビッグチャンス: "決定機", PK失敗: "PK失敗", 負傷: "負傷", VAR: "VAR" };
   const evTxt = e => {
     const nm = e.player ? (e.side === "me" ? pLink(e.player) : esc(e.player)) : `<span class="ev-k">${esc(LBL[e.kind] || e.kind)}</span>`;
@@ -1376,7 +1379,7 @@ function matchLineup(m) {
       /* 横向きのピッチ：ホームは左から右へ、アウェイは右から左へ攻める */
       const dep = l.pos === "GK" ? 6.5 : 16 + Math.max(0, Math.min(1, (74 - y) / 60)) * 29;
       const X = top ? 100 - dep : dep, Y = Math.max(9, Math.min(91, top ? 100 - x : x));
-      return link(l, `<span class="lp-ph">${face(l.name, "", l.no)}${badges(l)}</span><span class="lp-nm">${l.no != null ? `<b>${l.no}</b>` : ""}${esc(l.name)}</span>`, `lp ${side}${X > 78 ? " rl" : ""}`).replace(/^<(a|div) class="([^"]+)"/, `<$1 class="$2" style="left:${X}%;top:${Y}%"`);
+      return link(l, `<span class="lp-ph">${face(l.name, "", l.no)}${badges(l)}</span><span class="lp-nm">${hurtIn(m, l) ? INJ_MARK : ""}${l.no != null ? `<b>${l.no}</b>` : ""}${esc(l.name)}</span>`, `lp ${side}${X > 78 ? " rl" : ""}`).replace(/^<(a|div) class="([^"]+)"/, `<$1 class="$2" style="left:${X}%;top:${Y}%"`);
     }).join(""); };
   /* スマホ：チームごとに縦向きで表示（自チームは下から上へ攻める） */
   const vdots = side => { const used = {};
@@ -1384,7 +1387,7 @@ function matchLineup(m) {
       let [x, y] = posXY(l.pos, side);
       const k = x + "," + y; used[k] = (used[k] || 0) + 1; x += (used[k] - 1) * 14 * (used[k] % 2 ? 1 : -1);
       const X = Math.max(10, Math.min(90, x)), Y = l.pos === "GK" ? 92 : Math.max(9, Math.min(84, y));
-      return link(l, `<span class="lp-ph">${face(l.name, "", l.no)}${badges(l)}</span><span class="lp-nm">${l.no != null ? `<b>${l.no}</b>` : ""}${esc(l.name)}</span>`, `lp ${side}${X > 78 ? " rl" : ""}`).replace(/^<(a|div) class="([^"]+)"/, `<$1 class="$2" style="left:${X}%;top:${Y}%"`);
+      return link(l, `<span class="lp-ph">${face(l.name, "", l.no)}${badges(l)}</span><span class="lp-nm">${hurtIn(m, l) ? INJ_MARK : ""}${l.no != null ? `<b>${l.no}</b>` : ""}${esc(l.name)}</span>`, `lp ${side}${X > 78 ? " rl" : ""}`).replace(/^<(a|div) class="([^"]+)"/, `<$1 class="$2" style="left:${X}%;top:${Y}%"`);
     }).join(""); };
   const t0 = h.hs === "me" ? 0 : 1; /* スマホは自チームのタブを最初に開く */
   const tab = (side, i) => `<button type="button" class="lpm-tab${i === t0 ? " on" : ""}" onclick="const u=this.closest('.lu');u.dataset.t='${i}';u.querySelectorAll('.lpm-tab').forEach((b,j)=>b.classList.toggle('on',j==${i}))">${logo(club(side), "sm")}<b>${esc(shortOf(club(side)))}</b><small>${esc(m.form[side] || "")}</small></button>`;
@@ -1397,7 +1400,7 @@ function matchLineup(m) {
   const row = l => { const used = l.role === "途中出場", e = used ? subEv(l) : null;
     const info = used ? `<small class="sb-io">${ICON.sub}${e && e.rel ? `<span>OUT ${esc(e.rel)}</span>` : "<span>途中出場</span>"}</small>` : `<small class="sb-io off">出場なし</small>`;
     const tag = used ? `<span class="sb-min">${e && e.min ? esc(String(e.min)).replace(/分$/, "") + "'" : l.s["出場時間"] != null ? l.s["出場時間"] + "分" : "IN"}</span>` : "";
-    return link(l, `<span class="sb-ph">${face(l.name, "", l.no)}${l.no != null ? `<em>${l.no}</em>` : ""}</span><span class="sb-tx"><span class="sb-nm"><i>${esc(l.pos || "")}</i>${esc(l.name)}${gIcon(l)}</span>${info}</span>${tag}${rtChip(l.rating)}`, "sb" + (used ? "" : " off")); };
+    return link(l, `<span class="sb-ph">${face(l.name, "", l.no)}${l.no != null ? `<em>${l.no}</em>` : ""}</span><span class="sb-tx"><span class="sb-nm"><i>${esc(l.pos || "")}</i>${hurtIn(m, l) ? INJ_MARK : ""}${esc(l.name)}${gIcon(l)}</span>${info}</span>${tag}${rtChip(l.rating)}`, "sb" + (used ? "" : " off")); };
   const col = side => { const list = [...L(side).filter(l => l.role !== "先発"), ...B(side)].map((l, i) => [l, i]).sort((a, b) => (+b[0].s["出場時間"] || 0) - (+a[0].s["出場時間"] || 0) || a[1] - b[1]).map(x => x[0]);
     return `<div class="sb-col"><div class="sb-h">${logo(club(side), "sm")}<b>${esc(club(side))}</b><small>${list.length}名</small></div>${list.length ? list.map(row).join("") : `<div class="sb-none">記録なし</div>`}</div>`; };
   return `<div class="lu" data-t="${t0}">` + pitch + `<div class="sb-sec"><div class="sb-title">SUBSTITUTES<small>控え</small></div><div class="sb-cols">${col(h.hs)}${col(h.as)}</div></div></div>`;

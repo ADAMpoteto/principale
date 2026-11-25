@@ -1588,3 +1588,17 @@ button.all{display:block;width:100%;border:0;background:none;font:inherit;cursor
 }
 @media (max-width:600px){.tb-head .tb-tog{display:grid;flex-direction:row;gap:0}}
 @media (max-width:600px){.tb-tog{width:140px}.tb-tog button{white-space:nowrap;padding:7px 4px}.tb-head .tb-tog{align-self:center}}
+
+/* 試合中の負傷マーク：白丸に赤の太いプラス */
+.injm{display:inline-grid;place-items:center;width:16px;height:16px;border-radius:50%;background:#fff;color:#d0102e;flex:none;vertical-align:-3px;margin-right:4px;box-shadow:0 0 0 1px rgba(0,0,0,.12)}
+.injm svg{width:12px;height:12px;display:block}
+.ico .injm{width:20px;height:20px;margin:0}.ico .injm svg{width:15px;height:15px}
+.sb-nm .injm{margin-right:0}
+/* 順位表：フルは直近5試合も出し、横スクロール可 */
+@media (max-width:600px){
+  .tb-v.full .tw{overflow-x:auto}
+  .tb-v.full .tw .t{width:auto;min-width:100%}
+  .tb-v.full .t th.fm,.tb-v.full .t td.fm{display:table-cell}
+}
+.lp-nm .injm{width:13px;height:13px;margin-right:3px;vertical-align:-2px}.lp-nm .injm svg{width:10px;height:10px}
+.sb-nm i.injm{min-width:0;width:16px;height:16px;color:#d0102e;letter-spacing:0;font-size:0}
