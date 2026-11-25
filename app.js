@@ -1518,7 +1518,7 @@ function playerFirsts(all) {
   const g = o => o.l.s["得点"] || (o.m._sc && o.m._sc[k]) || 0, as = o => o.l.s["アシスト"] || (o.m._as && o.m._as[k]) || 0;
   const F3 = [["初出場", L[0]], ["初得点", L.find(o => g(o) > 0)], ["初アシスト", L.find(o => as(o) > 0)]];
   return sec("FIRSTS", `${clubName()}での初記録`) + `<div class="firsts">${F3.map(([t, o]) => o
-    ? `<a href="#/match/${o.m.id}"><span>${t}</span><b>${fmtD(o.m.date)}</b><small>${roundBr(o.m)}</small><small>vs ${esc(o.m.opp)}</small><small class="fs-sc">${o.m.gf}-${o.m.ga}${o.m.pk ? `（PK ${esc(o.m.pk)}）` : ""}</small></a>`
+    ? `<a href="#/match/${o.m.id}"><span>${t}</span><b>${fmtD(o.m.date)}</b><small>${roundBr(o.m)}</small><small>vs ${esc(o.m.opp)}</small><small class="fs-sc">${o.m.gf}-${o.m.ga}${o.m.pk ? `（PK ${o.m.pk.a}-${o.m.pk.b}）` : ""}</small></a>`
     : `<div class="none"><span>${t}</span><b>-</b><small>まだ記録はありません</small></div>`).join("")}</div>`;
 }
 /* 在籍していたシーズン */
