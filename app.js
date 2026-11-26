@@ -996,7 +996,7 @@ function newsBody(n) {
   const rel = (m, names = []) => { const N = names.filter(Boolean); return (m || N.length) ? `<div class="nrel">${m ? `<div class="ph">MATCH<small>試合</small></div><div class="mlist">${matchRow(m)}</div>` : ""}${N.length ? `<div class="ph">PLAYER<small>選手</small></div><div class="panel">${N.map(prow).join("")}</div>` : ""}</div>` : ""; };
   const when = m => `${md(m.date)}の${esc(m.opp)}戦`;
   if (n.ms && n.ms.totw) { const m = n.m0, L = n.ms.totw;
-    return P(`${when(m)}での活躍が評価され、\n${L.map(x => `${esc(x.name)}選手`).join("、")}がTOTWに選ばれました！`) + rel(m, L.map(x => x.name)); }
+    return P(`${when(m)}での活躍が評価され、${L.map(x => `${esc(x.name)}選手`).join("、")}がTOTWに選ばれました！`) + rel(m, L.map(x => x.name)); }
   if (n.ms && n.ms.club_mvp) { const s = n.ms;
     return P(`${s.club_mvp}月度のクラブ月間MVPに、${esc(s.who)}選手が選ばれました！`) + rel(null, [s.who]); }
   if (n.ms && /^(AWARD|MONTHLY MVP)$/.test(n.ms.en || "") && !n.ms.totw) { const s = n.ms, aw = (D.awards || []).find(a => same(a.name, s.who) && a.date && dKey(a.date) === dKey(n.d)) || {};
@@ -1004,9 +1004,9 @@ function newsBody(n) {
   if (n.ms && n.ms.html) return n.ms.html;
   if (n.ms) { const s = n.ms, m = n.m0;
     if (s.club) { const what = s.txt ? esc(s.txt.replace(/^.+?は/, "")) : `公式戦通算${s.v}${s.def.u}を達成しました。`;
-      return P(`${when(m)}で、\n${what.replace(/。$/, "！")}`) + rel(m); }
+      return P(`${when(m)}で、${what.replace(/。$/, "！")}`) + rel(m); }
     const what = s.txt ? esc(s.txt.replace(/^.+?選手が/, "")) : `公式戦通算${s.v}${s.def.u}を達成しました。`;
-    return P(`${when(m)}で、\n${esc(s.who)}選手が${what.replace(/。$/, "！")}`) + rel(m, [s.who]); }
+    return P(`${when(m)}で、${esc(s.who)}選手が${what.replace(/。$/, "！")}`) + rel(m, [s.who]); }
   if (n.m && n.kind === "result") { const m = n.m;
     const v = { W: "勝利しました！", D: "引き分けました。", L: "敗れました。" }[m.res];
     return P(`${esc(roundTxt(m))}で${esc(m.opp)}と対戦し、${m.gf}-${m.ga}${m.pk ? `（PK ${m.pk.a}-${m.pk.b}）` : ""}で${v}${m.mom ? `\nMOMは${esc(m.mom)}選手です。` : ""}`) + rel(m); }
