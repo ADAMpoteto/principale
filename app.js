@@ -947,10 +947,10 @@ function newsThumb(n) {
         <div class="tw-n">${esc(surname(nm))}</div><div class="tw-ft">TEAM OF THE WEEK</div></div></div>`; };
     return `<div class="nt nt-totw${k > 1 ? " multi" : ""}" style="--n:${k}"><div class="tw-l"><b>TEAM OF${k > 1 ? " " : "<br>"}THE WEEK</b></div><div class="tw-cards">${P.map(card).join("")}</div></div>`; }
   /* 選手・チームの画像はすべて同じ型：見出し（英字1行）＋名前＋補足。色だけカテゴリーで変える */
-  const nm2 = name => { const pr = prof(name) || {}; return `<span class="nv-n">${esc(pr.roma || name)}</span>${pr.roma ? `<span class="nv-j">${esc(name)}</span>` : ""}`; };
+  const nm2 = name => { const pr = prof(name) || {}; return `<span class="nv-nm"><span class="nv-n">${esc(pr.roma || name)}</span>${pr.roma ? `<span class="nv-j">${esc(name)}</span>` : ""}</span>`; };
   const clubLine = (pre, c) => c ? `<span class="nv-x">${pre} ${logo(c, "")}${esc(c)}</span>` : "";
   const fit = t => Math.min(12.5, 100 / Math.max(4, t.length)).toFixed(2);
-  const V = ({ ac, kick, head, who, crest, x }) => `<div class="nt nt-v ac-${ac}"><i class="nv-sl"></i>${crest ? `<div class="nv-crest">${logo(clubName(), "")}</div>` : face(who)}
+  const V = ({ ac, kick, head, who, crest, x }) => `<div class="nt nt-v ac-${ac}"><b class="nv-wm" aria-hidden="true">${esc(head)}<br>${esc(head)}<br>${esc(head)}</b><i class="nv-sl"></i><i class="nv-bar"></i>${crest ? `<div class="nv-crest">${logo(clubName(), "")}</div>` : face(who)}
     <div class="nv-t">${kick ? `<span class="nv-k">${esc(kick)}</span>` : ""}<b class="nv-h" style="font-size:${fit(head)}cqw">${esc(head)}</b>${who && !crest ? nm2(who) : ""}${x || ""}</div></div>`;
   if (n.inj) { const x = n.inj;
     return V({ ac: "red", kick: "MEDICAL UPDATE", head: "INJURY", who: x.name, x: `<span class="nv-x">${esc([x.what, injTerm(x) ? `全治${injTerm(x)}` : ""].filter(Boolean).join("　"))}</span>` }); }
