@@ -1009,7 +1009,7 @@ function newsBody(n) {
     return P(`${when(m)}で、\n${esc(s.who)}選手が${what.replace(/。$/, "！")}`) + rel(m, [s.who]); }
   if (n.m && n.kind === "result") { const m = n.m;
     const v = { W: "勝利しました！", D: "引き分けました。", L: "敗れました。" }[m.res];
-    return P(`${esc(roundTxt(m))}で${esc(m.opp)}と対戦し、\n${m.gf}-${m.ga}${m.pk ? `（PK ${m.pk.a}-${m.pk.b}）` : ""}で${v}${m.mom ? `\nMOMは${esc(m.mom)}選手です。` : ""}`) + rel(m); }
+    return P(`${esc(roundTxt(m))}で${esc(m.opp)}と対戦し、${m.gf}-${m.ga}${m.pk ? `（PK ${m.pk.a}-${m.pk.b}）` : ""}で${v}${m.mom ? `\nMOMは${esc(m.mom)}選手です。` : ""}`) + rel(m); }
   if (n.m) { const m = n.m, d = m.date;
     return P(`${esc(roundTxt(m))}、${esc(m.opp)}戦の試合情報です。`) + T([["大会", esc(roundTxt(m))], ["日時", `${dJ(d)}${kickoff(m) ? `<br>${kickoff(m)} キックオフ` : ""}`], ["会場", esc(venue(m) || "")]])
       + `<div class="art-pv">${headToHead(m)}</div>` + rel(m); }
