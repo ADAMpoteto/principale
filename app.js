@@ -786,7 +786,7 @@ function milestones() {
         t: `${x.name}選手 公式戦通算${v}${MS_P[k].u}達成` }));
         if (nw && MS_P[k].first && p[k] === 0 && x[k] > 0) (x.fs = x.fs || []).push(k); p[k] += x[k]; });
       /* 初記録（デビュー・初ゴールなど）：同じ試合でも1つずつ別の記事にする */
-      if (x.fs) ["apps", "g", "a", "cs"].filter(k => x.fs.includes(k)).forEach(k => {
+      if (x.fs) ["cs", "a", "g", "apps"].filter(k => x.fs.includes(k)).forEach(k => {
         const txt = `${x.name}選手が${MS_P[k].first}${k === "apps" ? "を果たしました" : "を記録しました"}。`;
         N.push({ id: `r-first-${k}-${nameKey(x.name)}-${m.id}`, d: m.date, cat: "RECORD", m0: m, ms: { who: x.name, k, v: 1, def: MS_P[k], firsts: [k], txt }, t: `${x.name}選手 ${MS_P[k].first}` }); }); });
     const tx = { w: m.res === "W" ? 1 : 0, g: m.gf, n: 1, cs: m.ga === 0 ? 1 : 0 };
@@ -935,9 +935,7 @@ function buildNews() {
   if (oldName() && renameDate()) N.push({ id: "rename", d: renameDate(), cat: "CLUB", rename: true, t: `クラブ名変更のお知らせ` });
   (D.inj || []).forEach(x => N.push({ id: "i" + x.i, d: x.date, cat: "CLUB", inj: x, t: `${x.name}選手の負傷について` }));
   N.push(...milestones());
-  /* 同じ日の記事は、あとに起きたもの（シートの下の行・後の記録）を上に */
-  N.forEach((n, i) => n.seq = i);
-  return N.filter(n => n.d).sort((a, b) => b.d - a.d || (b.top || 0) - (a.top || 0) || (a.cat === "MATCH" ? -1 : 0) - (b.cat === "MATCH" ? -1 : 0) || b.seq - a.seq);
+  return N.filter(n => n.d).sort((a, b) => b.d - a.d || (b.top || 0) - (a.top || 0) || (a.cat === "MATCH" ? -1 : 0));
 }
 /* サムネイル（画像の代わりに、試合ならエンブレムとスコア、移籍なら選手） */
 function newsThumb(n) {
