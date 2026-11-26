@@ -865,7 +865,7 @@ function milestones3() {
       html: `<p>${esc(clubName())}の${esc(se)}シーズンの全日程が終了しました。</p>
         <ul class="srev">${me ? `<li><span>${esc(lg)}</span><b>${me.rank}位</b>勝点${me.pts}</li>` : ""}<li><span>公式戦</span><b>${r.n}試合 ${r.w}勝${r.d}分${r.l}敗</b>得点${r.gf} 失点${r.ga}</li>
         ${li("チーム得点王", tg, `${ranked(P, PM[0])[0] ? ranked(P, PM[0])[0].v : ""}ゴール`)}${li("アシスト王", ta, `${ranked(P, PM[1])[0] ? ranked(P, PM[1])[0].v : ""}アシスト`)}${li("平均評価1位", tr, ranked(P, PM[3])[0] ? fmtN(ranked(P, PM[3])[0].v, 2) : "")}</ul>
-        <p>今シーズンも応援ありがとうございました！</p><p class="nbtn"><a class="btn" href="#/stats">STATS</a></p>` }, last.date);
+        <p>今シーズンも応援ありがとうございました。</p><p class="nbtn"><a class="btn" href="#/stats">STATS</a></p>` }, last.date);
   });
   return N;
 }
@@ -902,7 +902,7 @@ function milestones2() {
     chk("goal", m.scorers.filter(x => !/オウン/.test(x.name)).map(x => x.name));
     /* MOM */
     if (m.mom && !(m.momL && m.momL.side === "opp")) { const k = nameKey(m.mom), c = (mom[k] = (mom[k] || 0) + 1);
-      if (c === 5 || (c >= 10 && c % 10 === 0)) { const pp = newcomer(m.mom) ? "" : clubName() + "での"; push(m, `r-mom-${k}-${c}`, `${m.mom}選手 通算${c}回目のマン・オブ・ザ・マッチ`, { who: m.mom, big: c, en: "MOM", txt: `${m.mom}選手が${pp}通算${c}回目のマン・オブ・ザ・マッチに選ばれました。` }); } }
+      if (c === 5 || (c >= 10 && c % 10 === 0)) { const pp = newcomer(m.mom) ? "" : clubName() + "での"; push(m, `r-mom-${k}-${c}`, `${m.mom}選手 通算${c}回目のMOM`, { who: m.mom, big: c, en: "MOM", txt: `${m.mom}選手が${pp}通算${c}回目のMOMに選ばれました。` }); } }
   });
   return N;
 }
@@ -987,7 +987,8 @@ function newsThumb(n) {
 const newsCard = n => `<a class="ncard" href="#/news/${encodeURIComponent(n.id)}">${newsThumb(n)}<div class="nb"><div class="nmeta"><time>${dotY(n.d)}</time>${catTag(n)}</div><b>${esc(n.t)}</b></div></a>`;
 const newsList = L => `<div class="news">${L.map(n => `<a href="#/news/${encodeURIComponent(n.id)}"><time>${dotY(n.d)}</time>${catTag(n)}<b>${esc(n.t)}</b></a>`).join("")}</div>`;
 function newsBody(n) {
-  const P = s => `<p>${s}</p>`;
+  /* 1文ごとに改行（\n で区切る） */
+  const P = s => `<p>${String(s).split("\n").filter(Boolean).join("<br>")}</p>`;
   /* 表は必要な記事だけ。試合・選手へのリンクは他のページと同じ行の形 */
   const T = rows => { const R = rows.filter(r => r && r[1] !== "" && r[1] != null); return R.length ? `<dl class="inj-dl">${R.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>` : ""; };
   const dJ = d => d ? `${d.getFullYear()}年${md(d)}（${WD[d.getDay()]}）` : "";
@@ -995,25 +996,25 @@ function newsBody(n) {
   const rel = (m, names = []) => { const N = names.filter(Boolean); return (m || N.length) ? `<div class="nrel">${m ? `<div class="ph">MATCH<small>試合</small></div><div class="mlist">${matchRow(m)}</div>` : ""}${N.length ? `<div class="ph">PLAYER<small>選手</small></div><div class="panel">${N.map(prow).join("")}</div>` : ""}</div>` : ""; };
   const when = m => `${md(m.date)}の${esc(m.opp)}戦`;
   if (n.ms && n.ms.totw) { const m = n.m0, L = n.ms.totw;
-    return P(`${when(m)}での活躍が評価され、${L.map(x => `${esc(x.name)}選手`).join("、")}がTOTW（チーム・オブ・ザ・ウィーク）に選ばれました！`) + rel(m, L.map(x => x.name)); }
+    return P(`${when(m)}での活躍が評価され、\n${L.map(x => `${esc(x.name)}選手`).join("、")}がTOTWに選ばれました！`) + rel(m, L.map(x => x.name)); }
   if (n.ms && n.ms.club_mvp) { const s = n.ms;
-    return P(`${s.club_mvp}月度のクラブ月間MVPに、${esc(s.who)}選手が選ばれました！おめでとうございます！`) + rel(null, [s.who]); }
+    return P(`${s.club_mvp}月度のクラブ月間MVPに、${esc(s.who)}選手が選ばれました！`) + rel(null, [s.who]); }
   if (n.ms && /^(AWARD|MONTHLY MVP)$/.test(n.ms.en || "") && !n.ms.totw) { const s = n.ms, aw = (D.awards || []).find(a => same(a.name, s.who) && a.date && dKey(a.date) === dKey(n.d)) || {};
-    return P(`${esc(s.who)}選手が、${esc(aw.comp || "")}${aw.comp ? "の" : ""}${aw.month ? esc(aw.month) + "の" : ""}${esc(aw.title || "賞")}を受賞しました！おめでとうございます！`) + (aw.memo ? P(esc(aw.memo)) : "") + rel(null, [s.who]); }
+    return P(`${esc(s.who)}選手が、${esc(aw.comp || "")}${aw.comp ? "の" : ""}${aw.month ? esc(aw.month) + "の" : ""}${esc(aw.title || "賞")}を受賞しました！`) + (aw.memo ? P(esc(aw.memo)) : "") + rel(null, [s.who]); }
   if (n.ms && n.ms.html) return n.ms.html;
   if (n.ms) { const s = n.ms, m = n.m0;
     if (s.club) { const what = s.txt ? esc(s.txt.replace(/^.+?は/, "")) : `公式戦通算${s.v}${s.def.u}を達成しました。`;
-      return P(`${when(m)}で、${what.replace(/。$/, "！")}`) + rel(m); }
+      return P(`${when(m)}で、\n${what.replace(/。$/, "！")}`) + rel(m); }
     const what = s.txt ? esc(s.txt.replace(/^.+?選手が/, "")) : `公式戦通算${s.v}${s.def.u}を達成しました。`;
-    return P(`${when(m)}で、${esc(s.who)}選手が${what.replace(/。$/, "！")}`) + rel(m, [s.who]); }
+    return P(`${when(m)}で、\n${esc(s.who)}選手が${what.replace(/。$/, "！")}`) + rel(m, [s.who]); }
   if (n.m && n.kind === "result") { const m = n.m;
     const v = { W: "勝利しました！", D: "引き分けました。", L: "敗れました。" }[m.res];
-    return P(`${esc(roundTxt(m))}で${esc(m.opp)}と対戦し、${m.gf}-${m.ga}${m.pk ? `（PK ${m.pk.a}-${m.pk.b}）` : ""}で${v}${m.mom ? `マン・オブ・ザ・マッチは${esc(m.mom)}選手です！` : ""}`) + rel(m); }
+    return P(`${esc(roundTxt(m))}で${esc(m.opp)}と対戦し、\n${m.gf}-${m.ga}${m.pk ? `（PK ${m.pk.a}-${m.pk.b}）` : ""}で${v}${m.mom ? `\nMOMは${esc(m.mom)}選手です。` : ""}`) + rel(m); }
   if (n.m) { const m = n.m, d = m.date;
-    return P(`${esc(roundTxt(m))}、${esc(m.opp)}戦の試合情報です！`) + T([["大会", esc(roundTxt(m))], ["日時", `${dJ(d)}${kickoff(m) ? `<br>${kickoff(m)} キックオフ` : ""}`], ["会場", esc(venue(m) || "")]])
+    return P(`${esc(roundTxt(m))}、${esc(m.opp)}戦の試合情報です。`) + T([["大会", esc(roundTxt(m))], ["日時", `${dJ(d)}${kickoff(m) ? `<br>${kickoff(m)} キックオフ` : ""}`], ["会場", esc(venue(m) || "")]])
       + `<div class="art-pv">${headToHead(m)}</div>` + rel(m); }
   if (n.rename) { const d = n.d, st = D.conf["ホームスタジアム"];
-    return P(`${esc(oldName())}は新たなオーナーグループによる買収にともない、クラブ名を「${esc(clubName())}」に変更しました！アカデミーとトップチームはそのまま引き継がれます。新しい${esc(clubName())}をよろしくお願いします！`)
+    return P(`${esc(oldName())}は新たなオーナーグループによる買収にともない、クラブ名を「${esc(clubName())}」に変更しました。\nアカデミーとトップチームはそのまま引き継がれます。\n新しい${esc(clubName())}をよろしくお願いいたします。`)
       + T([["新クラブ名", esc(clubName())], ["旧クラブ名", esc(oldName())], ["変更日", dJ(d)], ["スタジアム", esc(st || "")]])
       + `<p class="nbtn"><a class="btn" href="#/club">CLUB</a></p>`; }
   if (n.inj) { const x = n.inj, m = D.played.find(q => dKey(q.date) === dKey(x.date)), d = x.date;
@@ -1021,15 +1022,15 @@ function newsBody(n) {
     return P(lead) + T([["負傷日", dJ(d)], ["診断名", esc(x.what || "")], ["全治", injTerm(x)], ["復帰予定", x.back ? dJ(x.back) : ""]]) + (x.memo ? P(esc(x.memo)) : "") + rel(m, [x.name]); }
   if (n.tr) { const t = n.tr, pr = prof(t.name) || {}, cl = t.club ? esc(t.club) + (leagueOf(t.club) ? `（${esc(leagueOf(t.club))}）` : "") : "";
     if (t.kind === "契約延長") return P(`${esc(t.name)}選手が契約を${t.years ? `${t.years}年` : ""}更新しました！`) + (t.memo ? P(esc(t.memo)) : "") + newsProfile(t, pr) + rel(null, [t.name]);
-    if (t.kind === "ユース昇格") return P(`${esc(t.name)}選手がアカデミーからトップチームに昇格します！${n.yno ? `アカデミーから${n.yno}人目のトップ昇格です。` : ""}`) + (t.memo ? P(esc(t.memo)) : "") + newsProfile(t, pr) + rel(null, [t.name]);
-    const tx = { 退団: cl ? `${cl}へ完全移籍することが決まりました。` : "退団することになりました。", レンタル移籍: `${cl || "他クラブ"}へ期限付き移籍することが決まりました！`,
-      レンタル復帰: "期限付き移籍先から復帰します！", 加入: "加入することが決まりました！", レンタル加入: "期限付き移籍で加入することが決まりました！" }[t.kind] || `${esc(t.kind)}のお知らせです。`;
+    if (t.kind === "ユース昇格") return P(`${esc(t.name)}選手がアカデミーからトップチームに昇格します！${n.yno ? `\nアカデミーから${n.yno}人目のトップ昇格です。` : ""}`) + (t.memo ? P(esc(t.memo)) : "") + newsProfile(t, pr) + rel(null, [t.name]);
+    const tx = { 退団: cl ? `${cl}へ完全移籍することが決まりました。` : "退団することになりました。", レンタル移籍: `${cl || "他クラブ"}へ期限付き移籍することが決まりました。`,
+      レンタル復帰: "期限付き移籍先から復帰します。", 加入: "加入することが決まりました。", レンタル加入: "期限付き移籍で加入することが決まりました。" }[t.kind] || `${esc(t.kind)}のお知らせです。`;
     const kindJ = { 退団: t.club ? "完全移籍" : "退団", レンタル移籍: "期限付き移籍", レンタル復帰: "期限付き移籍から復帰", 加入: "完全移籍で加入", レンタル加入: "期限付き移籍で加入" }[t.kind] || esc(t.kind);
     const out = /^(退団|レンタル移籍)$/.test(t.kind), inn = /^(加入|レンタル加入)$/.test(t.kind);
     return P(`${esc(t.name)}選手が${tx}`)
       + T([["種別", kindJ], [out ? "移籍先" : "前所属", t.club && (out || inn) ? cl : ""], ["契約期間", t.years ? `${t.years}年` : ""], ["移籍金", t.fee != null ? money(t.fee) : ""], ["メモ", esc(t.memo || "")]])
       + newsProfile(t, pr) + rel(null, [t.name]); }
-  return P(`${esc(n.season)}シーズン、${esc(n.title)}で優勝しました！応援ありがとうございました！`) + `<p class="nbtn"><a class="btn" href="#/club">CLUB</a></p>`;
+  return P(`${esc(n.season)}シーズン、${esc(n.title)}で優勝しました！\n応援ありがとうございました。`) + `<p class="nbtn"><a class="btn" href="#/club">CLUB</a></p>`;
 }
 /* 記事の下の選手プロフィール（Jクラブの発表文の形） */
 function newsProfile(t, pr) {

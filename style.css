@@ -1732,3 +1732,9 @@ button.all{display:block;width:100%;border:0;background:none;font:inherit;cursor
 .nrel .ph{background:var(--white);border:1px solid var(--line);border-bottom:0;font-family:var(--en);letter-spacing:.06em}
 .nrel .mlist,.nrel .panel{margin:0 0 18px;border:1px solid var(--line)}
 .nrel .mlist .mrow:last-child{border-bottom:0}
+/* 試合の行：大会名がスコアに重ならないように */
+.mrow .t small.mr-meta{min-width:0;max-width:100%}
+.mrow .mr-comp{min-width:0;overflow-wrap:anywhere}
+.nrel .mrow{grid-template-columns:58px minmax(0,1fr) auto;gap:10px}
+@media (max-width:600px){.mrow .t small.mr-meta{flex-wrap:wrap;row-gap:2px}}
+.nrel .prow:has(.ph) .no{visibility:hidden}
