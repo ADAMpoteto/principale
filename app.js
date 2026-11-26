@@ -743,7 +743,7 @@ const seasonLabel = s => s || "";
 
 /* ---------- ニュース（試合・移籍から自動で作る） ---------- */
 const MON_EN = ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"];
-const NCAT = { CLUB: "クラブ", CONTRACT: "契約更新", TRANSFER: "移籍", PREVIEW: "試合情報", RESULT: "試合結果", ACADEMY: "ユース", FIRST: "ユース記録", AWARD: "表彰", RECORD: "記録", MEDICAL: "メディカル" };
+const NCAT = { CLUB: "クラブ", CONTRACT: "契約更新", TRANSFER: "移籍", PREVIEW: "試合情報", RESULT: "試合結果", ACADEMY: "トップ昇格", FIRST: "ユース記録", AWARD: "表彰", RECORD: "記録", MEDICAL: "メディカル" };
 /* 表示用のカテゴリー（n.cat は並び順などの判定用にそのまま使う） */
 const ncat = n => n.cat === "MATCH" ? (n.kind === "result" ? "RESULT" : "PREVIEW")
   : n.cat === "TRANSFER" ? (n.tr && n.tr.kind === "契約延長" ? "CONTRACT" : n.tr && n.tr.kind === "ユース昇格" ? "ACADEMY" : "TRANSFER")
