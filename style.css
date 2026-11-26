@@ -1723,3 +1723,7 @@ button.all{display:block;width:100%;border:0;background:none;font:inherit;cursor
 .nv-j{margin-top:.8cqw}
 .nt-v .face{filter:drop-shadow(0 0 2.4cqw rgba(0,0,0,.55)) drop-shadow(-1.2cqw 0 0 color-mix(in srgb,var(--ac) 35%,transparent))}
 .nv-crest{filter:drop-shadow(0 0 3cqw rgba(0,0,0,.55)) drop-shadow(0 0 4cqw color-mix(in srgb,var(--ac) 35%,transparent))}
+/* 記事の表：項目名を少し広く */
+.art .inj-dl{grid-template-columns:9em 1fr}
+.art .inj-dl dd a{color:var(--blue);font-weight:700}
+@media (max-width:600px){.art .inj-dl{grid-template-columns:7.6em 1fr}.art .inj-dl dt,.art .inj-dl dd{padding:10px 8px;font-size:13px}}
