@@ -1644,3 +1644,20 @@ button.all{display:block;width:100%;border:0;background:none;font:inherit;cursor
 @media (max-width:700px){.pst{columns:1;margin-top:12px}.pst-c{margin-bottom:12px}}
 .pmr-r .rt{font-size:14px;min-width:40px}
 .s90-note{margin:-6px 0 14px;font-size:12px;color:var(--tx3)}
+/* 順位表：ショートとフルで列の幅をそろえる（フルはショートの間隔のまま右へ伸ばす）＋フルは順位・クラブを固定 */
+@media (max-width:600px){
+  .tb-v .t{table-layout:fixed;border-collapse:separate;border-spacing:0}
+  .tb-v .t th.pos,.tb-v .t td.pos{width:43px;box-sizing:border-box}
+  .tb-v .t th:not(.pos):not(.l):not(.fm),.tb-v .t td:not(.pos):not(.club):not(.fm){width:52px;box-sizing:border-box}
+  .tb-v .t td.club,.tb-v .t th.l{width:auto}
+  .tb-v.full .tw .t{width:max-content;min-width:0}
+  .tb-v.full .t td.club,.tb-v.full .t th.l{width:calc(100vw - 42px - 43px - 156px);max-width:calc(100vw - 42px - 43px - 156px);box-sizing:border-box}
+  .tb-v.full .t td.club span{overflow:hidden;text-overflow:ellipsis}
+  .tb-v.full .t th.fm,.tb-v.full .t td.fm{width:128px;box-sizing:border-box}
+  .tb-v.full .t .pos,.tb-v.full .t .club,.tb-v.full .t th.l{position:sticky;z-index:1}
+  .tb-v.full .t .pos{left:0}
+  .tb-v.full .t .club,.tb-v.full .t th.l{left:43px;box-shadow:inset -1px 0 var(--line)}
+  .tb-v.full .t td.pos,.tb-v.full .t td.club{background:var(--white)}
+  .tb-v.full .t tr.me td.pos,.tb-v.full .t tr.me td.club{background:#e6f2fb}
+  .tb-v.full .t thead th.pos,.tb-v.full .t thead th.l{background:var(--navy)}
+}
