@@ -1727,3 +1727,8 @@ button.all{display:block;width:100%;border:0;background:none;font:inherit;cursor
 .art .inj-dl{grid-template-columns:9em 1fr}
 .art .inj-dl dd a{color:var(--blue);font-weight:700}
 @media (max-width:600px){.art .inj-dl{grid-template-columns:7.6em 1fr}.art .inj-dl dt,.art .inj-dl dd{padding:10px 8px;font-size:13px}}
+/* 記事の関連リンク（試合・選手は他のページと同じ行の形） */
+.nrel{margin-top:26px;display:grid;gap:0}
+.nrel .ph{background:var(--white);border:1px solid var(--line);border-bottom:0;font-family:var(--en);letter-spacing:.06em}
+.nrel .mlist,.nrel .panel{margin:0 0 18px;border:1px solid var(--line)}
+.nrel .mlist .mrow:last-child{border-bottom:0}
