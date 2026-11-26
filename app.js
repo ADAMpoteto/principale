@@ -953,7 +953,7 @@ function newsThumb(n) {
   const V = ({ ac, kick, head, who, crest, x }) => `<div class="nt nt-v ac-${ac}"><b class="nv-wm" aria-hidden="true">${esc(head)}<br>${esc(head)}<br>${esc(head)}</b><i class="nv-sl"></i><i class="nv-bar"></i>${crest ? `<div class="nv-crest">${logo(clubName(), "")}</div>` : face(who)}
     <div class="nv-t">${kick ? `<span class="nv-k">${esc(kick)}</span>` : ""}<b class="nv-h" style="font-size:${fit(head)}cqw">${esc(head)}</b>${who && !crest ? nm2(who) : ""}${x || ""}</div></div>`;
   if (n.inj) { const x = n.inj;
-    return V({ ac: "red", kick: "MEDICAL UPDATE", head: "INJURY", who: x.name, x: `<span class="nv-x">${esc([x.what, injTerm(x) ? `全治${injTerm(x)}` : ""].filter(Boolean).join("　"))}</span>` }); }
+    return V({ ac: "red", kick: "MEDICAL UPDATE", head: "INJURY", who: x.name }); }
   if (n.tr) { const t = n.tr;
     const c = { 契約延長: ["sky", "CONTRACT", "RENEWED"], ユース昇格: ["green", `ACADEMY${n.yno ? " #" + n.yno : ""}`, "PROMOTED"], 加入: ["blue", "NEW SIGNING", "WELCOME"], レンタル加入: ["blue", "LOAN SIGNING", "WELCOME"],
       レンタル移籍: ["blue", "LOAN", "ON LOAN"], レンタル復帰: ["blue", "BACK FROM LOAN", "WELCOME BACK"], 退団: ["gray", "FAREWELL", "THANK YOU"] }[t.kind] || ["blue", "NEWS", "NEWS"];
