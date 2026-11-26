@@ -833,7 +833,7 @@ function milestones3() {
   D.played.forEach(m => { const L = m.lu.filter(l => l.totw); if (!L.length) return;
     const d = m.date, when = `${d.getMonth() + 1}月${d.getDate()}日（${WD[d.getDay()]}）の${esc(roundTxt(m))} ${esc(m.opp)}戦`;
     const P = L.map(l => { const k = nameKey(l.name); TW[k] = (TW[k] || 0) + 1; return { name: l.name, pos: l.pos, rating: l.rating, ovr: l.rating != null ? Math.round(l.rating * 10) : null, c: TW[k], g: l.s["得点"] || 0, a: l.s["アシスト"] || 0 }; });
-    const t = P.length === 1 ? `${P[0].name}選手 チーム・オブ・ザ・ウィーク選出` : P.length === 2 ? `${P[0].name}選手・${P[1].name}選手 チーム・オブ・ザ・ウィーク選出` : `チーム・オブ・ザ・ウィークに${P.length}選手が選出`;
+    const t = P.length === 1 ? `${P[0].name}選手 TOTW選出` : P.length === 2 ? `${P[0].name}選手・${P[1].name}選手 TOTW選出` : `TOTWに${P.length}選手が選出`;
     const li = P.map(x => `<li><span>${esc(x.pos || "")}</span><b><a href="#/player/${encodeURIComponent(x.name)}">${esc(x.name)}</a></b></li>`).join("");
     push(m, `r-totw-${m.id}`, t, { who: P[0].name, en: "TOTW", totw: P,
       html: `<p>${when}での活躍が評価され、${P.length === 1 ? `${esc(P[0].name)}選手が` : `${P.length}選手が`}チーム・オブ・ザ・ウィーク（TOTW）に選ばれました。</p><ul class="srev">${li}</ul><p class="nbtn"><a class="btn" href="#/match/${m.id}">MATCH REPORT</a></p>` }, new Date(m.date.getFullYear(), m.date.getMonth(), m.date.getDate() + 5)); });
@@ -946,42 +946,34 @@ function newsThumb(n) {
       return `<div class="tw-card"><div class="tw-in"><span class="tw-lb">TOTW</span><div class="tw-o"><b>${x.ovr ?? ""}</b><small>${esc(x.pos || "")}</small>${logo(clubName(), "tw-cl")}</div>${face(x.name, "tw-f")}
         <div class="tw-n">${esc(surname(nm))}</div><div class="tw-ft">TEAM OF THE WEEK</div></div></div>`; };
     return `<div class="nt nt-totw${k > 1 ? " multi" : ""}" style="--n:${k}"><div class="tw-l"><b>TEAM OF${k > 1 ? " " : "<br>"}THE WEEK</b></div><div class="tw-cards">${P.map(card).join("")}</div></div>`; }
-  /* 新デザイン（契約更新・トップ昇格・初記録・月間MVP・チーム記録・メディカル）：枠付きタグとクラブ名表記なし */
+  /* 選手・チームの画像はすべて同じ型：見出し（英字1行）＋名前＋補足。色だけカテゴリーで変える */
   const nm2 = name => { const pr = prof(name) || {}; return `<span class="nv-n">${esc(pr.roma || name)}</span>${pr.roma ? `<span class="nv-j">${esc(name)}</span>` : ""}`; };
-  const vsLine = m => m && m.opp ? `<span class="nv-x">vs ${logo(m.opp, "")}${esc(m.opp)}</span>` : "";
-  const V = ({ cls, kick, head, jp, who, x, wm, crest, big, unit }) => `<div class="nt nt-v ${cls}">${wm ? `<b class="nv-wm">${esc(wm)}</b>` : ""}${crest ? `<div class="nv-crest">${logo(clubName(), "")}</div>` : who ? face(who) : ""}
-    <div class="nv-t">${kick ? `<span class="nv-k">${esc(kick)}</span>` : ""}${big != null ? `<b class="nv-big">${esc(big)}</b><b class="nv-u">${esc(unit || "")}</b>` : ""}${jp ? `<b class="nv-hj">${esc(jp)}</b>` : ""}${(head || []).map(t => `<b class="nv-h${t.length > 9 ? " s2" : ""}">${esc(t)}</b>`).join("")}${who ? nm2(who) : ""}${x || ""}</div></div>`;
+  const clubLine = (pre, c) => c ? `<span class="nv-x">${pre} ${logo(c, "")}${esc(c)}</span>` : "";
+  const fit = t => Math.min(12.5, 100 / Math.max(4, t.length)).toFixed(2);
+  const V = ({ ac, kick, head, who, crest, x }) => `<div class="nt nt-v ac-${ac}"><i class="nv-sl"></i>${crest ? `<div class="nv-crest">${logo(clubName(), "")}</div>` : face(who)}
+    <div class="nv-t">${kick ? `<span class="nv-k">${esc(kick)}</span>` : ""}<b class="nv-h" style="font-size:${fit(head)}cqw">${esc(head)}</b>${who && !crest ? nm2(who) : ""}${x || ""}</div></div>`;
   if (n.inj) { const x = n.inj;
-    return V({ cls: "v-med", kick: "MEDICAL UPDATE", jp: "負傷情報", who: x.name, x: `<span class="nv-x">${esc([x.what, injTerm(x) ? `全治${injTerm(x)}` : ""].filter(Boolean).join("　"))}</span>` }); }
-  if (n.tr && n.tr.kind === "契約延長") { const t = n.tr;
-    return V({ cls: "v-ctr", kick: "CONTRACT RENEWAL", jp: "契約更新", who: t.name, x: t.years ? `<span class="nv-x">契約期間 ${t.years}年延長</span>` : "" }); }
-  if (n.tr && n.tr.kind === "ユース昇格") { const t = n.tr, hs = ((prof(t.name) || {}).schools || []).find(q => q[0] === "高校" && q[1]);
-    return V({ cls: "v-acad", kick: "PROMOTED TO THE FIRST TEAM", jp: "トップ昇格", who: t.name, wm: n.yno ? String(n.yno).padStart(2, "0") : "", x: hs ? `<span class="nv-x">${esc(hs[1])}から昇格</span>` : "" }); }
-  if (n.ms) { const s = n.ms, m0 = n.m0;
-    if (s.firsts || (s.v === 1 && s.def && s.def.fe && !s.club)) { const fe = s.def.fe;
-      return V({ cls: "v-first", kick: "MILESTONE", head: fe === "DEBUT" ? ["DEBUT"] : [fe.split(" ")[0], fe.split(" ").slice(1).join(" ")], who: s.who, x: vsLine(m0) }); }
-    if (s.en === "MONTHLY MVP") { const mo = s.club_mvp || parseInt(String(s.tag || "").replace(/\D/g, ""), 10) || 0, dd = n.d, mi = s.club_mvp ? s.club_mvp - 1 : MON_EN.findIndex(x => String(s.tag || "").includes(x));
-      const lgName = s.club_mvp ? "" : String(s.tag || "").split("　")[0];
-      return V({ cls: "v-mvp", kick: mi >= 0 ? MON_EN[mi] : "", head: s.club_mvp ? ["CLUB MVP"] : ["PLAYER OF", "THE MONTH"], who: s.who,
-        x: s.club_mvp ? `<span class="nv-x">クラブ月間MVP</span>` : lgName ? `<span class="nv-x">${compLogo(lgName, "nv-cl")}${esc(lgName)}</span>` : "" }); }
-    if (s.club) { const rec = /クラブ新記録|最多得点差/.test(n.t || "") || s.en === "RECORD WIN";
-      const num = s.big !== "" && s.big != null ? String(s.big) : s.v != null ? String(s.v) : "";
-      const unit = s.en || (s.def && s.def.en) || "";
-      return num ? V({ cls: "v-team", kick: rec ? "NEW CLUB RECORD" : "TEAM RECORD", big: num, unit, crest: true, x: vsLine(m0) })
-        : V({ cls: "v-team", kick: "", head: unit.split(" ").length > 1 ? [unit.split(" ")[0], unit.split(" ").slice(1).join(" ")] : [unit], crest: true }); }
-    /* 個人記録（ゴール数・MOM・ハットトリックなど）：これまでのデザインからタグとクラブ名を外す */
-    let lines; const big = s.big !== "" && s.big != null ? String(s.big) : "";
-    let kick = /シーズン最多|史上最年少/.test(n.t || "") ? "CLUB RECORD" : "";
-    if (s.en === "HAT-TRICK") lines = ["HAT-", "TRICK"];
-    else if (s.en === "AWARD") { lines = ["AWARD"]; kick = s.tag || ""; }
-    else if (s.en === "YEARS OLD") lines = [big, "YEARS OLD"];
-    else if (s.en) lines = big ? [big, s.en] : s.en.split(" ");
-    else lines = [String(s.v), s.def.en];
-    const sz = t => t.length > 11 ? " s4" : t.length > 8 ? " s3" : t.length > 6 ? " s2" : "";
-    const head = lines.filter(Boolean).map(t => `<b class="nx-h${sz(t)}">${esc(t)}</b>`).join("");
-    const pr = prof(s.who) || {};
-    return `<div class="nt nt-x nt-rec"><div class="nx-bg">${logo(clubName(), "")}</div>${face(s.who)}
-      <div class="nx-t">${kick ? `<span class="nv-k gold">${esc(kick)}</span>` : ""}${head}<span class="nx-n">${esc(pr.roma || s.who)}</span>${pr.roma ? `<span class="nx-j">${esc(s.who)}</span>` : ""}${m0 && m0.opp ? `<span class="nx-vs">vs ${logo(m0.opp, "")}${esc(m0.opp)}</span>` : ""}</div></div>`; }
+    return V({ ac: "red", kick: "MEDICAL UPDATE", head: "INJURY", who: x.name, x: `<span class="nv-x">${esc([x.what, injTerm(x) ? `全治${injTerm(x)}` : ""].filter(Boolean).join("　"))}</span>` }); }
+  if (n.tr) { const t = n.tr;
+    const c = { 契約延長: ["sky", "CONTRACT", "RENEWED"], ユース昇格: ["green", `ACADEMY${n.yno ? " #" + n.yno : ""}`, "PROMOTED"], 加入: ["blue", "NEW SIGNING", "WELCOME"], レンタル加入: ["blue", "LOAN SIGNING", "WELCOME"],
+      レンタル移籍: ["blue", "LOAN", "ON LOAN"], レンタル復帰: ["blue", "BACK FROM LOAN", "WELCOME BACK"], 退団: ["gray", "FAREWELL", "THANK YOU"] }[t.kind] || ["blue", "NEWS", "NEWS"];
+    const x = /^(加入|レンタル加入)$/.test(t.kind) ? clubLine("from", t.club) : /^(レンタル移籍|退団)$/.test(t.kind) ? clubLine("to", t.club) : "";
+    return V({ ac: c[0], kick: c[1], head: c[2], who: t.name, x }); }
+  if (n.ms) { const s = n.ms, m0 = n.m0, vs = m0 && m0.opp ? clubLine("vs", m0.opp) : "";
+    if (s.firsts || (s.v === 1 && s.def && s.def.fe && !s.club)) return V({ ac: "green", kick: "MILESTONE", head: s.def.fe, who: s.who, x: vs });
+    if (s.en === "MONTHLY MVP") { const mi = s.club_mvp ? s.club_mvp - 1 : MON_EN.findIndex(x => String(s.tag || "").includes(x)), lg = s.club_mvp ? "" : String(s.tag || "").split("　")[0];
+      return V({ ac: "gold", kick: mi >= 0 ? MON_EN[mi] : "MONTHLY AWARD", head: s.club_mvp ? "CLUB MVP" : "PLAYER OF THE MONTH", who: s.who, x: lg ? `<span class="nv-x">${compLogo(lg, "nv-cl")}${esc(lg)}</span>` : "" }); }
+    if (s.en === "AWARD") return V({ ac: "gold", kick: s.tag || "AWARD", head: "AWARD", who: s.who });
+    if (s.club) { const rec = /クラブ新記録|最多得点差/.test(n.t || "");
+      const num = s.big !== "" && s.big != null ? String(s.big) : s.v != null ? String(s.v) : "", unit = s.en || (s.def && s.def.en) || "";
+      const head = s.en === "RECORD WIN" ? "RECORD WIN" : s.en === "UNBEATEN" ? `${num} GAMES UNBEATEN` : num ? `${num} ${unit}` : unit;
+      return V({ ac: "gold", kick: rec ? "NEW CLUB RECORD" : s.en === "CHAMPIONS" || s.en === "PROMOTED" || s.en === "SEASON REVIEW" || s.en === "RELEGATED" ? String(n.m0 && n.m0.season || "") : "TEAM RECORD", head, crest: true, x: s.en === "RECORD WIN" && m0 ? `<span class="nv-x">${m0.gf}-${m0.ga}　vs ${logo(m0.opp, "")}${esc(m0.opp)}</span>` : vs }); }
+    const big = s.big !== "" && s.big != null ? String(s.big) : "";
+    if (s.en === "HAT-TRICK") return V({ ac: "gold", kick: "MATCH RECORD", head: "HAT-TRICK", who: s.who, x: vs });
+    if (s.en === "YEARS OLD") { const deb = /デビュー/.test(n.t || ""); return V({ ac: "gold", kick: "CLUB RECORD", head: deb ? "YOUNGEST DEBUT" : "YOUNGEST SCORER", who: s.who, x: `<span class="nv-x">${esc(s.sub || "")}　vs ${logo(m0.opp, "")}${esc(m0.opp)}</span>` }); }
+    if (s.en === "MOM") return V({ ac: "gold", kick: "PLAYER OF THE MATCH", head: `${big} MOM`, who: s.who, x: vs });
+    const head = s.en ? (big ? `${big} ${s.en}` : s.en) : `${s.v} ${s.def.en}`;
+    return V({ ac: "gold", kick: /シーズン最多/.test(n.t || "") ? "CLUB RECORD" : "MILESTONE", head, who: s.who, x: vs }); }
   if (n.m) { const h = homeAway(n.m);
     const res = n.kind === "result";
     return `<div class="nt nt-m2"><div class="nm-top">${compLogo(n.m.comp, "nm-cl")}${roundBr(n.m)}</div>
@@ -989,13 +981,8 @@ function newsThumb(n) {
       <div class="nm-c"><div class="nm-s">${res ? scoreTxt(n.m) : "VS"}</div><small>${res ? "FULL TIME" : dotY(n.m.date)}</small></div>
       <div class="nm-t">${logo(h.away, "")}<b>${esc(shortOf(h.away))}</b></div></div>`; }
   if (n.rename) return `<div class="nt nt-rn"><div class="rn-c">${logo(oldName(), "")}<span>${esc(oldName())}</span></div><i class="rn-ar"></i><div class="rn-c">${logo(clubName(), "")}<span>${esc(clubName())}</span></div><b class="rn-h">NEW ERA</b></div>`;
-  if (n.tr) { const t = n.tr, pr = prof(t.name) || {};
-    const w = { 加入: "WELCOME", レンタル加入: "WELCOME", レンタル復帰: "RETURN", 退団: "THANK YOU", レンタル移籍: "ON LOAN" }[t.kind] || "NEWS";
-    const kick = t.kind === "レンタル移籍" ? "LOAN" : t.kind === "レンタル加入" ? "ON LOAN" : t.kind === "退団" ? "FAREWELL" : t.kind === "レンタル復帰" ? "BACK FROM LOAN" : "NEW SIGNING";
-    const dest = (t.kind === "レンタル移籍" || t.kind === "退団" || t.kind === "レンタル加入") && t.club ? `<span class="nx-vs">${t.kind === "レンタル加入" ? "from" : "to"} ${logo(t.club, "")}${esc(t.club)}</span>` : "";
-    return `<div class="nt nt-x${t.kind === "退団" ? " is-out" : ""}"><div class="nx-bg">${logo(clubName(), "")}</div>${face(t.name)}
-      <div class="nx-t"><span class="nv-k">${kick}</span><b class="nx-h">${w}</b><span class="nx-n">${esc(pr.roma || t.name)}</span>${pr.roma ? `<span class="nx-j">${esc(t.name)}</span>` : ""}${dest}</div></div>`; }
-  return `<div class="nt nt-c2">${ICON.cup}<div class="nt-w">CHAMPIONS<small>${esc(n.title || "")}</small></div></div>`;
+  if (n.title) return V({ ac: "gold", kick: n.title, head: "CHAMPIONS", crest: true });
+  return `<div class="nt nt-c2">${ICON.cup}<div class="nt-w">NEWS</div></div>`;
 }
 const newsCard = n => `<a class="ncard" href="#/news/${encodeURIComponent(n.id)}">${newsThumb(n)}<div class="nb"><div class="nmeta"><time>${dotY(n.d)}</time>${catTag(n)}</div><b>${esc(n.t)}</b></div></a>`;
 const newsList = L => `<div class="news">${L.map(n => `<a href="#/news/${encodeURIComponent(n.id)}"><time>${dotY(n.d)}</time>${catTag(n)}<b>${esc(n.t)}</b></a>`).join("")}</div>`;
@@ -1118,12 +1105,12 @@ function vHome() {
 
 function vNews(id) {
   if (id) return vNewsDetail(id);
-  const all = buildNews(), cats = ["ALL", ...Object.keys(NCAT).filter(c => all.some(n => ncat(n) === c))];
+  const all = buildNews(), cats = [...Object.keys(NCAT), "ALL"];
   if (!cats.includes(ST.ncat)) ST.ncat = "ALL";
   const L = all.filter(n => ST.ncat === "ALL" || ncat(n) === ST.ncat);
   return band("NEWS", "ニュース") + `<div class="wrap">
     <div class="pills" id="ncat">${cats.map(c => `<button class="pill${c === ST.ncat ? " on" : ""}" data-c="${c}">${c === "ALL" ? "すべて" : NCAT[c]}</button>`).join("")}</div>
-    ${L.length ? `<div class="ngrid">${L.slice(0, 60).map(newsCard).join("")}</div>` : `<div class="panel">${empty("ニュースはまだありません。")}</div>`}</div>`;
+    ${L.length ? `<div class="ngrid">${L.slice(0, 60).map(newsCard).join("")}</div>` : `<div class="panel">${empty(ST.ncat === "ALL" ? "ニュースはまだありません。" : "このカテゴリーの記事はまだありません。")}</div>`}</div>`;
 }
 function bNews() { document.querySelectorAll("#ncat .pill").forEach(b => b.onclick = () => { ST.ncat = b.dataset.c; render(); }); }
 
