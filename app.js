@@ -1472,7 +1472,7 @@ function vSquad() {
   const out = D.players.filter(p => /退団/.test(p.status));
   const jl = [["GK", "GK"], ["DF", "DF"], ["MF", "MF"], ["FW", "FW"], ["他", "その他"]].filter(([k]) => G[k].length).map(([k, t]) => [`sq-${k}`, t]);
   if (staffList().length) jl.push(["sq-staff", "スタッフ"]);
-  const jump = jl.length > 1 ? `<nav class="sq-jump">${jl.map(([id, t]) => `<button type="button" onclick="sqJump('${id}')">${t}</button>`).join("")}</nav>` : "";
+  const jump = jl.length > 1 ? `<nav class="sq-jump">${jl.map(([id, t]) => `<button type="button" data-id="${id}" onclick="sqJump('${id}')">${t}</button>`).join("")}</nav>` : "";
   return band("SQUAD", "選手・スタッフ", true) + jump + `<div class="wrap">
     ${["GK", "DF", "MF", "FW", "他"].filter(k => G[k].length).map(k => `<div id="sq-${k}" class="sq-anc"></div>` + sec(lbl[k][0], lbl[k][1]) + `<div class="pgrid">${G[k].sort((a, b) => (a.no ?? 999) - (b.no ?? 999)).map(p => card(p)).join("")}</div>`).join("") || `<div class="panel">${empty("選手情報はまだありません。")}</div>`}
     ${loan.length ? `<div id="sq-loan" class="sq-anc"></div>` + sec("ON LOAN", "期限付き移籍中の選手") + `<div class="pgrid">${loan.map(p => card(p, true)).join("")}</div>` : ""}
@@ -1788,12 +1788,24 @@ let lastPage = "";
 /* ブラウザバックで戻ったときは、そのページで見ていた位置に戻す（各履歴にスクロール位置を保存） */
 if ("scrollRestoration" in history) history.scrollRestoration = "manual";
 let scrollSave = 0;
+function sqSpy() {
+  const bar = document.querySelector(".sq-jump"); if (!bar) return;
+  const top = document.querySelector(".top").offsetHeight + bar.offsetHeight + 24, B = [...bar.querySelectorAll("button")];
+  let cur = -1; B.forEach((b, i) => { const el = document.getElementById(b.dataset.id); if (el && el.getBoundingClientRect().top - top <= 0) cur = i; });
+  if (innerHeight + scrollY >= document.documentElement.scrollHeight - 4) { const st = B.findIndex(b => b.dataset.id === "sq-staff"); if (st >= 0 && cur >= 0) cur = Math.max(cur, st); }
+  B.forEach((b, i) => b.classList.toggle("on", i === cur));
+}
+window.addEventListener("scroll", sqSpy, { passive: true });
 window.addEventListener("scroll", () => { clearTimeout(scrollSave); scrollSave = setTimeout(() => { try { history.replaceState({ y: scrollY }, ""); } catch (e) { } }, 120); }, { passive: true });
+/* 「すべて見る」などで開いた箇所も、戻ったときに開いたままにする */
+const OPENED = {}, togBtns = () => [...document.querySelectorAll('#view button[onclick*="toggle(\'open\')"]')];
 window.addEventListener("hashchange", () => {
   const p = location.hash, back = history.state && typeof history.state.y === "number" ? history.state.y : null;
+  if (lastPage) OPENED[lastPage] = togBtns().map((b, i) => b.parentNode.classList.contains("open") ? i : -1).filter(i => i >= 0);
   if (!/^#\/match\//.test(p)) ST.mtab = "facts"; setMenu(false); render();
+  if (back != null && OPENED[p]) { const B = togBtns(); OPENED[p].forEach(i => B[i] && B[i].click()); }
   if (p !== lastPage) { if (back != null) { window.scrollTo(0, back); requestAnimationFrame(() => window.scrollTo(0, back)); setTimeout(() => window.scrollTo(0, back), 300); } else window.scrollTo(0, 0); }
-  lastPage = p;
+  lastPage = p; sqSpy();
 });
 
 (async function init() {
