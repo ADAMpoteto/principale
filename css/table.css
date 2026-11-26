@@ -1,0 +1,32 @@
+/* 順位表 */
+
+.form5{display:flex;gap:6px}
+.tb{background:var(--white);border:1px solid var(--line);border-top:4px solid #bc002d;padding:16px 18px}
+.tb-cups{display:grid;gap:14px}
+.tb-h{display:grid;grid-template-columns:52px 1fr auto;gap:14px;align-items:center}
+.tb-n b{display:block;font-size:17px;font-weight:900}
+.tb-n small{font-family:var(--en);font-weight:700;font-size:12px;letter-spacing:.12em;color:var(--tx3)}
+.tb .tl-s{margin-top:12px}
+.tb-rows{list-style:none;margin:14px 0 0;padding:0;border-top:1px solid var(--line)}
+.tb-rows li{display:grid;grid-template-columns:70px 1fr auto;gap:10px;align-items:center;padding:7px 2px;border-bottom:1px solid var(--line);font-size:13px}
+.tb-rows span{font-family:var(--en);font-weight:700;color:var(--tx3)}
+.tb-rows b{font-weight:700}
+.tb-rows em{font-style:normal;font-family:var(--en);font-weight:800;font-style:italic;color:var(--navy)}
+@media (max-width:700px){.tb{padding:12px}.tb-h{grid-template-columns:40px 1fr auto;gap:10px}.tb-rows li{grid-template-columns:58px 1fr auto;font-size:12px}}
+.tb-h .tl-ic,.tb-h .tl-c,.tb-h .tb-n{grid-area:auto}
+/* 順位表：大会エンブレム */
+.tb-head{display:flex;align-items:center;gap:16px;padding:20px 0 16px}
+.tb-head .tb-cl{width:56px;height:56px;object-fit:contain;flex:none}
+.tb-head div{display:flex;flex-direction:column;gap:2px}
+.tb-head b{font-size:22px;line-height:1.2}
+.tb-head small{font-family:var(--en);font-size:13px;font-weight:700;color:var(--tx3);letter-spacing:.06em}
+@media (max-width:600px){.tb-head .tb-cl{width:44px;height:44px}.tb-head b{font-size:18px}}
+/* 順位表：スマホのショート／フル切り替え */
+.tb-tog{display:none}
+@media (max-width:600px){.tb-head .tb-tog{display:grid;flex-direction:row;gap:0}}
+/* 順位表：フルは直近5試合も出し、横スクロール可 */
+@media (max-width:600px){
+  .tb-v.full .tw{overflow-x:auto}
+  .tb-v.full .tw .t{width:auto;min-width:100%}
+  .tb-v.full .t th.fm,.tb-v.full .t td.fm{display:table-cell}
+}

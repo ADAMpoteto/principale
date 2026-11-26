@@ -1,0 +1,28 @@
+/* 記録 */
+
+.rk-card{background:var(--white);border:1px solid var(--line)}
+.rk-top{display:grid;grid-template-columns:1fr auto;align-items:end;background:var(--navy);color:#fff;padding:14px 16px 0;position:relative;overflow:hidden;min-height:112px}
+.rk-top::before{content:"";position:absolute;right:-30px;top:0;bottom:0;width:110px;background:var(--sky);transform:skewX(-20deg);opacity:.9}
+.rk-top h3{margin:0 0 4px;font-size:12px;font-weight:700;color:var(--sky);letter-spacing:.06em;position:relative}
+.rk-top .who{position:relative;padding-bottom:14px}
+.rk-top .who b{display:block;font-size:17px;font-weight:700;line-height:1.3}
+.rk-top .who small{font-size:12px;color:rgba(255,255,255,.65)}
+.rk-top .big{font-family:var(--en);font-size:52px;font-weight:800;line-height:1;position:relative;padding-bottom:12px}
+.rk-top .big small{font-size:18px}
+.rk-top .face{position:absolute;right:62px;bottom:0;width:72px;height:72px;border-radius:0;opacity:.95}
+.rk-top .face.ph{display:none}
+.rk-row{display:flex;align-items:center;gap:12px;padding:9px 16px;border-bottom:1px solid var(--line)}
+.rk-row .n{width:16px;font-family:var(--en);font-weight:700;color:var(--tx3);font-size:16px}
+.rk-row .nm{flex:1;min-width:0;font-weight:600;overflow-wrap:anywhere}
+.rk-row .val{font-family:var(--en);font-size:20px;font-weight:700}
+.rk-card .all{display:block;text-align:center;padding:10px;font-size:12px;font-weight:700;color:var(--blue)}
+.rk-top .big.l4{font-size:42px}
+.rk-top .big.l5{font-size:34px}
+@media (max-width:600px){
+  .rk-card:not(.open) .rk-row.m-more{display:none}
+  .rk-card .all.m-only{display:block}
+}
+/* 記録カード：その場で全員を開く */
+.rk-card .rk-row.more{display:none}
+.rk-card.open .rk-row.more{display:flex}
+.s90-note{margin:-6px 0 14px;font-size:12px;color:var(--tx3)}

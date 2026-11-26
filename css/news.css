@@ -1,0 +1,266 @@
+/* ニュース（一覧・記事・画像） */
+
+.nm-card{padding:4px 0}
+.nm-comp{font-size:13px;font-weight:700;color:rgba(255,255,255,.8)}
+.nm-vs{display:flex;align-items:center;gap:20px}
+.nm-vs .club{display:flex;flex-direction:column;align-items:center;gap:8px;width:130px;text-align:center;font-weight:700;font-size:14px}
+.nm-vs .club .logo.ph{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.25);color:#fff}
+.nm-vs .v{font-family:var(--en);font-size:36px;font-weight:800;color:rgba(255,255,255,.5)}
+.nm-venue{margin:18px 0 22px;font-size:13px;color:rgba(255,255,255,.75)}
+/* ---------- ニュース ---------- */
+.news a{display:grid;grid-template-columns:96px 84px minmax(0,1fr);gap:14px;align-items:center;padding:15px 4px;border-bottom:1px solid var(--line)}
+.news a:hover b{color:var(--blue)}
+.news time{font-family:var(--en);font-size:16px;font-weight:700;color:var(--tx2);letter-spacing:.04em}
+.news .cat{font-family:var(--en);font-size:12px;font-weight:700;letter-spacing:.1em;text-align:center;padding:2px 0;border:1px solid var(--navy)}
+.news .cat.c-MATCH{background:var(--navy);color:#fff}
+.news .cat.c-TRANSFER{border-color:var(--blue);color:var(--blue)}
+.news b{font-weight:500;line-height:1.5}
+@media (max-width:600px){.news a{grid-template-columns:auto 1fr;gap:4px 10px}.news a b{grid-column:1/-1}.news .cat{width:84px}}
+/* NEWS（サムネイル付きカード） */
+.ngrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;margin-bottom:10px}
+@media (max-width:900px){.ngrid{grid-template-columns:1fr 1fr}}
+.ncard{background:var(--white);display:block;border:1px solid var(--line)}
+.ncard:hover b{color:var(--blue)}
+.nb{padding:12px 14px 16px}
+.nb b{display:block;font-weight:700;font-size:14px;line-height:1.55;margin-top:6px}
+.cat{font-size:11px;font-weight:700;padding:1px 8px;border:1px solid var(--navy);color:var(--navy)}
+.cat.c-MATCH{background:var(--navy);color:#fff}
+.cat.c-TRANSFER{border-color:var(--blue);color:var(--blue)}
+.cat.c-CLUB{border-color:#bc002d;color:#bc002d}
+.news a{grid-template-columns:110px 70px minmax(0,1fr)}
+.news .cat{text-align:center;width:auto}
+.nt{aspect-ratio:16/9;background:var(--navy);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;gap:10px;color:#fff}
+.nt::before{content:"";position:absolute;right:-20%;top:0;bottom:0;width:45%;background:var(--sky);transform:skewX(-20deg);opacity:.9}
+.nt>*{position:relative}
+.nt .logo.md{width:52px;height:52px}
+.nt .logo.ph{background:#fff;color:var(--navy);border:0;font-family:var(--en);font-size:15px}
+.nt-s{font-family:var(--en);font-size:34px;font-weight:800;font-style:italic;text-align:center;line-height:1;min-width:84px}
+.nt-s small{display:block;font-size:11px;letter-spacing:.2em;color:var(--sky);font-style:normal;margin-top:4px}
+.nt-t .face{width:34%;height:auto;aspect-ratio:4/5;border-radius:0;align-self:flex-end;background:transparent}
+.nt-t .face.ph{font-size:0;background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20100%20125%22%3E%3Cg%20fill%3D%22%23fff%22%20fill-opacity%3D%22.35%22%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2242%22%20r%3D%2221%22/%3E%3Cpath%20d%3D%22M8%20125c0-28%2018-46%2042-46s42%2018%2042%2046z%22/%3E%3C/g%3E%3C/svg%3E") center bottom/90% auto no-repeat}
+.nt-w{font-family:var(--en);font-size:26px;font-weight:800;font-style:italic;letter-spacing:.04em;line-height:1}
+.nt-w small{display:block;font-family:var(--font);font-style:normal;font-size:12px;font-weight:700;letter-spacing:0;margin-top:6px;color:var(--sky)}
+.nt-t.acad::before{background:#bc002d}
+.nt-c2 svg{width:44px;height:44px;color:var(--sky)}
+/* 記事ページ */
+.art{background:var(--white);border:1px solid var(--line);padding:28px 32px 32px}
+.art h1{font-size:24px;font-weight:900;line-height:1.5;margin:12px 0 20px}
+.art-th .nt{max-width:none;width:100%}
+.art-th .nt .logo.md{width:90px;height:90px}
+.art-th .nt-s{font-size:56px;min-width:140px}
+.art-th .nt-w{font-size:44px}
+.art-b{margin-top:22px;font-size:15px;line-height:2}
+.art-b p{margin:0 0 12px}
+.nbtn{margin-top:22px!important}
+@media (max-width:600px){.art{padding:18px}.art h1{font-size:19px}.art-th .nt .logo.md{width:56px;height:56px}.art-th .nt-s{font-size:36px}.art-th .nt-w{font-size:28px}}
+.nt-r::before{background:#bc002d}
+.nt-r.club::before{background:var(--sky)}
+.nt-r .face{width:34%;height:auto;aspect-ratio:4/5;border-radius:0;align-self:flex-end;background:transparent}
+.nt-r .face.ph{font-size:0;background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20100%20125%22%3E%3Cg%20fill%3D%22%23fff%22%20fill-opacity%3D%22.35%22%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2242%22%20r%3D%2221%22/%3E%3Cpath%20d%3D%22M8%20125c0-28%2018-46%2042-46s42%2018%2042%2046z%22/%3E%3C/g%3E%3C/svg%3E") center bottom/90% auto no-repeat}
+.nt-num{display:block;font-size:2.2em;line-height:.9}
+.cat.c-RECORD{border-color:#bc002d;background:#bc002d;color:#fff}
+.nbtn .btn{margin:0 8px 8px 0}
+/* ===== ニュースのサムネイル：カードの幅に合わせて縮む ===== */
+@media (max-width:900px){.ngrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
+.ncard{min-width:0;overflow:hidden}
+.nt{container-type:inline-size;gap:3%;padding:0 4%}
+.nt .logo.md{width:19cqw;height:19cqw;font-size:5cqw}
+.nt-s{font-size:12cqw;min-width:26cqw}
+.nt-s small{font-size:3.6cqw}
+.nt-w{font-size:9cqw;min-width:0;white-space:nowrap}
+.nt-w small{font-size:4.2cqw;overflow-wrap:anywhere}
+.nt-num{font-size:1.9em}
+.nt-t,.nt-r{justify-content:flex-start;padding:0 0 0 2%}
+.nt-t .face,.nt-r .face{width:40cqw;height:100%;aspect-ratio:auto;flex:none;object-fit:contain;object-position:bottom;align-self:flex-end}
+.nt-t .face.ph,.nt-r .face.ph{height:86%}
+.nt-r.club{justify-content:center;padding:0 4%}
+.nt-c2 svg{width:14cqw;height:14cqw}
+.art-th .nt .logo.md{width:19cqw;height:19cqw}
+.art-th .nt-s{font-size:12cqw;min-width:26cqw}
+.art-th .nt-w{font-size:9cqw}
+.nt-t .nt-w,.nt-r .nt-w{font-size:7cqw;overflow:hidden;text-overflow:clip}
+.nt-t .face,.nt-r .face{width:34cqw}
+/* ユース昇格ニュースの画像：バッジ用の .acad が効いてずれるのを防ぐ */
+.nt.acad{position:relative;right:auto;top:auto;z-index:auto;padding:0 0 0 2cqw;letter-spacing:normal;font-size:inherit;font-family:inherit;background:var(--navy)}
+/* ===== 移籍・昇格・契約のサムネイル（クラブ発表画像風） ===== */
+.nt-x{display:block;padding:0;background:radial-gradient(120% 140% at 85% 30%,#2b5a80 0%,#1c2833 55%,#121a22 100%)}
+.nt-x::before{content:"";position:absolute;inset:0;right:auto;width:auto;transform:none;opacity:1;
+  background:repeating-linear-gradient(115deg,rgba(124,192,232,0) 0 7cqw,rgba(124,192,232,.06) 7cqw 9cqw)}
+.nt-x::after{content:"";position:absolute;left:0;right:0;bottom:0;height:35%;background:linear-gradient(transparent,rgba(10,16,22,.75));z-index:1}
+.nt-x>*{position:absolute}
+.nx-bg{left:-8cqw;top:-10cqw;width:62cqw;height:62cqw;opacity:.09;filter:grayscale(1) brightness(2)}
+.nt-x .face{right:2cqw;bottom:0;top:5%;width:44cqw;height:auto;max-height:none;object-fit:contain;object-position:bottom;z-index:2;filter:drop-shadow(0 0 3cqw rgba(0,0,0,.45))}
+.nt-x .face.ph{top:16%;width:40cqw;background-size:90% auto}
+.nx-t{left:6cqw;top:0;bottom:0;width:56cqw;display:flex;flex-direction:column;justify-content:center;z-index:3;color:#fff}
+.nx-tag{align-self:flex-start;background:#bc002d;font-family:var(--en);font-weight:700;font-size:3cqw;letter-spacing:.12em;padding:.4cqw 1.6cqw;margin-bottom:1.6cqw;white-space:nowrap}
+.nt-x:not(.is-acad) .nx-tag{background:var(--blue)}
+.nx-h{font-family:var(--en);font-weight:800;font-style:normal;font-size:13.5cqw;line-height:.86;letter-spacing:.02em;white-space:nowrap;
+  color:transparent;-webkit-text-stroke:.45cqw var(--sky);text-shadow:.9cqw .9cqw 0 rgba(124,192,232,.18)}
+.nx-n{font-family:var(--en);font-weight:800;font-size:5.6cqw;letter-spacing:.06em;text-transform:uppercase;color:var(--sky);margin-top:2.4cqw;line-height:1;overflow-wrap:anywhere}
+.nx-j{font-size:3cqw;font-weight:700;color:rgba(255,255,255,.75);margin-top:1cqw}
+.nx-c{display:flex;align-items:center;gap:1.4cqw;margin-top:3cqw;font-family:var(--en);font-weight:800;font-style:italic;font-size:3.4cqw;letter-spacing:.08em;text-transform:uppercase}
+.nx-t{z-index:1}
+.nt-x .face{z-index:2}
+.nt-x .face.ph{border-radius:0;background-color:transparent;color:transparent;font-size:0;border:0;aspect-ratio:auto;height:auto;top:14%;
+  background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20100%20125%22%3E%3Cg%20fill%3D%22%23fff%22%20fill-opacity%3D%22.3%22%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2242%22%20r%3D%2221%22/%3E%3Cpath%20d%3D%22M8%20125c0-28%2018-46%2042-46s42%2018%2042%2046z%22/%3E%3C/g%3E%3C/svg%3E") center bottom/86% auto no-repeat}
+/* ===== 記事下の選手プロフィール ===== */
+.nprof{margin:28px 0 8px;border-top:3px solid var(--navy)}
+.nprof h3 small{font-family:var(--font);font-style:normal;font-size:12px;font-weight:700;color:var(--tx3)}
+.nprof dl{display:grid;grid-template-columns:110px 1fr;margin:0;background:var(--white);border:1px solid var(--line)}
+.nprof dt,.nprof dd{margin:0;padding:10px 14px;border-top:1px solid var(--line);font-size:14px}
+.nprof dt{background:#f4f6f8;color:var(--tx2);font-weight:700}
+.nprof dd{font-weight:700}
+.nprof dt:first-of-type,.nprof dt:first-of-type+dd{border-top:0}
+.nprof dd small{margin-left:10px;font-family:var(--en);font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3)}
+@media (max-width:700px){.nprof dl{grid-template-columns:92px 1fr}.nprof dt,.nprof dd{padding:9px 10px;font-size:13px}}
+.nprof .nw{white-space:nowrap}
+.nprof .nh{display:block;white-space:nowrap}
+/* 経歴が長いときは枠の中で折り返す（期間は途中で切らない） */
+.nprof dl{grid-template-columns:110px minmax(0,1fr)}
+.nprof dd{min-width:0;overflow-wrap:anywhere}
+.nprof .nh{white-space:normal}
+.nprof .nh i{font-style:normal;white-space:nowrap}
+@media (max-width:700px){.nprof dl{grid-template-columns:84px minmax(0,1fr)}}
+@media (max-width:700px){.nprof dl{grid-template-columns:90px minmax(0,1fr)}.nprof dt{white-space:nowrap;font-size:12px;padding:9px 8px}.nprof dd{padding:9px 10px}.nprof .nh{font-size:12px}}
+/* ===== 試合ニュースのサムネイル ===== */
+.nt-m2{display:grid;grid-template-columns:1fr auto 1fr;grid-template-rows:auto 1fr;align-items:center;gap:0 2%;padding:3.5% 4%;
+  background:radial-gradient(120% 140% at 50% 0%,#2b4a66 0%,#1c2833 60%,#141d26 100%)}
+.nt-m2::before{right:auto;left:0;width:100%;transform:none;opacity:1;background:repeating-linear-gradient(115deg,rgba(124,192,232,0) 0 7cqw,rgba(124,192,232,.06) 7cqw 9cqw)}
+.nm-top{grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:1.6cqw;align-self:start}
+.nm-top .nm-cl{height:7cqw;width:auto;margin:0;flex:none}
+.nm-top span{font-size:3cqw;font-weight:700;color:rgba(255,255,255,.8);letter-spacing:.04em}
+.nm-t{display:flex;flex-direction:column;align-items:center;gap:1.6cqw;min-width:0}
+.nm-t .logo.ph{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.3);color:#fff}
+.nm-t b{font-family:var(--en);font-weight:800;font-size:3.6cqw;letter-spacing:.1em}
+.nm-c{text-align:center}
+.nm-s{font-family:var(--en);font-weight:800;font-style:italic;font-size:14cqw;line-height:1;white-space:nowrap}
+.nm-c small{display:block;margin-top:1.5cqw;font-family:var(--en);font-weight:700;font-size:3.2cqw;letter-spacing:.14em;color:var(--sky)}
+/* ===== UIの整列まわり ===== */
+.ngrid.ng3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:900px){.ngrid.ng3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* ===== 記録ニュースの画像 ===== */
+.nt-rec .nx-h+.nx-h{margin-top:.6cqw}
+.nt-rec .nx-h.s2{font-size:10cqw}
+.nt-rec .nx-h.s3{font-size:7.4cqw}
+.nt-rec .nx-tag{background:#c8a24a;color:#1c2833}
+.nx-crest{right:6cqw;top:50%;width:36cqw;height:36cqw;transform:translateY(-50%);z-index:2;filter:drop-shadow(0 0 3cqw rgba(0,0,0,.45))}
+.nt-rec .nx-h.s3{font-size:7.6cqw}
+.nt-rec .nx-h.s4{font-size:6cqw}
+.nt-x .nx-tag.gold{background:#c8a24a;color:#1c2833}
+.nt-rec:not(.is-acad) .nx-tag:not(.gold){background:var(--blue);color:#fff}
+.nx-crest{right:4cqw;width:30cqw;height:30cqw}
+/* TOTW（チーム・オブ・ザ・ウィーク）のサムネイル */
+.nt-totw{background:radial-gradient(80% 120% at 72% 45%,#3b301a 0%,#15120c 55%,#0a0907 100%);justify-content:space-between;padding:0 6% 0 6%}
+.nt-totw::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(120deg,rgba(212,175,55,.07) 0 1px,transparent 1px 2.6cqw)}
+.tw-l{position:relative}
+.tw-l b{display:block;font-family:var(--en);font-style:italic;font-weight:800;font-size:8.6cqw;line-height:.92;color:#f3d77a;text-shadow:0 .4cqw 1.6cqw rgba(0,0,0,.6)}
+.tw-cards{position:relative;display:flex;gap:2cqw;align-items:center}
+.nt-totw.multi{flex-direction:column;justify-content:center;gap:1.6cqw;padding:0 4%}
+.nt-totw.multi .tw-l b{font-size:4.4cqw}
+.tw-card{container-type:inline-size;width:min(34cqw,calc((88cqw - (var(--n) - 1) * 2cqw) / var(--n)));aspect-ratio:.72;position:relative;filter:drop-shadow(0 1.6cqw 2.4cqw rgba(0,0,0,.7))}
+.nt-totw.multi .tw-card{width:min(31cqw,calc((92cqw - (var(--n) - 1) * 2cqw) / var(--n)))}
+.tw-card::before,.tw-in{clip-path:polygon(17% 5%,37% 5%,50% 0,63% 5%,83% 5%,100% 11%,100% 90%,64% 96%,50% 100%,36% 96%,0 90%,0 11%)}
+.tw-card::before{content:"";position:absolute;inset:0;background:linear-gradient(150deg,#fff1b8 0%,#d4af37 30%,#8a6a1c 55%,#f3d77a 78%,#a07c22 100%)}
+.tw-in{position:absolute;inset:2.6cqw;background:radial-gradient(90% 60% at 60% 30%,#3a3020 0%,#16130d 60%,#0b0a07 100%);overflow:hidden}
+.tw-in::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(135deg,rgba(243,215,122,.08) 0 .8cqw,transparent .8cqw 7cqw)}
+.tw-lb{position:absolute;left:50%;top:7cqw;transform:translateX(-50%);font-family:var(--en);font-weight:800;font-size:6.4cqw;letter-spacing:.14em;color:#f3d77a;z-index:3}
+.tw-o{position:absolute;left:9cqw;top:17cqw;z-index:3;display:flex;flex-direction:column;align-items:center;gap:1cqw;color:#f3d77a}
+.tw-o b{font-family:var(--en);font-weight:800;font-size:25cqw;line-height:.85}
+.tw-o small{font-family:var(--en);font-weight:800;font-size:9cqw;letter-spacing:.04em;line-height:1}
+.tw-o .logo.tw-cl{width:13cqw;height:13cqw;object-fit:contain;margin-top:2cqw}
+.tw-in .face.tw-f{position:absolute;right:2cqw;top:13cqw;width:66cqw;height:68cqw;border-radius:0;background:none;object-fit:contain;object-position:bottom;z-index:2}
+.tw-in .face.tw-f.ph{width:44cqw;height:44cqw;right:7cqw;top:24cqw;border-radius:50%;background:#2e2819;color:#f3d77a;font-size:12cqw}
+.tw-n{position:absolute;left:6cqw;right:6cqw;top:83cqw;z-index:3;text-align:center;font-family:var(--en);font-weight:800;font-size:10.5cqw;line-height:1.05;color:#f3d77a;text-transform:uppercase;letter-spacing:.02em;overflow-wrap:anywhere;
+  padding-bottom:3cqw;border-bottom:.6cqw solid rgba(243,215,122,.55)}
+.tw-ft{position:absolute;left:0;right:0;top:104cqw;text-align:center;font-family:var(--en);font-weight:800;font-size:5.6cqw;letter-spacing:.12em;color:rgba(243,215,122,.75);z-index:3}
+.nt-x.is-inj .nx-tag{background:#c8102e;color:#fff}
+/* クラブ名変更のサムネイル */
+.nt-rn{background:radial-gradient(90% 120% at 50% 40%,#1f4a6e 0%,#0f2236 60%,#09141f 100%);justify-content:center;gap:6cqw}
+.rn-c{position:relative;display:flex;flex-direction:column;align-items:center;gap:1.6cqw;width:24cqw}
+.rn-c .logo.ph{font-size:5cqw}
+.rn-c span{font-family:var(--en);font-weight:800;font-size:2.6cqw;color:#fff;letter-spacing:.04em;text-transform:uppercase;text-align:center}
+.rn-c:first-child{opacity:.62;filter:grayscale(.5)}
+.rn-ar{position:relative;width:8cqw;height:1cqw;background:var(--blue,#2e95d6)}
+.rn-ar::after{content:"";position:absolute;right:-1cqw;top:50%;width:3cqw;height:3cqw;border-top:1cqw solid var(--blue,#2e95d6);border-right:1cqw solid var(--blue,#2e95d6);transform:translateY(-50%) rotate(45deg)}
+.rn-h{position:absolute;left:0;right:0;bottom:5cqw;text-align:center;font-family:var(--en);font-style:italic;font-weight:800;font-size:3.4cqw;letter-spacing:.3em;color:rgba(255,255,255,.85)}
+/* ニュースのカテゴリー（細分化） */
+.cat.c-RESULT{background:var(--navy);color:#fff;border-color:var(--navy)}
+.cat.c-PREVIEW{border-color:var(--navy);color:var(--navy);background:#fff}
+.cat.c-TRANSFER{border-color:var(--blue);color:var(--blue)}
+.cat.c-CONTRACT{border-color:#5f6b77;color:#5f6b77}
+.cat.c-ACADEMY{border-color:#1f8a4c;color:#1f8a4c}
+.cat.c-AWARD{border-color:#b8860b;background:#b8860b;color:#fff}
+.cat.c-TITLE{border-color:#b8860b;color:#9a7209}
+.cat.c-MEDICAL{border-color:#c8102e;color:#c8102e}
+.cat.c-CLUB{border-color:#bc002d;color:#bc002d}
+.news .cat.c-RESULT{background:var(--navy);color:#fff}
+.cat{white-space:nowrap;flex:none}
+.cat.c-FIRST{border-color:#1f8a4c;background:#1f8a4c;color:#fff}
+.art-pv{margin:20px 0;border:1px solid var(--line)}
+.nm-top .rb{align-items:flex-start}
+/* ニュースカテゴリーの色（クラブ・契約更新・記録） */
+.cat.c-CLUB,.news .cat.c-CLUB{border-color:var(--sky);background:#fff;color:#3a9fd8}
+.cat.c-CONTRACT,.news .cat.c-CONTRACT{border-color:var(--sky);background:var(--sky);color:#fff}
+.cat.c-RECORD,.news .cat.c-RECORD{border-color:transparent;background:#fff;color:#b8860b}
+/* ===== ニュース画像（選手・チーム共通の型。色だけ変える） ===== */
+.nt-v{display:block;padding:0;color:#fff;--ac:var(--sky);background:radial-gradient(120% 140% at 82% 35%,#2b5a80 0%,#1c2833 55%,#111922 100%)}
+.nt-v>*{position:absolute}
+.nt-v::before{content:"";position:absolute;left:0;right:0;top:0;bottom:0;width:auto;height:auto;transform:none;opacity:1;z-index:0;pointer-events:none;
+  background:repeating-linear-gradient(115deg,transparent 0 9cqw,rgba(255,255,255,.03) 9cqw 18cqw)}
+.nt-v::after{content:none}
+.nv-sl{right:-6cqw;top:0;bottom:0;width:42cqw;transform:skewX(-20deg);background:var(--ac);opacity:.18;z-index:1}
+.nv-sl::before{content:"";position:absolute;left:-3.4cqw;top:0;bottom:0;width:1.4cqw;background:var(--ac);opacity:2}
+.nv-t{left:6.5cqw;top:0;bottom:0;width:56cqw;display:flex;flex-direction:column;justify-content:center;z-index:3}
+.nv-k{display:flex;align-items:center;gap:1.4cqw;font-family:var(--en);font-weight:700;font-size:2.7cqw;letter-spacing:.2em;line-height:1;white-space:nowrap;color:var(--ac);margin-bottom:1.8cqw}
+.nv-k::before{content:"";flex:none;width:4.5cqw;height:.45cqw;background:currentColor}
+.nv-h{font-family:var(--en);font-weight:800;line-height:.9;letter-spacing:.01em;text-transform:uppercase;white-space:nowrap;color:#fff}
+.nv-n{font-family:var(--en);font-weight:800;font-size:4.8cqw;letter-spacing:.06em;text-transform:uppercase;line-height:1;margin-top:2.6cqw;color:var(--ac);overflow-wrap:anywhere}
+.nv-j{font-size:2.7cqw;font-weight:700;margin-top:1cqw;color:rgba(255,255,255,.78)}
+.nv-x{display:flex;align-items:center;gap:1.2cqw;margin-top:2.6cqw;font-size:2.6cqw;font-weight:700;line-height:1.3;color:rgba(255,255,255,.85)}
+.nv-x .clogo{height:5cqw;width:auto}
+.nt-v .face{right:2cqw;bottom:0;top:6%;width:44cqw;height:auto;max-height:none;object-fit:contain;object-position:bottom;z-index:2;filter:drop-shadow(0 0 3cqw rgba(0,0,0,.45))}
+.nt-v .face.ph{border-radius:0;color:transparent;font-size:0;border:0;aspect-ratio:auto;height:auto;top:16%;bottom:0;width:40cqw;background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20100%20125%22%3E%3Cg%20fill%3D%22%23fff%22%20fill-opacity%3D%22.3%22%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2242%22%20r%3D%2221%22/%3E%3Cpath%20d%3D%22M8%20125c0-28%2018-46%2042-46s42%2018%2042%2046z%22/%3E%3C/g%3E%3C/svg%3E") center bottom/90% auto no-repeat}
+.nv-crest{right:7cqw;top:50%;width:32cqw;height:32cqw;transform:translateY(-50%);z-index:2;filter:drop-shadow(0 0 3cqw rgba(0,0,0,.45))}
+.ac-sky{--ac:#7cc0e8}
+.ac-blue{--ac:#4aa3e6}
+.ac-green{--ac:#4fcf8f}
+.ac-gold{--ac:#d9b65c}
+.ac-red{--ac:#ef5a6a}
+.ac-gray{--ac:#c3ccd5}
+/* 既存デザイン用の補足行 */
+.nx-vs{display:flex;align-items:center;gap:1.2cqw;margin-top:2.4cqw;font-size:2.6cqw;font-weight:700;color:rgba(255,255,255,.85);position:static}
+/* クラブ名変更：旧エンブレムは薄くしない */
+.rn-c:first-child{opacity:1;filter:none}
+.rn-c:first-child span{color:rgba(255,255,255,.7)}
+/* カテゴリー：チーム記録・個人記録は金枠、レンタルは移籍と同じ */
+.cat.c-RECORD,.news .cat.c-RECORD,.cat.c-TEAMREC,.news .cat.c-TEAMREC{border-color:#b8860b;background:#fff;color:#b8860b}
+.cat.c-LOAN,.news .cat.c-LOAN{border-color:var(--blue);background:#fff;color:var(--blue)}
+.nv-x .logo.ph,.nx-vs .logo.ph{font-size:1.3cqw;overflow:hidden}
+/* ===== ニュース画像：かっこよく ===== */
+.nt-v{background:linear-gradient(160deg,#0b1219 0%,#16222e 45%,#0d151d 100%)}
+.nt-v::before{background:linear-gradient(115deg,transparent 0 30%,rgba(255,255,255,.04) 30% 34%,transparent 34% 52%,rgba(255,255,255,.03) 52% 54%,transparent 54%)}
+.nv-wm{right:-4cqw;top:50%;transform:translateY(-50%) rotate(-8deg);z-index:1;font-family:var(--en);font-weight:800;font-style:italic;font-size:15cqw;line-height:.86;text-transform:uppercase;white-space:nowrap;text-align:right;
+  color:transparent;-webkit-text-stroke:.18cqw var(--ac);opacity:.22}
+.nv-sl{right:-10cqw;top:-10%;bottom:-10%;width:46cqw;transform:skewX(-18deg);opacity:1;z-index:1;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--ac) 55%,transparent) 0%,color-mix(in srgb,var(--ac) 12%,transparent) 70%,transparent 100%)}
+.nv-sl::before{left:-2.6cqw;width:.9cqw;opacity:1;background:var(--ac)}
+.nv-sl::after{content:"";position:absolute;left:-5.2cqw;top:0;bottom:0;width:.35cqw;background:var(--ac);opacity:.6}
+.nv-bar{left:0;bottom:0;width:62cqw;height:1.1cqw;z-index:3;background:linear-gradient(90deg,var(--ac),transparent)}
+.nv-h{font-style:italic;letter-spacing:0;text-shadow:0 .5cqw 2cqw rgba(0,0,0,.5);padding-right:1cqw}
+.nv-k{font-style:italic}
+.nv-nm{position:static;display:flex;flex-direction:column;margin-top:2.6cqw;padding-left:2cqw;border-left:.7cqw solid var(--ac)}
+.nv-n{color:#fff;font-style:italic;font-size:4.4cqw;margin-top:0}
+.nv-j{margin-top:.8cqw}
+.nt-v .face{filter:drop-shadow(0 0 2.4cqw rgba(0,0,0,.55)) drop-shadow(-1.2cqw 0 0 color-mix(in srgb,var(--ac) 35%,transparent))}
+.nv-crest{filter:drop-shadow(0 0 3cqw rgba(0,0,0,.55)) drop-shadow(0 0 4cqw color-mix(in srgb,var(--ac) 35%,transparent))}
+/* 記事の表：項目名を少し広く */
+.art .inj-dl{grid-template-columns:9em 1fr}
+.art .inj-dl dd a{color:var(--blue);font-weight:700}
+@media (max-width:600px){.art .inj-dl{grid-template-columns:7.6em 1fr}.art .inj-dl dt,.art .inj-dl dd{padding:10px 8px;font-size:13px}}
+/* 記事の関連リンク（試合・選手は他のページと同じ行の形） */
+.nrel{margin-top:26px;display:grid;gap:0}
+.nrel .ph{background:var(--white);border:1px solid var(--line);border-bottom:0;font-family:var(--en);letter-spacing:.06em}
+.nrel .mlist,.nrel .panel{margin:0 0 18px;border:1px solid var(--line)}
+.nrel .mlist .mrow:last-child{border-bottom:0}
+.nrel .mrow{grid-template-columns:58px minmax(0,1fr) auto;gap:10px}
+.nrel .prow:has(.ph) .no{visibility:hidden}
