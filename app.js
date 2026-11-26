@@ -745,7 +745,7 @@ const seasonLabel = s => s || "";
 
 /* ---------- ニュース（試合・移籍から自動で作る） ---------- */
 const MON_EN = ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"];
-const NCAT = { CLUB: "チーム", CONTRACT: "契約更新", LOAN: "レンタル", TRANSFER: "移籍", PREVIEW: "試合情報", RESULT: "試合結果", ACADEMY: "トップ昇格", FIRST: "ユース記録", TEAMREC: "チーム記録", AWARD: "個人賞", RECORD: "個人記録", MEDICAL: "メディカル" };
+const NCAT = { CLUB: "チーム", CONTRACT: "契約更新", LOAN: "レンタル", TRANSFER: "移籍", PREVIEW: "試合情報", RESULT: "試合結果", ACADEMY: "トップ昇格", FIRST: "ユース記録", TEAMREC: "チーム記録", RECORD: "個人記録", AWARD: "個人賞", MEDICAL: "メディカル" };
 /* 表示用のカテゴリー（n.cat は並び順などの判定用にそのまま使う） */
 const ncat = n => n.cat === "MATCH" ? (n.kind === "result" ? "RESULT" : "PREVIEW")
   : n.cat === "TRANSFER" ? (n.tr && n.tr.kind === "契約延長" ? "CONTRACT" : n.tr && n.tr.kind === "ユース昇格" ? "ACADEMY" : n.tr && /レンタル/.test(n.tr.kind) ? "LOAN" : "TRANSFER")
@@ -785,10 +785,10 @@ function milestones() {
         hit(MS_P[k], p[k], p[k] + x[k]).filter(v => v > 1 || !MS_P[k].first).forEach(v => N.push({ id: `r-${k}-${nameKey(x.name)}-${v}`, d: m.date, cat: "RECORD", m0: m, ms: { who: x.name, k, v, def: MS_P[k], pro: !nw },
         t: `${x.name}選手 公式戦通算${v}${MS_P[k].u}達成` }));
         if (nw && MS_P[k].first && p[k] === 0 && x[k] > 0) (x.fs = x.fs || []).push(k); p[k] += x[k]; });
-      /* 初記録（デビュー・初ゴールなど）は1試合1選手で1件にまとめる */
-      if (x.fs) { const ord = ["apps", "g", "a", "cs"].filter(k => x.fs.includes(k)), hd = ["g", "a", "cs", "apps"].find(k => x.fs.includes(k)), lab = ord.map(k => MS_P[k].first);
-        const txt = `${x.name}選手が` + (ord[0] === "apps" ? `トップチームデビューを果たし${ord.length > 1 ? `、${lab.slice(1).join("・")}も記録しました` : "ました"}` : `${lab.join("・")}を記録しました`) + "。";
-        N.push({ id: `r-first-${nameKey(x.name)}-${m.id}`, d: m.date, cat: "RECORD", m0: m, ms: { who: x.name, k: hd, v: 1, def: MS_P[hd], firsts: ord, txt }, t: `${x.name}選手 ${lab.join("・")}` }); } });
+      /* 初記録（デビュー・初ゴールなど）：同じ試合でも1つずつ別の記事にする */
+      if (x.fs) ["cs", "a", "g", "apps"].filter(k => x.fs.includes(k)).forEach(k => {
+        const txt = `${x.name}選手が${MS_P[k].first}${k === "apps" ? "を果たしました" : "を記録しました"}。`;
+        N.push({ id: `r-first-${k}-${nameKey(x.name)}-${m.id}`, d: m.date, cat: "RECORD", m0: m, ms: { who: x.name, k, v: 1, def: MS_P[k], firsts: [k], txt }, t: `${x.name}選手 ${MS_P[k].first}` }); }); });
     const tx = { w: m.res === "W" ? 1 : 0, g: m.gf, n: 1, cs: m.ga === 0 ? 1 : 0 };
     Object.keys(MS_T).forEach(k => { hit(MS_T[k], T[k], T[k] + tx[k]).forEach(v => N.push({ id: `r-t${k}-${v}`, d: m.date, cat: "RECORD", m0: m, ms: { club: true, k, v, def: MS_T[k], pro: true },
       t: `公式戦通算${v}${MS_T[k].u}達成` })); T[k] += tx[k]; });
