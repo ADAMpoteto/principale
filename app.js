@@ -672,6 +672,9 @@ function goalsChart(L) {   /* 試合ごとの得点（上）と失点（下） *
   s += `<line x1="${pl}" x2="${W - pr}" y1="${mid}" y2="${mid}" stroke="#8794a1" stroke-width="1"/>`;
   return s + `</svg>`;
 }
+/* スマホでタップ後に吹き出しが残らないよう、スクロールや他の場所のタップで消す */
+document.addEventListener("touchstart", e => { if (!e.target.closest("[data-tip]")) $("tip").hidden = true; }, { passive: true });
+window.addEventListener("scroll", () => { const t = $("tip"); if (t && !t.hidden) t.hidden = true; }, { passive: true });
 function bindTips(root) {
   const tip = $("tip");
   root.querySelectorAll("[data-tip]").forEach(el => {
@@ -1471,6 +1474,7 @@ function vSquad() {
         : a.apps ? (/GK/.test(p.pos || a.pos || "") ? `${a.apps}試合 クリーンシート${a.cs}` : `${a.apps}試合 ${a.g}得点 ${a.a}アシスト`) : "出場なし"}</small></div></a>`; };
   const out = D.players.filter(p => /退団/.test(p.status));
   const jl = [["GK", "GK"], ["DF", "DF"], ["MF", "MF"], ["FW", "FW"], ["他", "その他"]].filter(([k]) => G[k].length).map(([k, t]) => [`sq-${k}`, t]);
+  if (loan.length) jl.push(["sq-loan", "期限付き"]);
   if (staffList().length) jl.push(["sq-staff", "スタッフ"]);
   const jump = jl.length > 1 ? `<nav class="sq-jump">${jl.map(([id, t]) => `<button type="button" data-id="${id}" onclick="sqJump('${id}')">${t}</button>`).join("")}</nav>` : "";
   return band("SQUAD", "選手・スタッフ", true) + jump + `<div class="wrap">
@@ -1776,6 +1780,7 @@ function render() {
   const V = { home: vHome, news: vNews, matches: vMatches, match: vMatch, table: vTable, stats: vStats, squad: vSquad, player: vPlayer, transfers: vTransfers, club: vClub, history: vHistory, staff: vStaff };
   const B = { news: bNews, matches: bMatches, stats: bStats, match: bMatch, table: bTable };
   const view = $("view");
+  $("tip").hidden = true;
   view.innerHTML = (V[page] || vHome)(arg);
   (B[page] || (() => { }))();
   bindTips(view);
