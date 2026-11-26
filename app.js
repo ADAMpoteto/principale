@@ -1463,20 +1463,24 @@ function vSquad() {
   const loan = list.filter(onLoan); list = list.filter(p => !onLoan(p));
   const G = { GK: [], DF: [], MF: [], FW: [], 他: [] };
   list.forEach(p => G[POSCAT(p.pos)].push(p));
-  const lbl = { GK: ["GOALKEEPERS", "ゴールキーパー"], DF: ["DEFENDERS", "ディフェンダー"], MF: ["MIDFIELDERS", "ミッドフィルダー"], FW: ["FORWARDS", "フォワード"], 他: ["OTHERS", "その他"] };
+  const lbl = { GK: ["GK", "ゴールキーパー"], DF: ["DF", "ディフェンダー"], MF: ["MF", "ミッドフィルダー"], FW: ["FW", "フォワード"], 他: ["OTHERS", "その他"] };
   const card = (p, isLoan) => { const a = byN[nameKey(p.name)] || {}, lc = isLoan ? loanClub(p.name) : "", ls = isLoan ? D.loans.filter(x => same(x.name, p.name) && (!s || x.season === s)).pop() : null;
     return `<a class="pcard${isLoan ? " loan" : ""}" href="#/player/${encodeURIComponent(p.name)}">
       <div class="ph-wrap">${p.no != null && !isLoan ? `<span class="no">${p.no}</span>` : ""}${isYouth(p) ? `<span class="acad">ACADEMY</span>` : ""}${!isLoan && injAt(p.name) ? `<span class="injb">${ICON_INJ}負傷中</span>` : ""}${face(p.name)}<span class="pos">${esc(p.pos || "")}</span></div>
       <div class="info"><b>${flag(p.nat)}${esc(p.name)}</b><small>${isLoan ? (lc ? `${esc(lc)}${leagueOf(lc) ? `（${esc(leagueOf(lc))}）` : ""}` : "期限付き移籍中") + (ls ? `<br>${ls.apps ?? 0}試合 ${ls.g ?? 0}得点 ${ls.a ?? 0}アシスト` : "")
         : a.apps ? (/GK/.test(p.pos || a.pos || "") ? `${a.apps}試合 クリーンシート${a.cs}` : `${a.apps}試合 ${a.g}得点 ${a.a}アシスト`) : "出場なし"}</small></div></a>`; };
   const out = D.players.filter(p => /退団/.test(p.status));
-  return band("PLAYERS", "選手", true) + `<div class="wrap">
-    ${["GK", "DF", "MF", "FW", "他"].filter(k => G[k].length).map(k => sec(lbl[k][0], lbl[k][1]) + `<div class="pgrid">${G[k].sort((a, b) => (a.no ?? 999) - (b.no ?? 999)).map(p => card(p)).join("")}</div>`).join("") || `<div class="panel">${empty("選手情報はまだありません。")}</div>`}
-    ${loan.length ? sec("ON LOAN", "期限付き移籍中の選手") + `<div class="pgrid">${loan.map(p => card(p, true)).join("")}</div>` : ""}
-    ${staffBlock()}
-    ${out.length ? sec("FORMER PLAYERS", "過去に在籍した選手") + `<div class="panel">${out.map(p => `<a class="prow" href="#/player/${encodeURIComponent(p.name)}"><span class="no"></span>${face(p.name)}<div class="nm"><b>${esc(p.name)}</b><small>${esc(p.pos)}</small></div></a>`).join("")}</div>` : ""}</div>`;
+  const jl = [["GK", "GK"], ["DF", "DF"], ["MF", "MF"], ["FW", "FW"], ["他", "その他"]].filter(([k]) => G[k].length).map(([k, t]) => [`sq-${k}`, t]);
+  if (staffList().length) jl.push(["sq-staff", "スタッフ"]);
+  const jump = jl.length > 1 ? `<nav class="sq-jump">${jl.map(([id, t]) => `<button type="button" onclick="sqJump('${id}')">${t}</button>`).join("")}</nav>` : "";
+  return band("SQUAD", "選手・スタッフ", true) + jump + `<div class="wrap">
+    ${["GK", "DF", "MF", "FW", "他"].filter(k => G[k].length).map(k => `<div id="sq-${k}" class="sq-anc"></div>` + sec(lbl[k][0], lbl[k][1]) + `<div class="pgrid">${G[k].sort((a, b) => (a.no ?? 999) - (b.no ?? 999)).map(p => card(p)).join("")}</div>`).join("") || `<div class="panel">${empty("選手情報はまだありません。")}</div>`}
+    ${loan.length ? `<div id="sq-loan" class="sq-anc"></div>` + sec("ON LOAN", "期限付き移籍中の選手") + `<div class="pgrid">${loan.map(p => card(p, true)).join("")}</div>` : ""}
+    <div id="sq-staff" class="sq-anc"></div>${staffBlock()}
+    ${out.length ? `<div id="sq-out" class="sq-anc"></div>` + sec("FORMER PLAYERS", "過去に在籍した選手") + `<div class="panel">${out.map(p => `<a class="prow" href="#/player/${encodeURIComponent(p.name)}"><span class="no"></span>${face(p.name)}<div class="nm"><b>${esc(p.name)}</b><small>${esc(p.pos)}</small></div></a>`).join("")}</div>` : ""}</div>`;
 }
 
+function sqJump(id) { const el = document.getElementById(id); if (!el) return; const top = document.querySelector(".top").offsetHeight + (document.querySelector(".sq-jump")?.offsetHeight || 0) + 8; window.scrollTo({ top: el.getBoundingClientRect().top + scrollY - top, behavior: "smooth" }); }
 function vPlayer(name) {
   const p = prof(name) || { name, pos: "" };
   const s = ST.season, Ls = ofSeason(s), all = playerAgg(D.played).find(x => same(x.name, name));
@@ -1781,7 +1785,16 @@ function render() {
 }
 function setMenu(open) { $("tabs").classList.toggle("open", open); $("menu-btn").setAttribute("aria-expanded", open); }
 let lastPage = "";
-window.addEventListener("hashchange", () => { const p = location.hash; if (!/^#\/match\//.test(p)) ST.mtab = "facts"; if (p !== lastPage) window.scrollTo(0, 0); lastPage = p; setMenu(false); render(); });
+/* ブラウザバックで戻ったときは、そのページで見ていた位置に戻す（各履歴にスクロール位置を保存） */
+if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+let scrollSave = 0;
+window.addEventListener("scroll", () => { clearTimeout(scrollSave); scrollSave = setTimeout(() => { try { history.replaceState({ y: scrollY }, ""); } catch (e) { } }, 120); }, { passive: true });
+window.addEventListener("hashchange", () => {
+  const p = location.hash, back = history.state && typeof history.state.y === "number" ? history.state.y : null;
+  if (!/^#\/match\//.test(p)) ST.mtab = "facts"; setMenu(false); render();
+  if (p !== lastPage) { if (back != null) { window.scrollTo(0, back); requestAnimationFrame(() => window.scrollTo(0, back)); setTimeout(() => window.scrollTo(0, back), 300); } else window.scrollTo(0, 0); }
+  lastPage = p;
+});
 
 (async function init() {
   $("menu-btn").onclick = () => setMenu(!$("tabs").classList.contains("open"));
