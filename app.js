@@ -743,12 +743,12 @@ const seasonLabel = s => s || "";
 
 /* ---------- ニュース（試合・移籍から自動で作る） ---------- */
 const MON_EN = ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"];
-const NCAT = { CLUB: "クラブ", CONTRACT: "契約更新", TRANSFER: "移籍", PREVIEW: "試合情報", RESULT: "試合結果", ACADEMY: "ユース", FIRST: "ユース記録", AWARD: "表彰", TITLE: "タイトル", RECORD: "記録", MEDICAL: "メディカル" };
+const NCAT = { CLUB: "クラブ", CONTRACT: "契約更新", TRANSFER: "移籍", PREVIEW: "試合情報", RESULT: "試合結果", ACADEMY: "ユース", FIRST: "ユース記録", AWARD: "表彰", RECORD: "記録", MEDICAL: "メディカル" };
 /* 表示用のカテゴリー（n.cat は並び順などの判定用にそのまま使う） */
 const ncat = n => n.cat === "MATCH" ? (n.kind === "result" ? "RESULT" : "PREVIEW")
   : n.cat === "TRANSFER" ? (n.tr && n.tr.kind === "契約延長" ? "CONTRACT" : n.tr && n.tr.kind === "ユース昇格" ? "ACADEMY" : "TRANSFER")
-  : n.cat === "RECORD" ? (n.ms && n.ms.firsts ? "FIRST" : n.ms && /^(MOM|TOTW|MONTHLY MVP|AWARD)$/.test(n.ms.en || "") ? "AWARD" : n.ms && n.ms.en === "CHAMPIONS" ? "TITLE" : "RECORD")
-  : n.inj ? "MEDICAL" : n.title ? "TITLE" : "CLUB";
+  : n.cat === "RECORD" ? (n.ms && n.ms.firsts ? (isYouth(prof(n.ms.who) || { name: n.ms.who }) ? "FIRST" : "RECORD") : n.ms && /^(MOM|TOTW|MONTHLY MVP|AWARD)$/.test(n.ms.en || "") ? "AWARD" : n.ms && n.ms.en === "CHAMPIONS" ? "CLUB" : "RECORD")
+  : n.inj ? "MEDICAL" : "CLUB";
 const catTag = n => `<span class="cat c-${ncat(n)}">${NCAT[ncat(n)]}</span>`;
 const INJ_MARK = `<i class="injm" title="負傷"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5.5v13M5.5 12h13" stroke="currentColor" stroke-width="4.2" stroke-linecap="round"/></svg></i>`;
 /* 試合中に負傷した選手：試合経過の「負傷」か、負傷シートの日付が試合の日 */
