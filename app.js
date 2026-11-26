@@ -786,7 +786,7 @@ function milestones() {
         t: `${x.name}選手 公式戦通算${v}${MS_P[k].u}達成` }));
         if (nw && MS_P[k].first && p[k] === 0 && x[k] > 0) (x.fs = x.fs || []).push(k); p[k] += x[k]; });
       /* 初記録（デビュー・初ゴールなど）：同じ試合でも1つずつ別の記事にする */
-      if (x.fs) ["cs", "a", "g", "apps"].filter(k => x.fs.includes(k)).forEach(k => {
+      if (x.fs) ["apps", "g", "a", "cs"].filter(k => x.fs.includes(k)).forEach(k => {
         const txt = `${x.name}選手が${MS_P[k].first}${k === "apps" ? "を果たしました" : "を記録しました"}。`;
         N.push({ id: `r-first-${k}-${nameKey(x.name)}-${m.id}`, d: m.date, cat: "RECORD", m0: m, ms: { who: x.name, k, v: 1, def: MS_P[k], firsts: [k], txt }, t: `${x.name}選手 ${MS_P[k].first}` }); }); });
     const tx = { w: m.res === "W" ? 1 : 0, g: m.gf, n: 1, cs: m.ga === 0 ? 1 : 0 };
@@ -888,12 +888,12 @@ function milestones2() {
     if (ws) { const nr = win > rec.win && rec.win >= 3; push(m, `r-ws-${m.id}`, `公式戦${win}連勝${nr ? "（クラブ新記録）" : ""}`, { club: true, big: win, en: "WINS IN A ROW", txt: `${clubName()}は${nr ? "クラブ新記録となる" : ""}${win}連勝を達成しました。` }); }
     if (!ws && unb >= 10 && unb % 5 === 0) { const nr = unb > rec.unb && rec.unb >= 10; push(m, `r-ub-${m.id}`, `公式戦${unb}試合無敗${nr ? "（クラブ新記録）" : ""}`, { club: true, big: unb, en: "UNBEATEN", txt: `${clubName()}は${nr ? "クラブ新記録となる" : ""}公式戦${unb}試合無敗となりました。` }); }
     rec.win = Math.max(rec.win, win); rec.unb = Math.max(rec.unb, unb);
-    /* クラブ最年少（デビュー・ゴール）。最初の記録は記事にしない */
+    /* クラブ最年少（デビュー・ゴール）。最初の記録は20歳以下のときだけ記事にする */
     /* 1試合につき、その試合で一番若い選手だけを比べる（同じ試合で記録が何度も更新されないように） */
     const chk = (kind, names) => { let best = null;
       names.forEach(name => { const p = prof(name); if (!p || !p.birth || !m.date) return; const a = ageTxt(p.birth, m.date); if (!best || a.ms < best.a.ms) best = { name, a }; });
       if (!best) return; const { name, a } = best, cur = yng[kind];
-      if (!cur || a.ms < cur) { if (cur) push(m, `r-yg-${kind}-${m.id}-${nameKey(name)}`, `${name}選手 クラブ史上最年少${kind === "debut" ? "デビュー" : "ゴール"}`,
+      if (!cur || a.ms < cur) { if (cur || a.y < 21) push(m, `r-yg-${kind}-${m.id}-${nameKey(name)}`, `${name}選手 クラブ史上最年少${kind === "debut" ? "デビュー" : "ゴール"}`,
         { who: name, big: a.y, en: "YEARS OLD", sub: `${a.y}歳${a.days}日`, txt: `${name}選手が${a.y}歳${a.days}日で${kind === "debut" ? "トップチームデビュー" : "ゴール"}を記録し、${clubName()}史上最年少記録を更新しました。` });
         yng[kind] = a.ms; } };
     const deb = [];
@@ -935,7 +935,9 @@ function buildNews() {
   if (oldName() && renameDate()) N.push({ id: "rename", d: renameDate(), cat: "CLUB", rename: true, t: `クラブ名変更のお知らせ` });
   (D.inj || []).forEach(x => N.push({ id: "i" + x.i, d: x.date, cat: "CLUB", inj: x, t: `${x.name}選手の負傷について` }));
   N.push(...milestones());
-  return N.filter(n => n.d).sort((a, b) => b.d - a.d || (b.top || 0) - (a.top || 0) || (a.cat === "MATCH" ? -1 : 0));
+  /* 同じ日の記事は、あとに起きたもの（シートの下の行・後の記録）を上に */
+  N.forEach((n, i) => n.seq = i);
+  return N.filter(n => n.d).sort((a, b) => b.d - a.d || (b.top || 0) - (a.top || 0) || (a.cat === "MATCH" ? -1 : 0) - (b.cat === "MATCH" ? -1 : 0) || b.seq - a.seq);
 }
 /* サムネイル（画像の代わりに、試合ならエンブレムとスコア、移籍なら選手） */
 function newsThumb(n) {
