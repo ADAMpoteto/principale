@@ -1669,3 +1669,7 @@ button.all{display:block;width:100%;border:0;background:none;font:inherit;cursor
 @media (max-width:600px){.sq-jump{display:flex}.sq-jump button{flex:1 1 0;padding:12px 2px;font-size:12.5px}}
 .sq-jump button.on{color:var(--navy);border-bottom-color:var(--blue)}
 @media (max-width:600px){.sq-jump button{border-bottom:3px solid transparent}.sq-jump button.on{border-bottom-color:var(--blue)}}
+/* ニュースカテゴリーの色（クラブ・契約更新・記録） */
+.cat.c-CLUB,.news .cat.c-CLUB{border-color:var(--sky);background:#fff;color:#3a9fd8}
+.cat.c-CONTRACT,.news .cat.c-CONTRACT{border-color:var(--sky);background:var(--sky);color:#fff}
+.cat.c-RECORD,.news .cat.c-RECORD{border-color:transparent;background:#fff;color:#b8860b}

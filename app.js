@@ -743,7 +743,7 @@ const seasonLabel = s => s || "";
 
 /* ---------- ニュース（試合・移籍から自動で作る） ---------- */
 const MON_EN = ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"];
-const NCAT = { CLUB: "クラブ", PREVIEW: "試合情報", RESULT: "試合結果", TRANSFER: "移籍", CONTRACT: "契約更新", ACADEMY: "アカデミー", MEDICAL: "メディカル", TITLE: "タイトル", AWARD: "表彰", RECORD: "記録", FIRST: "初記録" };
+const NCAT = { CLUB: "クラブ", CONTRACT: "契約更新", TRANSFER: "移籍", PREVIEW: "試合情報", RESULT: "試合結果", ACADEMY: "ユース", FIRST: "ユース記録", AWARD: "表彰", TITLE: "タイトル", RECORD: "記録", MEDICAL: "メディカル" };
 /* 表示用のカテゴリー（n.cat は並び順などの判定用にそのまま使う） */
 const ncat = n => n.cat === "MATCH" ? (n.kind === "result" ? "RESULT" : "PREVIEW")
   : n.cat === "TRANSFER" ? (n.tr && n.tr.kind === "契約延長" ? "CONTRACT" : n.tr && n.tr.kind === "ユース昇格" ? "ACADEMY" : "TRANSFER")
@@ -1097,7 +1097,7 @@ function vHome() {
 
 function vNews(id) {
   if (id) return vNewsDetail(id);
-  const all = buildNews(), cats = ["ALL", ...Object.keys(NCAT).filter(c => all.some(n => ncat(n) === c))];
+  const all = buildNews(), cats = [...Object.keys(NCAT).filter(c => all.some(n => ncat(n) === c)), "ALL"];
   if (!cats.includes(ST.ncat)) ST.ncat = "ALL";
   const L = all.filter(n => ST.ncat === "ALL" || ncat(n) === ST.ncat);
   return band("NEWS", "ニュース") + `<div class="wrap">
