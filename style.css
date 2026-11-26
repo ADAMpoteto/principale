@@ -1673,3 +1673,71 @@ button.all{display:block;width:100%;border:0;background:none;font:inherit;cursor
 .cat.c-CLUB,.news .cat.c-CLUB{border-color:var(--sky);background:#fff;color:#3a9fd8}
 .cat.c-CONTRACT,.news .cat.c-CONTRACT{border-color:var(--sky);background:var(--sky);color:#fff}
 .cat.c-RECORD,.news .cat.c-RECORD{border-color:transparent;background:#fff;color:#b8860b}
+/* ===== ニュース画像（新デザイン） ===== */
+.nt-v{display:block;padding:0;color:#fff;background:var(--navy)}
+.nt-v>*{position:absolute}
+.nt-v::before{content:"";position:absolute;inset:0;left:0;right:0;top:0;bottom:0;width:auto;height:auto;transform:none;opacity:1;background:none;z-index:0;pointer-events:none}
+.nt-v::after{content:none}
+.nv-t{left:6.5cqw;top:0;bottom:0;width:56cqw;display:flex;flex-direction:column;justify-content:center;z-index:3}
+.nv-k{display:flex;align-items:center;gap:1.4cqw;font-family:var(--en);font-weight:700;font-size:2.7cqw;letter-spacing:.2em;line-height:1;white-space:nowrap;color:var(--sky);margin-bottom:2cqw}
+.nv-k::before{content:"";flex:none;width:4.5cqw;height:.45cqw;background:currentColor}
+.nv-k.gold{color:#d9b65c}
+.nv-hj{font-family:"Noto Sans JP",sans-serif;font-weight:900;font-size:9.6cqw;line-height:1.05;letter-spacing:.04em;white-space:nowrap}
+.nv-h{font-family:var(--en);font-weight:800;font-size:12.5cqw;line-height:.86;letter-spacing:.01em;text-transform:uppercase;white-space:nowrap}
+.nv-h.s2{font-size:9cqw}
+.nv-h+.nv-h{margin-top:.4cqw}
+.nv-big{font-family:var(--en);font-weight:800;font-size:25cqw;line-height:.8;letter-spacing:-.01em}
+.nv-u{font-family:var(--en);font-weight:800;font-size:5.6cqw;letter-spacing:.06em;line-height:1;margin-top:1.4cqw;color:var(--sky)}
+.nv-n{font-family:var(--en);font-weight:800;font-size:4.8cqw;letter-spacing:.06em;text-transform:uppercase;line-height:1;margin-top:3cqw;overflow-wrap:anywhere}
+.nv-j{font-size:2.7cqw;font-weight:700;margin-top:1cqw;opacity:.8}
+.nv-x{display:flex;align-items:center;gap:1.2cqw;margin-top:2.6cqw;font-size:2.6cqw;font-weight:700;line-height:1.3;opacity:.92}
+.nv-x .logo{width:4.6cqw;height:4.6cqw;font-size:1.6cqw;flex:none}
+.nv-x .clogo{height:5cqw;width:auto}
+.nt-v .face{right:2cqw;bottom:0;top:6%;width:44cqw;height:auto;max-height:none;object-fit:contain;object-position:bottom;z-index:2}
+.nt-v .face.ph{border-radius:0;color:transparent;font-size:0;border:0;aspect-ratio:auto;height:auto;top:16%;bottom:0;width:40cqw;background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20100%20125%22%3E%3Cg%20fill%3D%22%23fff%22%20fill-opacity%3D%22.3%22%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2242%22%20r%3D%2221%22/%3E%3Cpath%20d%3D%22M8%20125c0-28%2018-46%2042-46s42%2018%2042%2046z%22/%3E%3C/g%3E%3C/svg%3E") center bottom/90% auto no-repeat}
+.v-first .face.ph,.v-med .face.ph{background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20100%20125%22%3E%3Cg%20fill%3D%22%231c2833%22%20fill-opacity%3D%22.16%22%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2242%22%20r%3D%2221%22/%3E%3Cpath%20d%3D%22M8%20125c0-28%2018-46%2042-46s42%2018%2042%2046z%22/%3E%3C/g%3E%3C/svg%3E")}
+.nv-wm{right:1cqw;top:-4cqw;z-index:1;font-family:var(--en);font-weight:800;font-size:44cqw;line-height:1;letter-spacing:-.04em}
+.nv-crest{right:7cqw;top:50%;width:32cqw;height:32cqw;transform:translateY(-50%);z-index:2}
+.nv-crest .logo{width:100%;height:100%;font-size:9cqw}
+/* 契約更新：水色 */
+.v-ctr{background:linear-gradient(120deg,#8ccbf0 0%,#55aee3 50%,#2e86c8 100%)}
+.v-ctr::before{background:repeating-linear-gradient(115deg,rgba(255,255,255,.0) 0 7cqw,rgba(255,255,255,.08) 7cqw 14cqw)}
+.v-ctr .nv-k{color:#fff}
+.v-ctr .face{filter:drop-shadow(0 0 2.4cqw rgba(13,58,94,.35))}
+/* トップ昇格：紺×緑、背景に何人目かの数字 */
+.v-acad{background:radial-gradient(120% 140% at 85% 30%,#1d5a43 0%,#14352c 45%,#101c22 100%)}
+.v-acad .nv-k{color:#6fd6a2}
+.v-acad .nv-wm{color:rgba(111,214,162,.14)}
+.v-acad .nv-x{color:#bfeed6}
+/* 初記録：白地 */
+.v-first{background:#f4f7fa;color:var(--navy)}
+.v-first::before{background:linear-gradient(115deg,transparent 0 58%,var(--sky) 58% 61%,#dcebf6 61% 100%)}
+.v-first .nv-k{color:var(--blue)}
+.v-first .nv-j{opacity:.65}
+/* 月間MVP：紺×金 */
+.v-mvp{background:radial-gradient(120% 140% at 85% 25%,#3b3320 0%,#1c2026 50%,#0f1418 100%)}
+.v-mvp .nv-k{color:#d9b65c}
+.v-mvp .nv-h{background:linear-gradient(180deg,#f6dc8f 0%,#c99a2e 100%);-webkit-background-clip:text;background-clip:text;color:transparent;padding-right:1cqw}
+.v-mvp .nv-n{color:#fff}
+.v-mvp .face{filter:drop-shadow(0 0 3cqw rgba(0,0,0,.5))}
+/* チーム記録：紺、エンブレム */
+.v-team{background:radial-gradient(120% 140% at 80% 50%,#2b5a80 0%,#1c2833 55%,#121a22 100%)}
+.v-team::before{background:repeating-linear-gradient(115deg,transparent 0 9cqw,rgba(255,255,255,.035) 9cqw 18cqw)}
+.v-team .nv-crest{filter:drop-shadow(0 0 3cqw rgba(0,0,0,.45))}
+/* メディカル：白地×赤 */
+.v-med{background:#eef2f5;color:var(--navy)}
+.v-med::before{background:linear-gradient(115deg,transparent 0 60%,#e3e8ed 60% 100%)}
+.v-med .nv-k{color:#c8102e}
+.v-med .nv-j{opacity:.65}
+.v-med .nv-x{opacity:.85}
+/* 既存デザイン（加入・移籍・個人記録）の補足行：枠なし */
+.nt-x .nv-k{margin-bottom:1.6cqw}
+.nx-vs{display:flex;align-items:center;gap:1.2cqw;margin-top:2.4cqw;font-size:2.6cqw;font-weight:700;color:rgba(255,255,255,.85);position:static}
+.nx-vs .logo{width:4.6cqw;height:4.6cqw;font-size:1.6cqw;flex:none}
+/* クラブ名変更：旧エンブレムは薄くしない（背景が透けて見えていた） */
+.rn-c:first-child{opacity:1;filter:none}
+.rn-c:first-child span{color:rgba(255,255,255,.7)}
+/* カテゴリー：チーム記録・個人記録は金枠、レンタルは移籍と同じ */
+.cat.c-RECORD,.news .cat.c-RECORD,.cat.c-TEAMREC,.news .cat.c-TEAMREC{border-color:#b8860b;background:#fff;color:#b8860b}
+.cat.c-LOAN,.news .cat.c-LOAN{border-color:var(--blue);background:#fff;color:var(--blue)}
+.nv-x .logo.ph,.nx-vs .logo.ph{font-size:1.3cqw;overflow:hidden}
