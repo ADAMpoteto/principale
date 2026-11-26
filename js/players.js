@@ -51,10 +51,12 @@ function vPlayer(name) {
   const matches = a ? [...a.list].reverse() : [];
   const tr = D.trans.filter(t => same(t.name, name));
   return `<section class="phero"><div class="phero-in"><div>
-      ${p.no != null ? `<div class="bigno">${p.no}</div>` : ""}<h1>${esc(name)}</h1>${p.roma ? `<p class="roma">${esc(p.roma)}</p>` : ""}<div class="pos">${flag(p.nat)}${esc(p.pos || "")}${onLoan(p) ? `<span class="ph-st">期限付き移籍中</span>` : /退団/.test(p.status || "") ? `<span class="ph-st">退団</span>` : ""}</div>${(ij => ij ? `<div class="inj-st">${ICON_INJ}負傷離脱中${ij.what ? `（${esc(ij.what)}）` : ""}${ij.back ? `<small>${md(ij.back)}ごろ復帰予定</small>` : ""}</div>` : "")(injAt(name))}
+      ${p.no != null ? `<div class="bigno">${p.no}</div>` : ""}<h1>${esc(name)}</h1>${p.roma ? `<p class="roma">${esc(p.roma)}</p>` : ""}<div class="pos">${flag(p.nat)}${esc(p.pos || "")}${onLoan(p) ? `<span class="ph-st">期限付き移籍中</span>` : /退団/.test(p.status || "") ? `<span class="ph-st">退団</span>` : ""}</div>
       ${isYouth(p) ? `<span class="acad-tag">ACADEMY</span>` : ""}
     </div><div class="photo">${face(name)}</div></div></section>
   <div class="wrap">
+    ${(ij => ij ? `<div class="pinj"><div class="pinj-h"><i>${ICON_INJ}</i><div><b>負傷離脱中</b>${ij.what ? `<span>${esc(ij.what)}</span>` : ""}</div></div>
+      <dl>${[["負傷日", md(ij.date)], ["全治", injTerm(ij)], ["復帰予定", ij.back ? `${md(ij.back)}ごろ` : "未定"]].filter(x => x[1]).map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl></div>` : "")(injAt(name))}
     ${info.length ? sec("PROFILE", "プロフィール") + `<div class="prof p4" style="--n:${info.length}">${info.map(([k, v]) => `<div><span>${k}</span><b>${esc(v)}</b></div>`).join("")}</div>` : ""}
     ${p.memo ? `<p style="color:var(--tx2);margin:12px 0 0">${esc(p.memo)}</p>` : ""}
     ${playerFirsts(all)}${playerTitles(p, name, bySeason)}${playerHistory(p, name, bySeason)}
@@ -199,6 +201,8 @@ function vStaff(name) {
       <div class="role-en">${esc(ROLE_EN[p.role] || "STAFF")}</div><h1>${esc(p.name)}</h1>${p.roma ? `<p class="roma">${esc(p.roma)}</p>` : ""}<div class="pos">${flag(p.nat)}${esc(p.role || "スタッフ")}${left ? "　退任" : ""}</div>
     </div><div class="photo">${face(p.name)}</div></div></section>
   <div class="wrap">
+    ${(ij => ij ? `<div class="pinj"><div class="pinj-h"><i>${ICON_INJ}</i><div><b>負傷離脱中</b>${ij.what ? `<span>${esc(ij.what)}</span>` : ""}</div></div>
+      <dl>${[["負傷日", md(ij.date)], ["全治", injTerm(ij)], ["復帰予定", ij.back ? `${md(ij.back)}ごろ` : "未定"]].filter(x => x[1]).map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl></div>` : "")(injAt(name))}
     ${info.length ? sec("PROFILE", "プロフィール") + `<div class="prof p4" style="--n:${info.length}">${info.map(([k, v]) => `<div><span>${k}</span><b>${esc(v)}</b></div>`).join("")}</div>` : ""}
     ${p.memo ? `<p style="color:var(--tx2);margin:12px 0 0">${esc(p.memo)}</p>` : ""}
     ${showRec ? sec("RECORD", "在任中の成績") + (M.length ? `<div class="tiles t4"><div class="tile"><span>試合</span><b>${M.length}</b></div>
