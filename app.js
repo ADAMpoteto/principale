@@ -908,12 +908,12 @@ function milestones2() {
 }
 function buildNews() {
   const N = [];
-  D.played.forEach(m => N.push({ id: "m" + m.id, d: m.date, cat: "MATCH", m, kind: "result", t: `【試合結果】${roundTitle(m)} vs ${m.opp}` }));
+  D.played.forEach(m => N.push({ id: "m" + m.id, d: m.date, cat: "MATCH", m, kind: "result", t: `${roundTitle(m)} vs ${m.opp}` }));
   const nx = D.matches.find(m => !m.played), lp = D.played[D.played.length - 1];
   /* 試合情報：試合が終わっても記事は残す。発表日は前の試合の日（最初の試合は試合の7日前） */
   const MS = [...D.matches].filter(m => m.date).sort((a, b) => a.date - b.date);
   MS.forEach((m, i) => { if (!m.played && m !== nx) return; const pv = MS[i - 1], d = pv ? pv.date : new Date(m.date.getFullYear(), m.date.getMonth(), m.date.getDate() - 7);
-    N.push({ id: "n" + m.id, d, cat: "MATCH", m, kind: "info", top: m === nx ? 1 : 0, t: `【試合情報】${roundTitle(m)} vs ${m.opp}` }); });
+    N.push({ id: "n" + m.id, d, cat: "MATCH", m, kind: "info", top: m === nx ? 1 : 0, t: `${roundTitle(m)} vs ${m.opp}` }); });
   const TT = { 加入: n => `${n}選手 加入のお知らせ`, レンタル加入: n => `${n}選手 期限付き移籍加入のお知らせ`, レンタル復帰: n => `${n}選手 期限付き移籍からの復帰のお知らせ`,
     ユース昇格: n => `${n}選手 トップチーム昇格のお知らせ`, 契約延長: n => `${n}選手 契約更新のお知らせ`,
     退団: (n, c) => c ? `${n}選手 ${c}へ完全移籍のお知らせ` : `${n}選手 退団のお知らせ`, レンタル移籍: (n, c) => `${n}選手 ${c ? c + "へ" : ""}期限付き移籍のお知らせ` };
