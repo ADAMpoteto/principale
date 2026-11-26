@@ -437,3 +437,7 @@
 .mrow .t small.mr-meta{min-width:0;max-width:100%}
 .mrow .mr-comp{min-width:0;overflow-wrap:anywhere}
 @media (max-width:600px){.mrow .t small.mr-meta{flex-wrap:wrap;row-gap:2px}}
+/* 相手選手がMOMのときは相手のエンブレム */
+.mom-ph.op{align-items:center}
+.mom-ph.op .logo{width:78px;height:78px;font-size:16px}
+@media (max-width:700px){.mom-ph.op .logo{width:62px;height:62px}}

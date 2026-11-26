@@ -181,7 +181,7 @@ function matchFacts(m, h) {
   const tlHead = `<div class="ph">試合経過</div>`;
   const hl = ytBox(m.video, "hl");
   const mom = m.mom ? (() => { const l = m.momL, op = l && l.side === "opp";
-    const inner = `<div class="mom-ph">${face(m.mom)}</div><div class="mom-tx"><span>MAN OF THE MATCH</span><b>${esc(m.mom)}</b><small>${[l && l.no != null ? "#" + l.no : "", l ? l.pos : "", op ? m.opp : ""].filter(Boolean).map(esc).join("　")}</small></div>${l && l.rating != null ? `<div class="mom-rt"><small>RATING</small><b>${fmtN(l.rating, 1)}</b></div>` : ""}`;
+    const inner = `<div class="mom-ph${op ? " op" : ""}">${op ? logo(m.opp, "") : face(m.mom)}</div><div class="mom-tx"><span>MAN OF THE MATCH</span><b>${esc(m.mom)}</b><small>${[l && l.no != null ? "#" + l.no : "", l ? l.pos : "", op ? m.opp : ""].filter(Boolean).map(esc).join("　")}</small></div>${l && l.rating != null ? `<div class="mom-rt"><small>RATING</small><b>${fmtN(l.rating, 1)}</b></div>` : ""}`;
     return op ? `<div class="mom">${inner}</div>` : `<a class="mom" href="#/player/${pslug(m.mom)}">${inner}</a>`; })() : "";
   const stats = "";
   return `${hl ? `<div class="ph">HIGHLIGHTS<small>ハイライト</small></div><div class="hlw">${hl}</div>` : ""}${mom}${tl ? `<div class="evw">${tlHead}${tl}</div>` : ""}${stats}${m.memo ? `<p style="padding:14px 18px;margin:0;color:var(--tx2)">${esc(m.memo)}</p>` : ""}
