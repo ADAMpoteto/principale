@@ -1,0 +1,439 @@
+/* 試合日程・結果、試合詳細、メンバー */
+
+/* ---------- 結果・評価 ---------- */
+.res{display:inline-grid;place-items:center;min-width:52px;height:28px;padding:0 8px;font-family:var(--en);font-size:18px;font-weight:700;color:#fff;letter-spacing:.04em}
+.res.W{background:var(--w)}
+.res.D{background:var(--d)}
+.res.L{background:var(--l)}
+/* ---------- 試合リスト ---------- */
+.mlist .mh{background:var(--navy);color:#fff;font-family:var(--en);font-size:16px;font-weight:700;letter-spacing:.1em;padding:6px 16px;margin-top:20px}
+.mlist .mh:first-child{margin-top:0}
+.mrow{display:grid;grid-template-columns:96px minmax(0,1fr) auto;align-items:center;gap:16px;padding:14px 16px;background:var(--white);border-bottom:1px solid var(--line)}
+.mrow:hover{background:#f8fafb}
+.mrow .d{font-family:var(--en);line-height:1.1}
+.mrow .d b{display:block;font-size:24px;font-weight:700;letter-spacing:.02em}
+.mrow .d span{font-size:13px;font-weight:600;color:var(--tx3);letter-spacing:.08em}
+.mrow .t{display:flex;align-items:center;gap:14px;min-width:0}
+.mrow .t div{min-width:0}
+.mrow .t small{display:block;font-size:12px;color:var(--tx3);overflow-wrap:anywhere}
+.mrow .t b{display:block;font-weight:700;font-size:15px;overflow-wrap:anywhere}
+.mrow .s{text-align:right}
+.mrow .s .pk{display:block;font-size:11px;color:var(--tx3);margin-top:2px}
+.mrow .s .up{font-family:var(--en);font-size:15px;font-weight:700;color:var(--tx2);letter-spacing:.04em}
+@media (max-width:600px){.mrow{grid-template-columns:58px minmax(0,1fr) auto;gap:10px;padding:12px}.mrow .d b{font-size:20px}.mrow .t{gap:10px}.mrow .t .logo{width:34px;height:34px;flex:none}}
+/* ---------- 試合詳細 ---------- */
+.mhead{background:var(--navy);color:#fff;position:relative;overflow:hidden}
+.mhead::before{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 0 80%,rgba(124,192,232,.9) 80% 92%,transparent 92%)}
+.mhead-in{max-width:900px;margin:0 auto;padding:28px 20px 26px;position:relative}
+.mhead .meta{text-align:center;font-size:13px;color:rgba(255,255,255,.75);font-weight:700}
+.mhead .vs{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;margin-top:18px}
+.mhead .club{display:flex;flex-direction:column;align-items:center;gap:10px;font-weight:700;font-size:15px;text-align:center}
+.mhead .club .logo.ph{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.25);color:#fff}
+.mhead .score{font-family:var(--en);font-size:76px;font-weight:800;line-height:1;letter-spacing:.02em;white-space:nowrap;text-align:center}
+.mhead .ft{display:block;text-align:center;font-family:var(--en);font-size:14px;letter-spacing:.2em;color:var(--sky);font-weight:700;margin-top:4px}
+.mhead .kick{font-family:var(--en);font-size:44px;font-weight:800;text-align:center;line-height:1}
+.scorers{display:grid;grid-template-columns:1fr 30px 1fr;gap:8px;margin-top:16px;font-size:13px;color:rgba(255,255,255,.85)}
+.scorers div:first-child{text-align:right}
+.scorers .ico{display:flex;justify-content:center;padding-top:3px;color:rgba(255,255,255,.6)}
+@media (max-width:600px){.mhead .score{font-size:54px}.mhead .logo.lg{width:60px;height:60px}}
+.mtabs{display:flex;background:var(--white);border-bottom:1px solid var(--line);justify-content:center;position:sticky;top:76px;z-index:5}
+.mtabs a{padding:14px 26px;font-family:var(--en);font-weight:700;font-size:17px;letter-spacing:.08em;color:var(--tx3);border-bottom:3px solid transparent;display:flex;flex-direction:column;align-items:center;line-height:1.1}
+.mtabs a small{font-family:var(--font);font-size:10px;font-weight:500;letter-spacing:0}
+.mtabs a.on{color:var(--tx);border-bottom-color:var(--blue)}
+@media (max-width:980px){.mtabs{top:64px}}
+.cmp-legend{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;font-weight:700;border-bottom:1px solid var(--line)}
+.cmp-legend span{display:flex;align-items:center;gap:8px}
+.cmp-legend i{width:12px;height:12px;display:inline-block}
+.cmp-legend small{color:var(--tx3);font-weight:500;font-size:12px}
+.cmp-sec{padding:6px 18px 16px}
+.cmp-sec h3{font-size:13px;font-weight:700;color:var(--tx2);text-align:center;margin:14px 0 8px;letter-spacing:.06em}
+.crow{display:grid;grid-template-columns:80px 1fr 80px;align-items:center;gap:8px;padding:7px 0}
+.crow .lab{text-align:center;font-size:13px;color:var(--tx2)}
+.crow .v{font-weight:700;font-variant-numeric:tabular-nums;font-size:15px}
+.crow .v.r{text-align:right}
+.crow .v b{display:inline-block;padding:1px 9px;min-width:36px;text-align:center}
+.crow .v.win.me b{background:var(--cl);color:#fff}
+.crow .v.win.op b{background:var(--cr);color:#fff}
+.crow .bars{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:4px;height:4px}
+.crow .bars span{height:4px;background:#e8edf1;position:relative;overflow:hidden}
+.crow .bars span i{position:absolute;top:0;bottom:0}
+.crow .bars span:first-child i{right:0;background:var(--cl)}
+.crow .bars span:last-child i{left:0;background:var(--cr)}
+.poss{display:flex;height:32px;gap:2px;margin:4px 0;font-family:var(--en);font-weight:700;font-size:17px;color:#fff}
+.poss div{display:flex;align-items:center;padding:0 12px;min-width:50px}
+.poss div:first-child{background:var(--cl)}
+.poss div:last-child{background:var(--cr);justify-content:flex-end}
+/* 試合経過 */
+.ev{display:grid;grid-template-columns:1fr 54px 1fr;align-items:center;gap:10px;padding:10px 18px;border-bottom:1px solid var(--line);font-size:14px}
+.ev .m{text-align:center;font-family:var(--en);font-weight:700;font-size:17px;color:var(--tx2)}
+.ev .l{text-align:right;display:flex;justify-content:flex-end;align-items:center;gap:8px}
+.ev .r{display:flex;align-items:center;gap:8px}
+.ev small{display:block;color:var(--tx3);font-size:12px}
+.ev .ico{flex:none;color:var(--tx2);display:flex}
+.ev-ht{text-align:center;font-family:var(--en);font-weight:700;letter-spacing:.14em;font-size:13px;color:var(--tx3);padding:8px;background:#f6f8fa;border-bottom:1px solid var(--line)}
+/* ピッチ */
+.pitch{position:relative;margin:18px;aspect-ratio:68/80;max-width:560px;margin-left:auto;margin-right:auto;overflow:hidden;
+  background:repeating-linear-gradient(180deg,#3d8b4f 0 10%,#378049 10% 20%)}
+.pitch::before{content:"";position:absolute;inset:4%;border:2px solid rgba(255,255,255,.45)}
+.pitch::after{content:"";position:absolute;left:30%;right:30%;bottom:4%;height:14%;border:2px solid rgba(255,255,255,.45);border-bottom:0}
+.mrow .d span{display:block;overflow-wrap:anywhere}
+@media (max-width:600px){
+  .mrow .t .fn{display:inline}
+  .mrow .t .sn{display:none}
+  .mrow .t b{white-space:normal;font-size:14px;line-height:1.3}
+}
+/* 両チームのスタメン */
+.lu-grid{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.lu-col{min-width:0;border-right:1px solid var(--line)}
+.lu-col:last-child{border-right:0}
+.lu-col .pitch{margin:14px}
+.pitch.opp{background:repeating-linear-gradient(180deg,#46805a 0 10%,#40774f 10% 20%)}
+@media (max-width:760px){.lu-grid{grid-template-columns:1fr}.lu-col{border-right:0}}
+/* 試合一覧：HOME/AWAY */
+.mrow .t small .ha{width:auto;height:auto;padding:0 6px;font-size:10px;letter-spacing:.08em;margin-right:8px;vertical-align:1px}
+.tl{display:grid;grid-template-columns:52px 1fr auto;grid-template-areas:"ic n c" "ic s s";gap:4px 14px;align-items:center;background:var(--white);border:1px solid var(--line);border-left:4px solid #bc002d;padding:14px 18px}
+.tl-ic{grid-area:ic;width:52px;height:52px;display:flex;align-items:center;justify-content:center;background:var(--navy);color:var(--sky)}
+.tl-ic svg{width:28px;height:28px}
+.tl-n{grid-area:n}
+.tl-n b{font-size:17px;font-weight:900}
+.tl-n small{margin-left:8px;font-size:12px;font-weight:700;color:var(--tx3)}
+.tl-c{grid-area:c;font-family:var(--en);font-weight:800;font-style:italic;font-size:36px;line-height:1;color:var(--navy)}
+.tl-c small{font-family:var(--font);font-style:normal;font-size:12px;margin-left:2px}
+.tl-s{grid-area:s;display:flex;flex-wrap:wrap;gap:6px}
+.tl-s span{font-family:var(--en);font-weight:700;font-size:13px;background:#eef1f4;padding:1px 8px}
+@media (max-width:700px){.tl{grid-template-columns:40px 1fr auto;gap:4px 10px;padding:12px}.tl-ic{width:40px;height:40px}.tl-ic svg{width:22px;height:22px}.tl-n b{font-size:15px}.tl-c{font-size:28px}}
+/* ===== 試合詳細のヘッダー ===== */
+.mh{background:radial-gradient(120% 140% at 50% 0%,#2b4a66 0%,#1c2833 60%,#141d26 100%);color:#fff;position:relative;overflow:hidden}
+.mh::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(115deg,rgba(124,192,232,0) 0 60px,rgba(124,192,232,.05) 60px 75px)}
+.mh-in{position:relative;max-width:960px;margin:0 auto;padding:30px 20px 30px}
+.mh-top{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
+.mh-comp{font-size:12px;font-weight:700;background:var(--sky);color:var(--navy);padding:3px 12px}
+.mh-round{font-size:12px;font-weight:700;border:1px solid rgba(255,255,255,.35);padding:2px 12px}
+.mh-date{text-align:center;margin-top:12px;font-family:var(--en);font-weight:700;font-size:20px;letter-spacing:.06em}
+.mh-date small{font-size:14px;color:var(--sky);margin-left:2px}
+.mh-date span{font-size:14px;color:rgba(255,255,255,.7);margin-left:10px;letter-spacing:.1em}
+.mh-vs{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:16px;margin-top:22px}
+.mh-team{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;min-width:0}
+.mh-team .logo.ph{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.25);color:#fff;font-size:22px}
+.mh-team b{font-size:17px;font-weight:900;line-height:1.3}
+.mh-team small{font-family:var(--en);font-weight:700;font-size:11px;letter-spacing:.2em;color:rgba(255,255,255,.5)}
+.mh-c{display:flex;flex-direction:column;align-items:center;min-width:180px}
+.mh-score{display:flex;align-items:center;gap:18px;font-family:var(--en);font-weight:800;font-style:italic;line-height:1}
+.mh-score b{font-size:96px}
+.mh-score i{width:22px;height:6px;background:var(--sky)}
+.mh-pk{font-family:var(--en);font-weight:700;font-size:16px;color:var(--sky);margin-top:2px}
+.mh-ft{font-size:12px;font-weight:700;color:rgba(255,255,255,.7);margin-top:6px;letter-spacing:.1em}
+.mh-res{margin-top:8px;font-family:var(--en);font-weight:800;font-size:13px;letter-spacing:.2em;padding:2px 14px;background:#555}
+.mh-res.W{background:#bc002d}
+.mh-res.D{background:#6b7785}
+.mh-res.L{background:#3d4a57}
+.mh-kick{font-family:var(--en);font-weight:800;font-style:italic;font-size:56px;line-height:1}
+.mh-goals{display:grid;grid-template-columns:1fr 1fr;gap:0 min(220px,24%);margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,.12)}
+.mh-goals ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:700}
+.mh-goals li{display:flex;align-items:center;gap:6px}
+.mh-goals .h{align-items:flex-end}
+.mh-goals .h li{flex-direction:row-reverse}
+.mh-goals li svg{width:12px;height:12px;color:var(--sky);flex:none}
+.mh-goals em{font-style:normal;font-family:var(--en);color:rgba(255,255,255,.6)}
+.mh-info{background:var(--white);border-bottom:1px solid var(--line)}
+.mh-info-in{max-width:960px;margin:0 auto;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr)}
+.mh-info-in>div{padding:12px 16px;border-left:1px solid var(--line);display:flex;flex-direction:column;gap:3px;min-width:0}
+.mh-info-in>div:first-child{border-left:0}
+.mh-info small{font-family:var(--en);font-weight:700;font-size:11px;letter-spacing:.14em;color:var(--blue)}
+.mh-info small i{font-style:normal;font-family:var(--font);font-size:10px;color:var(--tx3);margin-left:6px;letter-spacing:0}
+.mh-info b{font-size:14px;font-weight:700;display:flex;align-items:center;gap:6px;overflow-wrap:anywhere}
+.mh-info b svg{width:18px;height:18px;color:var(--navy);flex:none}
+/* MOM */
+.mom{display:grid;grid-template-columns:92px 1fr auto;align-items:end;gap:14px;background:var(--navy);color:#fff;text-decoration:none;padding:0 20px 0 0;position:relative;overflow:hidden;margin:16px}
+.mom::after{content:"";position:absolute;right:-30px;top:0;bottom:0;width:110px;background:var(--sky);transform:skewX(-18deg);opacity:.25}
+.mom-ph{height:110px;display:flex;align-items:flex-end;justify-content:center}
+.mom-ph .face{width:92px;height:110px;object-fit:contain;object-position:bottom;border-radius:0;background:transparent}
+.mom-ph .face.ph{width:70px;height:70px;border-radius:50%;margin-bottom:20px}
+.mom-tx{align-self:center;display:flex;flex-direction:column;gap:2px;min-width:0}
+.mom-tx span{font-family:var(--en);font-weight:800;font-style:italic;font-size:14px;letter-spacing:.08em;color:var(--sky)}
+.mom-tx b{font-size:20px;font-weight:900}
+.mom-tx small{font-size:12px;color:rgba(255,255,255,.65)}
+.mom-rt{align-self:center;position:relative;z-index:1;text-align:center}
+.mom-rt small{display:block;font-family:var(--en);font-weight:700;font-size:10px;letter-spacing:.14em;color:rgba(255,255,255,.6)}
+.mom-rt b{font-family:var(--en);font-weight:800;font-style:italic;font-size:40px;line-height:1}
+@media (max-width:700px){.mom{grid-template-columns:72px 1fr auto;gap:10px;margin:12px;padding-right:14px}.mom-ph{height:92px}.mom-ph .face{width:72px;height:92px}.mom-tx b{font-size:17px}.mom-rt b{font-size:32px}}
+.mh-top{align-items:center}
+.lp-team{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;font-weight:700;font-size:13px;background:rgba(0,0,0,.25)}
+.lp-team span{display:flex;align-items:center;gap:6px}
+.lp-team small{font-family:var(--en);font-size:14px;letter-spacing:.06em;color:var(--sky)}
+.lp-field{position:relative;aspect-ratio:68/120;max-height:1000px;margin:0 auto;
+  background:repeating-linear-gradient(180deg,#3a7d52 0 6.25%,#357349 6.25% 12.5%)}
+.lp-field::before{content:"";position:absolute;inset:3%;border:2px solid rgba(255,255,255,.4);
+  background:linear-gradient(rgba(255,255,255,.4),rgba(255,255,255,.4)) center/100% 2px no-repeat}
+.lp-field::after{content:"";position:absolute;left:50%;top:50%;width:22%;aspect-ratio:1;border:2px solid rgba(255,255,255,.4);border-radius:50%;transform:translate(-50%,-50%)}
+.lp{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;width:72px;color:#fff;text-decoration:none;z-index:1}
+.lp-ph{position:relative;width:50px;height:50px;border-radius:50%;overflow:visible;background:linear-gradient(160deg,#e9f1f7,#c9dbe8);border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35)}
+.lp.opp .lp-ph{border-color:#f3b37a}
+.lp-ph .face{width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:50% 12%;background:transparent}
+.lp-ph .face.ph{display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--navy)}
+.lp-ph em{position:absolute;right:-6px;bottom:-4px;min-width:20px;height:20px;padding:0 4px;border-radius:10px;background:var(--navy);color:#fff;font-style:normal;font-family:var(--en);font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;border:1px solid #fff}
+.lp.opp .lp-ph em{background:#d9702a}
+.lp-g{position:absolute;left:-6px;top:-4px;display:flex;gap:1px}
+.lp-g svg{width:14px;height:14px;background:#fff;border-radius:50%;color:var(--navy)}
+.lp-nm{font-size:11px;font-weight:700;line-height:1.2;text-align:center;text-shadow:0 1px 2px rgba(0,0,0,.6);max-width:72px;overflow-wrap:anywhere}
+@media (max-width:700px){
+  .lp{width:60px}
+  .lp-ph{width:40px;height:40px}
+  .lp-ph em{min-width:17px;height:17px;font-size:10px;right:-7px}
+  .lp-nm{font-size:9.5px;max-width:60px}
+}
+.lp-team{gap:8px}
+.lp-team span{gap:6px}
+.lp-team small{font-size:12px;margin:0 4px}
+.lp-field{aspect-ratio:105/68;max-height:none;background:repeating-linear-gradient(90deg,#3a7d52 0 5%,#357349 5% 10%)}
+.lp-field::before{background:linear-gradient(rgba(255,255,255,.4),rgba(255,255,255,.4)) center/2px 100% no-repeat}
+.lp-field::after{width:auto;height:26%;aspect-ratio:1}
+.lp{width:76px}
+.lp-ph{width:44px;height:44px}
+.lp-nm{white-space:normal;overflow:visible;text-overflow:clip;max-width:80px;word-break:keep-all;overflow-wrap:anywhere;line-height:1.15}
+@media (max-width:700px){
+  .lp{width:44px;gap:2px}
+  .lp-ph{width:26px;height:26px;border-width:1.5px}
+  .lp-ph em{min-width:13px;height:13px;font-size:8px;right:-6px;bottom:-3px;padding:0 2px}
+  .lp-g svg{width:10px;height:10px}
+  .lp-nm{font-size:7.5px;max-width:48px}
+  .lp-team{font-size:11px;padding:6px 8px}
+  .lp-team small{font-size:10px}
+}
+/* ===== 試合ヘッダー：大会エンブレムを上に大きく ===== */
+.mh-top{flex-direction:column;align-items:center;gap:8px}
+.mh-cn{font-size:13px;font-weight:700;letter-spacing:.06em;color:rgba(255,255,255,.9)}
+.mh-cn span{margin-left:10px;padding-left:10px;border-left:1px solid rgba(255,255,255,.35)}
+/* ===== プレビュー ===== */
+.pv{margin:0 16px 8px;border:1px solid var(--line)}
+.pv-h{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--line);background:#f4f6f8}
+.pv-h>div{display:flex;align-items:center;gap:8px;padding:10px 14px;font-weight:700;font-size:14px;min-width:0}
+.pv-h>div:last-child{flex-direction:row-reverse;text-align:right}
+.pv-r{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:10px 14px;border-top:1px solid var(--line)}
+.pv-r:first-of-type{border-top:0}
+.pv-r .k{font-size:11px;font-weight:700;color:var(--tx3);text-align:center;padding:0 10px}
+.pv-r .a,.pv-r .b{font-family:var(--en);font-weight:700;font-size:16px}
+.pv-r .b{text-align:right;display:flex;justify-content:flex-end}
+.pv-r b{font-size:24px;font-weight:800}
+.pv-r small{font-size:11px;margin-left:2px}
+.kp{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 16px 16px}
+.kp-c{display:grid;grid-template-columns:64px 1fr;align-items:end;background:var(--navy);color:#fff;text-decoration:none;overflow:hidden}
+.kp-c .face{width:64px;height:78px;object-fit:contain;object-position:bottom;border-radius:0;background:transparent}
+.kp-c .face.ph{width:48px;height:48px;border-radius:50%;margin:0 0 14px 8px}
+.kp-c>div{padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.kp-c span{font-size:10px;font-weight:700;color:var(--sky)}
+.kp-c b{font-size:14px}
+.kp-c em{font-style:normal;font-family:var(--en);font-weight:800;font-size:22px;line-height:1}
+.kp-c em small{font-family:var(--font);font-size:10px;margin-left:3px}
+@media (max-width:700px){.pv{margin:0 10px 8px}.kp{margin:0 10px 12px;gap:8px}.kp-c{grid-template-columns:52px 1fr}.kp-c .face{width:52px;height:66px}.kp-c b{font-size:12px}.pv-h>div{font-size:12px;padding:8px}}
+.pv-r .a,.pv-r .b{display:flex;align-items:baseline;gap:1px}
+.pv-r .b{justify-content:flex-end}
+.pv-r .k{white-space:nowrap}
+.pv-r .form5{display:flex;gap:3px}
+@media (max-width:700px){
+  .pv-r{padding:9px 10px}.pv-r .k{padding:0 6px;font-size:10px}
+  .pv-r .wdl{width:17px;height:17px;font-size:9px;line-height:17px}
+  .lp-ph .face.ph{font-size:7px;line-height:1;overflow:hidden}
+}
+.mrow .clogo{height:14px;margin:0 4px 0 2px;vertical-align:-2px}
+/* ===== ピッチのライン ===== */
+.lp-field::before,.lp-field::after{display:none}
+.lp-lines{position:absolute;inset:0;width:100%;height:100%}
+/* ===== 試合一覧の1行 ===== */
+.mrow .t small.mr-meta{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;margin-bottom:2px}
+.mrow .t small.mr-meta .ha{margin:0}
+.mrow .t small.mr-meta .clogo{height:16px;margin:0;flex:none}
+.mrow .t small.mr-meta .mr-comp{;overflow-wrap:anywhere}
+/* ===== 控え ===== */
+.sb-sec{padding:26px 24px 24px}
+.sb-title{display:flex;align-items:baseline;gap:10px;padding:0 0 10px;font-family:var(--en);font-weight:800;font-style:italic;font-size:20px;letter-spacing:.04em;border-bottom:3px solid var(--navy)}
+.sb-title small{font-family:var(--font);font-style:normal;font-size:12px;color:var(--tx3);font-weight:700}
+.sb-cols{display:grid;grid-template-columns:1fr 1fr;gap:0 28px}
+.sb-cols>*{min-width:0}
+.sb-h{display:flex;align-items:center;gap:8px;padding:12px 2px;border-bottom:1px solid var(--line)}
+.sb-h b{font-size:14px;font-weight:700;min-width:0;overflow-wrap:anywhere}
+.sb-h small{margin-left:auto;font-size:11px;color:var(--tx3);font-weight:700}
+.sb{display:flex;align-items:center;gap:12px;padding:10px 2px;border-bottom:1px solid var(--line);color:inherit;text-decoration:none}
+.sb-ph{position:relative;flex:none;width:44px;height:44px}
+.sb-ph .face{width:44px;height:44px;border-radius:50%;object-fit:cover;object-position:50% 12%;background:linear-gradient(160deg,#e9f1f7,#c9dbe8);display:grid;place-items:center;font-size:11px;font-weight:700;color:var(--navy)}
+.sb-ph em{position:absolute;right:-4px;bottom:-2px;min-width:20px;height:20px;padding:0 4px;border-radius:10px;background:var(--navy);color:#fff;border:2px solid #fff;font-style:normal;font-family:var(--en);font-weight:800;font-size:11px;display:grid;place-items:center;box-sizing:border-box}
+.sb-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.sb-nm{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;overflow-wrap:anywhere}
+.sb-nm i{font-style:normal;font-family:var(--en);font-weight:800;font-size:11px;color:var(--blue);min-width:28px;letter-spacing:.04em}
+.sb-nm .lp-g{position:static}
+.sb-nm .lp-g svg{width:12px;height:12px;background:none;color:var(--navy)}
+.sb-io{display:flex;align-items:center;gap:5px;padding-left:36px;font-size:11px;color:var(--tx3);min-width:0}
+.sb-io svg{width:13px;height:13px;flex:none}
+.sb-io span{;overflow-wrap:anywhere}
+.sb-min{flex:none;font-family:var(--en);font-weight:800;font-size:15px;color:#1d9a55}
+.sb.off .sb-ph,.sb.off .sb-nm{opacity:.55}
+.sb-none{padding:14px 2px;font-size:12px;color:var(--tx3)}
+@media (max-width:700px){
+  .sb-sec{padding:20px 14px 16px}
+  .sb-cols{grid-template-columns:1fr;gap:6px}
+  .sb-title{font-size:18px}
+}
+@media (max-width:700px){
+  .lu .lpitch{display:none}
+  .lu[data-t="0"] .lpm-field.s1,.lu[data-t="1"] .lpm-field.s0{display:none}
+  .lu[data-t="0"] .sb-col:nth-child(2),.lu[data-t="1"] .sb-col:nth-child(1){display:none}
+}
+.mtabs a{white-space:nowrap}
+@media (max-width:700px){.mtabs a{font-size:15px;padding-left:4px;padding-right:4px}}
+.ev-ph{display:flex;align-items:center;justify-content:center;gap:12px;padding:9px 12px;background:#f4f6f8;border-bottom:1px solid var(--line)}
+.ev-ph b{font-family:var(--en);font-weight:800;font-size:13px;letter-spacing:.14em;color:var(--tx2)}
+.ev-ph span{font-family:var(--en);font-weight:800;font-size:15px;color:var(--navy);letter-spacing:.04em}
+.ev-ph small{font-size:11px;color:var(--tx3)}
+.ev-ph.ft{background:var(--navy)}
+.ev-ph.ft b,.ev-ph.ft span{color:#fff}
+.ev-ph.ft small{color:rgba(255,255,255,.6)}
+.ev.minor{padding-top:6px;padding-bottom:6px;font-size:12.5px;color:var(--tx2)}
+.ev.minor .m{font-size:14px;color:var(--tx3)}
+.ev.minor .ico{color:var(--tx3)}
+.ev.goal{background:#f3f8fc}
+.ev.goal a,.ev.goal>div>div{font-weight:700}
+.ev-k{font-weight:700}
+.ev-vb{flex:none;display:inline-flex;align-items:center;gap:3px;border:1px solid #d33;background:#fff;color:#d33;font:700 10px/1 var(--font);padding:4px 6px;cursor:pointer}
+.ev-vb:hover{background:#d33;color:#fff}
+.ev-v{padding:10px 18px 14px;border-bottom:1px solid var(--line);background:#fafbfc}
+.ev-v .yt{max-width:560px;margin:0 auto}
+.hlw{padding:16px 18px;border-bottom:1px solid var(--line)}
+.hlw .yt{max-width:860px;margin:0 auto}
+@media (max-width:700px){
+  .hlw{padding:12px}
+  .ev-v{padding:8px 10px 12px}
+}
+@media (max-width:700px){.ev-vb{padding:5px}.ev-vb span{display:none}.ev{gap:6px;padding:9px 10px;grid-template-columns:1fr 44px 1fr}}
+/* 試合タブ：スマホは3等分 */
+@media (max-width:700px){.mtabs{display:grid;grid-template-columns:repeat(3,1fr)}.mtabs a{padding:12px 2px}}
+/* ===== 相手のチームカラー ===== */
+.lp.opp .lp-ph{border-color:var(--opp)}
+.lp.opp .lp-ph em{background:var(--opp)}
+/* ===== 評価点 ===== */
+.lp-ph .lp-rt{position:absolute;top:-7px;right:-14px;min-width:30px;height:17px;font-size:10.5px;padding:0 4px;border:1.5px solid #fff;box-sizing:content-box;z-index:2;font-family:var(--en)}
+.sb .rt{flex:none}
+.cmp-legend .sn{display:none}
+@media (max-width:600px){.cmp-legend .sn{display:inline}.cmp-legend .fn{display:none}}
+/* 評価点は名前の下に（顔写真に重ねない） */
+.lp .rt.lp-rt,.lpm-field .lp .rt.lp-rt{position:static;margin-top:1px;min-width:28px;height:16px;font-size:10.5px;padding:0 4px;border:0;box-sizing:border-box;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+/* 評価点：顔写真の右上の外側（顔にかからない位置） */
+.lp .rt.lp-rt,.lpm-field .lp .rt.lp-rt{position:absolute;top:-9px;right:-27px;left:auto;margin:0;min-width:27px;height:16px;padding:0 3px;font-size:10px;border:1.5px solid #fff;box-sizing:content-box;box-shadow:none;z-index:2}
+.lp.rl .rt.lp-rt{right:auto;left:-27px}
+.lp.rl .lp-g{left:auto;right:-6px}
+/* 評価点：小さめの正方形 */
+.lp .rt.lp-rt,.lpm-field .lp .rt.lp-rt{top:-7px;right:-15px;width:21px;min-width:0;height:21px;padding:0;font-size:9.5px;letter-spacing:-.02em;border:1.5px solid #fff;border-radius:3px;box-sizing:border-box}
+.lp.rl .rt.lp-rt{right:auto;left:-15px}
+/* ===== ピッチのバッジ（FotMob風） ===== */
+.lp-ph .bd{position:absolute;z-index:2;display:flex;align-items:center;justify-content:center;box-sizing:border-box;font-style:normal}
+.lp-ph .rt.b-tr{top:-6px;right:-13px;left:auto;width:21px;min-width:0;height:21px;padding:0;font-size:9.5px;border:1.5px solid #fff;border-radius:3px;box-shadow:none}
+.lp-ph .b-br{right:-7px;bottom:-5px}
+.lp-ph .b-bl{left:-7px;bottom:-5px}
+.lp-ph .b-g,.lp-ph .b-a{height:18px;min-width:18px;padding:0 2px;border-radius:9px;background:#fff;color:var(--navy);gap:1px;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+.lp-ph .b-g svg,.lp-ph .b-a svg{width:13px;height:13px}
+.lp-ph .bd b{font-family:var(--en);font-weight:800;font-size:10px;line-height:1;padding-right:2px}
+.lp-ph .b-card{left:-11px;top:50%;width:9px;height:13px;margin-top:-7px;border-radius:2px;border:1px solid #fff;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+.lp-ph .b-card.y{background:#f5c518}
+.lp-ph .b-card.r{background:#d6303a}
+.lp-ph .b-off{top:-6px;left:-16px;height:16px;padding:0 4px 0 2px;border-radius:8px;background:#fff;color:#d6303a;font-family:var(--en);font-weight:800;font-size:10px;line-height:1;gap:1px;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+.lp-ph .b-off svg{width:10px;height:10px}
+.lp-nm b{font-family:var(--en);font-weight:800;margin-right:3px;opacity:.85}
+.lp.opp .lp-ph{border-color:var(--opp)}
+/* ゴール：ボールを得点数だけ重ねて並べる／アシスト：傾けたスパイク */
+.lp-ph .b-g{right:auto;left:calc(100% - 12px);bottom:-5px;height:auto;min-width:0;padding:0;background:none;box-shadow:none;border-radius:0;gap:0}
+.lp-ph .b-g img{width:17px;height:17px;display:block;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4))}
+.lp-ph .b-g img+img{margin-left:-8px}
+.lp-ph .b-a{left:-9px;bottom:-5px;height:19px;min-width:19px;padding:0;border-radius:10px;background:#fff;gap:0}
+.lp-ph .b-a i{display:grid;place-items:center;width:19px;height:19px}
+.lp-ph .b-a img{width:15px;height:15px;transform:rotate(-28deg);display:block}
+.lp-ph .b-a b{padding:0 4px 0 0;color:var(--navy)}
+/* ボールも白い丸の上に */
+.lp-ph .b-g img{width:19px;height:19px;padding:2px;box-sizing:border-box;background:#fff;border-radius:50%;filter:none;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+.lp-ph .b-g img+img{margin-left:-9px}
+/* 評価点：丸、数字は中央 */
+.lp-ph .rt.b-tr{width:23px;height:23px;border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;text-align:center;font-size:9.5px;letter-spacing:-.03em;top:-7px;right:-14px}
+.lp.rl .lp-ph .rt.b-tr{right:auto;left:-14px}
+.mh img.ico-ball,.mh-sc img.ico-ball{box-shadow:none}
+/* 評価点はいつも右上（端の選手でも左に回さない） */
+.lp.rl .lp-ph .rt.b-tr,.lp.rl .rt.lp-rt{left:auto;right:-14px}
+/* 試合結果：勝ち＝緑／負け＝赤／引き分け＝グレー */
+.mh-res{color:#fff}
+.mh-res.W{background:var(--w)}
+.mh-res.D{background:var(--d)}
+.mh-res.L{background:var(--l)}
+/* PK戦 */
+.ev.pk-row .m.pk-sc{font-family:var(--en);font-weight:800;font-size:15px;color:var(--navy)}
+.pk-ic.ng{color:var(--l)}
+.pk-ic.ng svg{width:18px;height:18px}
+/* 試合経過の区切り：ラベルの下にスコア（縦並び） */
+.ev-ph{flex-direction:column;gap:2px;padding:10px 12px}
+.ev-ph span{font-size:18px;line-height:1.1}
+/* 対戦成績：相手は同じなので名前とエンブレムは出さない */
+.h2h .mrow .t>.logo,.h2h .mrow .t b{display:none}
+.h2h .mrow .t small.mr-meta{margin-bottom:0}
+.mrow .t small.mr-meta .ha{flex:none;white-space:nowrap}
+/* 枠外シュートはPK失敗と同じ赤い× */
+.ev .ico.miss{color:var(--l)}
+.ev .ico.miss svg{width:18px;height:18px}
+/* 選手スタッツ（項目別ランキング） */
+.ps{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;padding:6px 18px 24px}
+.ps-c{background:var(--white);border:1px solid var(--line);min-width:0;display:flex;flex-direction:column}
+.ps-c h3 small{font-size:11px;color:var(--tx3);font-weight:700}
+.ps-r{display:grid;grid-template-columns:22px 34px minmax(0,1fr) auto;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--line);color:inherit}
+.ps-r.more{display:none}
+.ps-c.open .ps-r.more{display:grid}
+.ps-r.is-1{background:#f4f8fc}
+.ps-rk{font-family:var(--en);font-weight:800;font-size:15px;color:var(--tx3);text-align:center}
+.ps-r.is-1 .ps-rk{color:var(--blue)}
+.ps-r .face.ps-f{width:34px;height:34px;border-radius:50%;object-fit:cover;font-size:11px}
+.ps-nm{display:flex;flex-direction:column;min-width:0}
+.ps-nm b{font-size:14px;overflow-wrap:anywhere;line-height:1.3}
+.ps-nm small{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--tx3);font-weight:700;margin-top:2px}
+.ps-nm small .logo{width:14px;height:14px;object-fit:contain}
+.ps-v{font-family:var(--en);font-weight:800;font-size:20px;text-align:right}
+.ps-more{margin-top:auto;border:0;background:none;padding:10px;font:inherit;font-size:12px;font-weight:700;color:var(--blue);cursor:pointer}
+@media (max-width:700px){.ps{padding:6px 12px 20px;grid-template-columns:1fr}
+  .mtabs{grid-template-columns:repeat(4,1fr)}.mtabs a{font-size:12px;letter-spacing:.02em;white-space:normal;text-align:center}.mtabs a small{font-size:9px}}
+/* 得点バッジ：ボール1つ＋数字（アシストと同じ形） */
+.lp-ph .b-g{left:calc(100% - 12px);bottom:-5px;height:19px;min-width:19px;padding:0;border-radius:10px;background:#fff;gap:0;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+.lp-ph .b-g i{display:grid;place-items:center;width:19px;height:19px}
+.lp-ph .b-g img{width:15px;height:15px;padding:0;background:none;box-shadow:none;border-radius:0;filter:none;display:block}
+.lp-ph .b-g img+img{margin-left:0}
+.lp-ph .b-g b{padding:0 4px 0 0;color:var(--navy)}
+/* 写真がない選手の背番号を大きく */
+.lp-ph .face.num.ph{font-family:var(--en);font-weight:800;font-size:20px;line-height:1;letter-spacing:-.02em}
+.sb-ph .face.num.ph{font-family:var(--en);font-weight:800;font-size:18px}
+.ps-r .face.num.ph{font-family:var(--en);font-weight:800;font-size:14px}
+@media (max-width:700px){.lp-ph .face.num.ph{font-size:16px}}
+/* 試合一覧：結果／日程の切り替え、PKで行がずれないように */
+.mtog{display:grid;grid-template-columns:1fr 1fr;margin:0 0 16px;border:1px solid var(--navy)}
+.mtog button{border:0;background:var(--white);color:var(--navy);font:inherit;font-weight:700;font-size:15px;padding:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.mtog button small{font-family:var(--en);font-size:12px;color:var(--tx3)}
+.mtog button.on{background:var(--navy);color:#fff}
+.mtog button.on small{color:rgba(255,255,255,.7)}
+.mrow .s{position:relative;width:76px;text-align:center;display:flex;justify-content:center}
+.mrow .s .pk{position:absolute;left:0;right:0;top:100%;margin-top:3px;text-align:center;white-space:nowrap}
+@media (max-width:600px){.mrow .s{width:64px}}
+.mr-meta{align-items:center}
+.mh-cn .rb{align-items:center}
+.mh-cn .rb>span{margin:0;padding:0;border:0}
+.mh-cn .rb>span+span{font-size:12px;opacity:.85}
+.mh-cn .rb{margin:0;padding:0;border:0;align-items:center}
+.mh-goals .h li{flex-direction:row;justify-content:flex-end;text-align:right}
+.mh-goals li{flex-wrap:wrap;column-gap:6px;row-gap:0}
+/* 控え欄のゴール・アシスト */
+.sb-st{display:inline-flex;align-items:center;gap:2px;flex:none}
+.sb-st img,.sb-st .ico-ball{width:15px;height:15px;display:block}
+.sb-st.a img{transform:rotate(-28deg)}
+.sb-st b{font-family:var(--en);font-weight:800;font-size:12px;color:var(--navy)}
+.sb-ph .face.num.ph+em{display:none}
+/* 試合中の負傷マーク：白丸に赤の太いプラス */
+.injm{display:inline-grid;place-items:center;width:16px;height:16px;border-radius:50%;background:#fff;color:#d0102e;flex:none;vertical-align:-3px;margin-right:4px;box-shadow:0 0 0 1px rgba(0,0,0,.12)}
+.injm svg{width:12px;height:12px;display:block}
+.sb-nm .injm{margin-right:0}
+.lp-nm .injm{width:13px;height:13px;margin-right:3px;vertical-align:-2px}
+.lp-nm .injm svg{width:10px;height:10px}
+.sb-nm i.injm{min-width:0;width:16px;height:16px;color:#d0102e;letter-spacing:0;font-size:0}
+/* 試合の行：大会名がスコアに重ならないように */
+.mrow .t small.mr-meta{min-width:0;max-width:100%}
+.mrow .mr-comp{min-width:0;overflow-wrap:anywhere}
+@media (max-width:600px){.mrow .t small.mr-meta{flex-wrap:wrap;row-gap:2px}}

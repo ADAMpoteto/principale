@@ -1,0 +1,168 @@
+/* 選手・スタッフ一覧、選手ページ */
+
+.pcard{background:var(--white);border:1px solid var(--line);display:block;transition:transform .15s,box-shadow .15s}
+.pcard:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(28,40,51,.12)}
+.pcard .ph-wrap{position:relative;aspect-ratio:4/5;background:linear-gradient(160deg,#e9f1f7,#d4e3ee);overflow:hidden}
+.pcard .ph-wrap::after{content:"";position:absolute;right:-30px;top:0;bottom:0;width:70px;background:rgba(124,192,232,.35);transform:skewX(-18deg)}
+.pcard .ph-wrap .face{width:100%;height:100%;border-radius:0;position:relative;z-index:1}
+.pcard .ph-wrap .face.ph{font-family:var(--en);font-size:44px;color:rgba(28,40,51,.18);background:transparent}
+.pcard .no{position:absolute;left:12px;top:6px;font-family:var(--en);font-size:54px;font-weight:800;line-height:1;color:var(--navy);z-index:2;text-shadow:0 0 12px rgba(255,255,255,.6)}
+.pcard .pos{position:absolute;left:12px;bottom:10px;z-index:2;background:var(--navy);color:#fff;font-family:var(--en);font-weight:700;font-size:13px;letter-spacing:.08em;padding:1px 8px}
+.pcard .info{padding:10px 12px 12px;border-top:3px solid var(--navy)}
+.pcard .info b{display:block;font-size:15px;font-weight:700;overflow-wrap:anywhere}
+.pcard .info small{display:block;font-size:12px;color:var(--tx3)}
+.pcard.loan .info{border-top-color:var(--sky)}
+@media (max-width:600px){
+  .pcard .no{font-size:40px}
+}
+/* ---------- 選手ページ ---------- */
+.phero{background:var(--navy);color:#fff;position:relative;overflow:hidden}
+.phero::before{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 0 55%,rgba(124,192,232,.92) 55% 80%,var(--blue) 80% 82%,transparent 82%)}
+.phero-in{max-width:1200px;margin:0 auto;padding:30px 20px 0;position:relative;display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:20px;align-items:end;min-height:290px}
+.phero .bigno{font-family:var(--en);font-size:120px;font-weight:800;line-height:.8;color:var(--sky)}
+.phero h1{margin:14px 0 4px;font-size:34px;font-weight:900;line-height:1.2}
+.phero .pos{font-family:var(--en);font-size:18px;font-weight:700;letter-spacing:.14em;color:rgba(255,255,255,.75)}
+.phero .ovr{display:flex;gap:0;margin:20px 0 28px}
+.phero .ovr div{border-left:3px solid var(--sky);padding:0 22px 0 12px}
+.phero .ovr b{display:block;font-family:var(--en);font-size:40px;font-weight:800;line-height:1}
+.phero .ovr span{font-size:11px;color:rgba(255,255,255,.7);font-weight:700}
+.phero .photo{align-self:end;height:280px;display:flex;align-items:flex-end;justify-content:center}
+.phero .photo .face{width:240px;height:280px;border-radius:0;object-fit:cover;object-position:top}
+.phero .photo .face.ph{background:transparent;font-family:var(--en);font-size:90px;color:rgba(255,255,255,.18)}
+@media (max-width:700px){.phero-in{grid-template-columns:1fr 120px;min-height:0}.phero .bigno{font-size:80px}.phero h1{font-size:26px}.phero .photo{height:160px}.phero .photo .face{width:120px;height:160px}.phero .ovr b{font-size:32px}}
+.prof{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));background:var(--white);border:1px solid var(--line)}
+.prof div{padding:12px 18px;box-shadow:1px 0 0 var(--line),0 1px 0 var(--line)}
+.prof span{display:block;font-size:11px;font-weight:700;color:var(--tx3)}
+.prof b{font-weight:700}
+.pcard .ph-wrap .face.ph,.phero .photo .face.ph{font-size:0;color:transparent;background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20100%20125%22%3E%3Cg%20fill%3D%22%231c2833%22%20fill-opacity%3D%22.16%22%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2242%22%20r%3D%2221%22/%3E%3Cpath%20d%3D%22M8%20125c0-28%2018-46%2042-46s42%2018%2042%2046z%22/%3E%3C/g%3E%3C/svg%3E") center bottom/86% auto no-repeat}
+.phero .photo .face.ph{filter:invert(1);opacity:.5}
+.pcard .info b{display:flex;align-items:center}
+.phero .pos .flag{width:24px;height:16px;vertical-align:-2px}
+.mgr{display:flex;align-items:center;gap:28px;background:var(--white);border:1px solid var(--line);padding:22px}
+.mgr .face{width:120px;height:150px;border-radius:0;flex:none}
+.mgr .face.ph{font-size:0;background:#e9eef2 url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20100%20125%22%3E%3Cg%20fill%3D%22%231c2833%22%20fill-opacity%3D%22.16%22%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2242%22%20r%3D%2221%22/%3E%3Cpath%20d%3D%22M8%20125c0-28%2018-46%2042-46s42%2018%2042%2046z%22/%3E%3C/g%3E%3C/svg%3E") center bottom/86% auto no-repeat}
+.mgr span{font-family:var(--en);font-weight:700;font-style:italic;letter-spacing:.14em;color:var(--blue)}
+.mgr b{display:flex;align-items:center;font-size:26px;font-weight:900;margin:4px 0 10px}
+.mgr p{margin:0 0 14px;color:var(--tx2)}
+.pcard.staff .pos{background:var(--blue)}
+/* 透過の選手写真は背景なし */
+.phero .photo img.face,.pcard .ph-wrap img.face,.rk-top img.face,.nt img.face,.mgr img.face,.pl img.face{background:transparent}
+.phero .photo img.face{object-fit:contain;object-position:bottom}
+/* ===== 選手ページ：写真を大きく ===== */
+.phero-in{display:block;min-height:360px;padding-top:34px}
+.phero-in>div:first-child{position:relative;z-index:2;max-width:56%;padding-bottom:4px}
+.phero .photo{position:absolute;right:20px;bottom:0;top:16px;width:min(44%,380px);height:auto;display:flex;align-items:flex-end;justify-content:center;z-index:1}
+.phero .photo .face{width:100%;height:100%;border-radius:0;object-fit:contain;object-position:bottom}
+.phero .photo .face.ph{background-size:90% auto}
+@media (max-width:700px){
+  .phero-in{min-height:300px;padding:22px 16px 0}
+  .phero-in>div:first-child{max-width:58%}
+  .phero .photo{right:0;width:50%;top:24px}
+  .phero .bigno{font-size:68px}
+  .phero h1{font-size:24px;margin-top:10px}
+  .phero .pos{font-size:15px}
+  .phero .acad-tag{font-size:11px;padding:2px 8px}
+  .phero .ovr{margin:14px 0 20px}
+  .phero .ovr div{padding:0 14px 0 10px}
+  .phero .ovr b{font-size:30px}
+}
+/* 選手ページ写真：枠の高さが0になる不具合の修正 */
+.phero .photo{display:block;height:auto;align-self:stretch;justify-self:stretch}
+.phero .photo .face{position:absolute;left:0;top:0;right:0;bottom:0;width:100%;height:100%;max-width:none}
+/* ===== 選手ページ：ヒーローの余白をそろえる ===== */
+.phero-in{display:flex;align-items:center;min-height:380px;padding:40px 20px}
+.phero-in>div:first-child{max-width:calc(100% - 300px);padding:0}
+.phero .photo{top:40px;bottom:0;right:20px;width:272px;height:auto}
+.phero .bigno{line-height:.8}
+.phero h1{margin:16px 0 0}
+.phero .roma{margin:2px 0 10px;font-family:var(--en);font-size:16px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.6)}
+.phero .acad-tag{margin-top:14px}
+@media (max-width:700px){
+  .phero-in{min-height:300px;padding:28px 16px}
+  .phero-in>div:first-child{max-width:calc(100% - 196px)}
+  .phero .photo{top:28px;right:16px;width:218px}
+  .phero h1{margin-top:12px;font-size:24px}
+  .phero .roma{font-size:12px;letter-spacing:.12em;margin-bottom:8px}
+  .phero .acad-tag{margin-top:12px}
+}
+/* ===== 初記録 ===== */
+.firsts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.firsts>*{display:block;background:var(--white);border:1px solid var(--line);border-top:3px solid var(--blue);padding:14px 16px;color:inherit;text-decoration:none}
+.firsts>a:hover{border-color:var(--blue)}
+.firsts span{display:block;font-size:12px;font-weight:700;color:var(--tx3)}
+.firsts b{display:block;font-family:var(--en);font-size:22px;font-weight:800;margin:4px 0 2px}
+.firsts small{display:block;font-size:12px;color:var(--tx2);overflow-wrap:anywhere}
+.firsts .none{border-top-color:var(--line)}
+.firsts .none b{color:var(--tx3)}
+@media (max-width:700px){.firsts{gap:8px}.firsts>*{padding:12px 10px}.firsts b{font-size:17px}.firsts small{font-size:11px}}
+.prof.p4{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:700px){
+  .prof.p4{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+.prof.p4{grid-template-columns:repeat(var(--n,4),minmax(0,1fr))}
+@media (max-width:700px){.prof.p4{grid-template-columns:repeat(2,minmax(0,1fr))}.prof.p4>div:last-child:nth-child(odd){grid-column:1/-1}}
+.phero .role-en{font-family:var(--en);font-style:italic;font-weight:800;font-size:44px;line-height:.9;color:var(--sky);letter-spacing:.02em}
+@media (max-width:700px){.phero .role-en{font-size:30px}}
+.pr-h{display:flex;align-items:center;gap:8px;padding:12px 2px;border-bottom:2px solid var(--navy)}
+.pr-h b{font-size:14px;min-width:0;overflow-wrap:anywhere}
+.pr-h small{margin-left:auto;font-size:11px;font-weight:700;color:var(--tx3);white-space:nowrap}
+.pr-row{display:flex;align-items:center;gap:10px;padding:8px 2px;border-bottom:1px solid var(--line);color:inherit}
+.pr-no{flex:none;width:24px;text-align:center;font-family:var(--en);font-weight:800;font-size:15px;color:var(--tx3)}
+.pr-nm{flex:1;min-width:0;display:flex;flex-direction:column}
+.pr-nm b{font-size:14px;overflow-wrap:anywhere}
+.pr-nm small{font-size:11px;color:var(--tx3)}
+.pr-best{flex:none;font-family:var(--en);font-weight:800;font-size:10px;letter-spacing:.1em;color:#d18a12;border:1px solid #d18a12;padding:1px 5px}
+.pr-row .rt{flex:none;min-width:38px;height:24px;font-size:13px}
+@media (max-width:700px){
+  .pr-col+.pr-col{margin-top:10px}
+}
+.inj-st{display:inline-flex;align-items:center;gap:6px;margin-top:10px;background:#c8102e;color:#fff;font-size:13px;font-weight:700;padding:3px 10px;flex-wrap:wrap}
+.inj-st small{font-weight:500;opacity:.9}
+.inj-dl{display:grid;grid-template-columns:7em 1fr;border-top:1px solid var(--line);margin:18px 0}
+.inj-dl dt,.inj-dl dd{margin:0;padding:12px 10px;border-bottom:1px solid var(--line)}
+.inj-dl dt{background:#f4f6f8;font-weight:700;font-size:13px}
+.inj-ab{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;padding:0 18px 20px}
+.inj-ab .face{width:40px;height:40px;border-radius:50%;flex:none}
+.inj-ab div{display:flex;flex-direction:column;min-width:0}
+.inj-ab b{font-size:14px}
+.inj-ab small{font-size:12px;color:var(--tx3);margin-top:2px}
+/* ===== スマホの見た目の調整 ===== */
+.phero .pos .ph-st{display:inline-block;white-space:nowrap;margin-left:10px;font-size:.8em;padding:1px 8px;border:1px solid rgba(255,255,255,.5);letter-spacing:.06em}
+/* 選手ページの出場試合 */
+.pmr{display:grid;grid-template-columns:96px minmax(0,1fr);align-items:center;gap:16px;padding:14px 16px;background:var(--white);border-bottom:1px solid var(--line);color:inherit}
+.pmr:hover .pmr-o{color:var(--blue)}
+.pmr-d{display:flex;flex-direction:column;gap:3px}
+.pmr-d>b{font-family:var(--en);font-weight:800;font-size:22px;line-height:1}
+.pmr-d .rb{font-size:11px;color:var(--tx3);font-weight:700;line-height:1.3}
+.pmr-m{display:flex;align-items:center;gap:12px;min-width:0}
+.pmr-m>div{display:grid;grid-template-columns:minmax(0,1fr) auto auto;column-gap:10px;row-gap:4px;align-items:start;min-width:0;flex:1}
+.pmr-o{font-size:15px;line-height:1.3;overflow-wrap:anywhere}
+.pmr-s{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.pmr-r{display:flex;justify-content:flex-end;min-width:44px}
+.pmr-r>*{margin:0}
+.pmr-o{align-self:center}
+.pmr-s .res{min-width:auto;height:22px;font-size:14px;padding:0 7px}
+.pmr-s small{font-size:10px;color:var(--tx3);font-weight:700;white-space:nowrap}
+.pmr-x{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px 10px;font-size:12px;color:var(--tx3);font-weight:700}
+.pmr-x i{font-style:normal;font-family:var(--en);color:var(--blue)}
+.pmr-x span{white-space:nowrap}
+/* 選手ページ：カテゴリー別スタッツ */
+.pst{columns:3 300px;column-gap:16px;margin-top:16px}
+.pst-c{background:var(--white);border:1px solid var(--line);break-inside:avoid;margin-bottom:16px}
+.pst-c h3 b{font-family:var(--en);font-size:17px;letter-spacing:.04em;color:var(--tx)}
+.pst-r{display:grid;grid-template-columns:1fr auto;grid-template-areas:"k v" "k s";align-items:center;column-gap:12px;padding:9px 16px;border-top:1px solid var(--line)}
+.pst-c h3+.pst-r{border-top:0}
+.pst-r span{grid-area:k;font-size:13px;font-weight:700;color:var(--tx2)}
+.pst-r b{grid-area:v;font-family:var(--en);font-size:21px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.pst-r b small{font-family:var(--font);font-size:11px;font-weight:700;color:var(--tx3);margin-left:2px}
+.pst-r em{grid-area:s;font-style:normal;font-size:11px;line-height:1.3;color:var(--tx3);text-align:right;white-space:nowrap}
+.pst-r em:empty{display:none}
+.pst-r.rate{grid-template-areas:"k v" "k s" "bar bar"}
+.pst-r.rate i{grid-area:bar;display:block;height:4px;background:var(--bg);margin-top:6px;position:relative}
+.pst-r.rate i::before{content:"";position:absolute;inset:0 auto 0 0;width:var(--pw);background:var(--blue)}
+@media (max-width:700px){.pst{columns:1;margin-top:12px}.pst-c{margin-bottom:12px}}
+.pmr-r .rt{font-size:14px;min-width:40px}
+/* 選手・スタッフ一覧：ポジションへのジャンプ */
+.sq-jump{position:sticky;top:76px;z-index:6;display:flex;justify-content:center;gap:0;background:var(--white);border-bottom:1px solid var(--line);overflow:hidden}
+.sq-jump button:hover{color:var(--navy);border-bottom-color:var(--sky)}
+@media (max-width:980px){.sq-jump{top:64px}}
