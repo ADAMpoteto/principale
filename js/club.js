@@ -59,7 +59,7 @@ function vHistory() {
       o.cap ? ["キャプテン", `<a href="#/player/${pslug(o.cap)}">${esc(o.cap)}</a>`] : null,
       o.vcap.length ? ["副キャプテン", o.vcap.map(n => `<a href="#/player/${pslug(n)}">${esc(n)}</a>`).join("")] : null].filter(Boolean);
     return `<li class="hx${o.champ ? " champ" : ""}${o.pro ? " pro" : ""}${o.cur ? " cur" : ""}">
-      <div class="hx-se">${esc(o.se)}</div><i class="hx-dot"></i>
+      <div class="hx-se">${esc(String(o.se).replace(/^\d\d(\d\d-)/, "$1"))}</div><i class="hx-dot"></i>
       <div class="hx-card"><div class="hx-head"><b class="hx-t">${o.t || "-"}<small>部</small></b><div class="hx-lgw"><span class="hx-lg">${compLogo(o.lg, "hx-cl")}${esc(o.lg)}</span>${res(o)}</div></div>
         ${rows.length ? `<dl class="hx-dl">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>` : ""}
         ${o.memo ? `<p class="hx-memo">${esc(o.memo)}</p>` : ""}</div></li>`; };
