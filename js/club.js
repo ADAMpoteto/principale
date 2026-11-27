@@ -56,8 +56,8 @@ function vHistory() {
     const line = x => `<span class="hx-run${x.cls ? " " + x.cls : ""}">${compLogo(x.comp, "hx-cl")}<b>${esc(x.comp)}</b><em>${x.cls === "win" ? ICON.cup : ""}${esc(x.txt)}</em></span>`;
     const cups = R.filter(x => !x.euro), eu = R.filter(x => x.euro);
     const rows = [cups.length ? ["カップ戦", cups.map(line).join("")] : null, eu.length ? ["ヨーロッパ", eu.map(line).join("")] : null,
-      o.cap ? ["主将", `<a href="#/player/${pslug(o.cap)}">${esc(o.cap)}</a>`] : null,
-      o.vcap.length ? ["副主将", o.vcap.map(n => `<a href="#/player/${pslug(n)}">${esc(n)}</a>`).join("")] : null].filter(Boolean);
+      o.cap ? ["キャプテン", `<a href="#/player/${pslug(o.cap)}">${esc(o.cap)}</a>`] : null,
+      o.vcap.length ? ["副キャプテン", o.vcap.map(n => `<a href="#/player/${pslug(n)}">${esc(n)}</a>`).join("")] : null].filter(Boolean);
     return `<li class="hx${o.champ ? " champ" : ""}${o.pro ? " pro" : ""}${o.cur ? " cur" : ""}">
       <div class="hx-se">${esc(o.se)}</div><i class="hx-dot"></i>
       <div class="hx-card"><div class="hx-head"><b class="hx-t">${o.t || "-"}<small>部</small></b><div class="hx-lgw"><span class="hx-lg">${compLogo(o.lg, "hx-cl")}${esc(o.lg)}</span>${res(o)}</div></div>

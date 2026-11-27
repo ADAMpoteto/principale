@@ -1,5 +1,9 @@
 /* 選手・スタッフ一覧、選手ページ、スタッフページ */
 
+/* キャプテン・副キャプテン（選手推移シートの役職。シーズン未選択なら最新シーズン） */
+function capRole(name, se) { se = se || D.seasonList[0]; const x = (D.capRows || []).find(r => r.se === se && same(r.name, name)); return !x ? "" : /副/.test(x.r) ? "副キャプテン" : "キャプテン"; }
+const capTag = (name, se, cls) => { const r = capRole(name, se); return r ? `<span class="${cls} ${r === "キャプテン" ? "c1" : "c2"}">${r}</span>` : ""; };
+
 const POSCAT = p => /GK/.test(p) ? "GK" : /(CB|LB|RB|WB|SW)/.test(p) ? "DF" : /(ST|CF|LW|RW|LF|RF|LS|RS)/.test(p) ? "FW" : p ? "MF" : "他";
 function vSquad() {
   const s = ST.season, P = playerAgg(ofSeason(s)), byN = {}; P.forEach(p => byN[nameKey(p.name)] = p);
@@ -12,7 +16,7 @@ function vSquad() {
   const card = (p, isLoan) => { const a = byN[nameKey(p.name)] || {}, lc = isLoan ? loanClub(p.name) : "", ls = isLoan ? D.loans.filter(x => same(x.name, p.name) && (!s || x.season === s)).pop() : null;
     return `<a class="pcard${isLoan ? " loan" : ""}" href="#/player/${pslug(p.name)}">
       <div class="ph-wrap">${p.no != null && !isLoan ? `<span class="no">${p.no}</span>` : ""}${isYouth(p) ? `<span class="acad">ACADEMY</span>` : ""}${!isLoan && injAt(p.name) ? `<span class="injb">${ICON_INJ}負傷中</span>` : ""}${face(p.name)}<span class="pos">${esc(p.pos || "")}</span></div>
-      <div class="info"><b>${flag(p.nat)}${esc(p.name)}</b><small>${isLoan ? (lc ? `${esc(lc)}${leagueOf(lc) ? `（${esc(leagueOf(lc))}）` : ""}` : "期限付き移籍中") + (ls ? `<br>${ls.apps ?? 0}試合 ${ls.g ?? 0}得点 ${ls.a ?? 0}アシスト` : "")
+      <div class="info"><b>${flag(p.nat)}${esc(p.name)}</b>${isLoan ? "" : capTag(p.name, s, "cap-tag")}<small>${isLoan ? (lc ? `${esc(lc)}${leagueOf(lc) ? `（${esc(leagueOf(lc))}）` : ""}` : "期限付き移籍中") + (ls ? `<br>${ls.apps ?? 0}試合 ${ls.g ?? 0}得点 ${ls.a ?? 0}アシスト` : "")
         : a.apps ? (/GK/.test(p.pos || a.pos || "") ? `${a.apps}試合 クリーンシート${a.cs}` : `${a.apps}試合 ${a.g}得点 ${a.a}アシスト`) : "出場なし"}</small></div></a>`; };
   const out = D.players.filter(p => /退団/.test(p.status));
   const jl = [["GK", "GK"], ["DF", "DF"], ["MF", "MF"], ["FW", "FW"], ["他", "その他"]].filter(([k]) => G[k].length).map(([k, t]) => [`sq-${k}`, t]);
@@ -52,7 +56,7 @@ function vPlayer(name) {
   const tr = D.trans.filter(t => same(t.name, name));
   return `<section class="phero"><div class="phero-in"><div>
       ${p.no != null ? `<div class="bigno">${p.no}</div>` : ""}<h1>${esc(name)}</h1>${p.roma ? `<p class="roma">${esc(p.roma)}</p>` : ""}<div class="pos">${flag(p.nat)}${esc(p.pos || "")}${onLoan(p) ? `<span class="ph-st">期限付き移籍中</span>` : /退団/.test(p.status || "") ? `<span class="ph-st">退団</span>` : ""}</div>
-      ${isYouth(p) ? `<span class="acad-tag">ACADEMY</span>` : ""}
+      ${capTag(name, ST.season, "cap-tag2")}${isYouth(p) ? `<span class="acad-tag">ACADEMY</span>` : ""}
     </div><div class="photo">${face(name)}</div></div></section>
   <div class="wrap">
     ${(ij => ij ? `<div class="pinj"><div class="pinj-h"><i>${ICON_INJ}</i><div><b>負傷離脱中</b>${ij.what ? `<span>${esc(ij.what)}</span>` : ""}</div></div>
