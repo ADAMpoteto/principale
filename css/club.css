@@ -161,3 +161,8 @@
 .hx-run.win em{color:#b8860b}
 .hx-run em svg{width:12px;height:12px}
 .hx-dl dd{gap:6px}
+/* ヒストリー：シーズンは「26-27」表記、左に寄せる */
+.hx{grid-template-columns:62px 30px 1fr}
+.hx-se{text-align:left;padding-right:0}
+.hxl::before{left:76px}
+@media (max-width:700px){.hx{grid-template-columns:42px 24px 1fr}.hxl::before{left:53px}}
