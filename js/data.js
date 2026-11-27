@@ -47,7 +47,7 @@ async function loadAll() {
   D.players = got.pl.map(o => ({
     name: F(o, "名前"), roma: F(o, "ローマ字"), pref: F(o, "出身地"), no: num(F(o, "背番号")), pos: F(o, "ポジション").toUpperCase(), nat: F(o, "国籍"), birth: pDate(F(o, "生年月日")),
     foot: F(o, "利き足"), height: num(F(o, "身長")), weight: num(F(o, "体重")), ovr: num(F(o, "総合値")), pot: num(F(o, "ポテンシャル")), value: num(F(o, "市場価値")),
-    joined: F(o, "加入"), origin: F(o, "出身"), schools: [["小学", F(o, "小学"), 6, 6], ["中学", F(o, "中学"), 12, 3], ["高校", F(o, "高校"), 15, 3]], status: F(o, "在籍") || "在籍", photo: F(o, "写真"), memo: F(o, "メモ"), cap: F(o, "主将")
+    joined: F(o, "加入"), origin: F(o, "出身"), schools: [["小学", F(o, "小学"), 6, 6], ["中学", F(o, "中学"), 12, 3], ["高校", F(o, "高校"), 15, 3]], status: F(o, "在籍") || "在籍", photo: F(o, "写真"), memo: F(o, "メモ")
   })).filter(p => p.name);
   /* 役職が入っている行はスタッフ */
   const roleOf = {}; got.pl.forEach(o => { const n = F(o, "名前"), r = F(o, "役職"); if (n && r) roleOf[nameKey(n)] = r; });
@@ -185,14 +185,17 @@ async function loadAll() {
 
   /* リーグ順位は自動（シーズンの「リーグ」の順位表から） */
   /* シーズンの情報はすべて自動（シーズンシートは使わない）
-     リーグ：その季のリーグ戦の大会／順位：順位表／タイトル：リーグ戦を全部終えて1位、カップ戦は決勝で勝利／主将：選手シートの「主将」列 */
-  const capOf = se => (D.players.find(p => String(p.cap || "").split(/[、,，\s]+/).includes(se)) || {}).name || "";
+     リーグ：その季のリーグ戦の大会／順位：順位表／タイトル：リーグ戦を全部終えて1位、カップ戦は決勝で勝利／主将・副主将：選手推移シートの「役職」列 */
+  /* 主将・副主将は選手推移シートの「役職」列（シーズンごと） */
+  const capRows = got.gr.map(o => ({ se: F(o, "シーズン"), name: F(o, "名前"), r: F(o, "役職") })).filter(x => x.se && x.name && x.r);
+  const capOf = se => (capRows.find(x => x.se === se && /^(主将|キャプテン)$/.test(x.r)) || {}).name || "";
+  const vcapOf = se => capRows.filter(x => x.se === se && /^副/.test(x.r)).map(x => x.name);
   D.seasons = [...new Set(D.matches.map(m => m.season).filter(Boolean))].sort().map(se => {
     const lg = (D.matches.find(m => m.season === se && tier(m.comp)) || {}).comp || "", L = D.matches.filter(m => m.season === se && m.comp === lg);
     const r = D.table.find(t => t.season === se && t.comp === lg && isMe(t.club)), titles = [];
     if (L.length && L.every(m => m.played) && r && r.rank === 1) titles.push(lg);
     D.matches.filter(m => m.season === se && m.played && !tier(m.comp) && /決勝/.test(m.round || "") && !/準/.test(m.round || "") && (m.res === "W" || (m.pk && m.pk.a > m.pk.b))).forEach(m => titles.push(m.comp));
-    return { season: se, league: lg, rank: r ? r.rank : null, titles: titles.join("、"), cap: capOf(se), fa: "", comment: "" };
+    return { season: se, league: lg, rank: r ? r.rank : null, titles: titles.join("、"), cap: capOf(se), vcap: vcapOf(se), fa: "", comment: "" };
   });
   /* 選手の推移シート：レンタル先が入っている行は、レンタル先での成績 */
   D.loans = got.gr.map(o => ({ season: F(o, "シーズン"), date: pDate(F(o, "日付")), name: F(o, "名前"), club: F(o, "レンタル先"), apps: num(F(o, "出場")), g: num(F(o, "得点")),
