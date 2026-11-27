@@ -166,3 +166,7 @@
 .hx-se{text-align:left;padding-right:0}
 .hxl::before{left:76px}
 @media (max-width:700px){.hx{grid-template-columns:42px 24px 1fr}.hxl::before{left:53px}}
+/* ヒストリー：項目名（副キャプテンなど）は改行しない */
+.hx-dl{grid-template-columns:max-content 1fr}
+.hx-dl dt{white-space:nowrap}
+@media (max-width:700px){.hx-dl{grid-template-columns:max-content 1fr}}
