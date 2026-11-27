@@ -22,6 +22,26 @@ function titleBoard(S, tc) {
     ${Object.keys(cups).length ? `<div class="tb-cups">${Object.keys(cups).sort((a, b) => cups[b].length - cups[a].length).map(t => `<div class="tb">${head(t, cups[t].length, "CUP")}
       <div class="tl-s">${cups[t].map(x => `<span>${esc(x)}</span>`).join("")}</div></div>`).join("")}</div>` : ""}</div>`;
 }
+/* シーズンごとのカップ戦・ヨーロッパの大会の成績（試合シートから自動）
+   最後の試合で負け → 〇〇敗退／勝って次の試合が決まっている → 〇〇進出／決勝で勝ち → 優勝 */
+const CUP_ORDER = ["FAカップ", "EFLカップ", "EFLトロフィー", "コミュニティ・シールド"];
+const isEuro = c => /UEFA|ヨーロッパ|チャンピオンズ|カンファレンス/.test(c || "");
+function compRuns(se) {
+  const M = D.matches.filter(m => m.season === se && m.comp && !tier(m.comp) && !/節/.test(m.round || ""));
+  const comps = [...new Set(M.map(m => m.comp))];
+  return comps.map(c => {
+    const L = M.filter(m => m.comp === c).sort((a, b) => a.date - b.date), P = L.filter(m => m.played), last = P[P.length - 1], next = L.find(m => !m.played);
+    const won = m => m.res === "W" || (m.pk && m.pk.a > m.pk.b), fin = m => /決勝/.test(m.round || "") && !/準/.test(m.round || "");
+    let txt, cls = "";
+    if (!last) txt = next ? `${next.round || ""}から出場` : "";
+    else if (fin(last) && won(last)) { txt = "優勝"; cls = "win"; }
+    else if (next) txt = `${next.round || "次ラウンド"}進出`;
+    else if (/グループ|リーグフェーズ|リーグステージ/.test(last.round || "")) txt = se === D.seasonList[0] ? `${last.round}` : `${last.round}敗退`;
+    else if (!won(last)) txt = `${last.round || ""}敗退`;
+    else txt = `${last.round || ""}突破`;
+    return { comp: c, txt, cls, euro: isEuro(c), n: P.length, w: P.filter(won).length };
+  }).filter(x => x.txt).sort((a, b) => (CUP_ORDER.indexOf(a.comp) + 1 || 99) - (CUP_ORDER.indexOf(b.comp) + 1 || 99));
+}
 function vHistory() {
   const S = historySeasons(), first = D.conf["最初のシーズン"] || "";
   if (!S.length) return band("HISTORY", "ヒストリー") + `<div class="wrap">${empty("シーズンシートにリーグを入れると、ここに歩みが表示されます。")}</div>`;
@@ -29,13 +49,17 @@ function vHistory() {
   const tc = {}; S.forEach(o => o.titles.forEach(t => (tc[t] = tc[t] || []).push(o.se)));
   const nL = S.reduce((a, o) => a + o.titles.filter(t => tier(t)).length, 0), nC = S.reduce((a, o) => a + o.titles.filter(t => !tier(t)).length, 0);
   const res = o => o.champ ? `<span class="hx-r win">${ICON.cup}リーグ優勝</span>` : o.cur ? `<span class="hx-r now">シーズン中</span>` : o.rank ? `<span class="hx-r">${o.rank}位</span>` : "";
-  const node = o => { const cups = o.titles.filter(t => t !== o.lg);
-    const rows = [cups.length ? ["カップ戦", cups.map(t => `<span class="hx-cup">${ICON.cup}${esc(t)}</span>`).join("")] : null,
-      o.fa ? ["FAカップ", esc(o.fa) + (/優勝/.test(o.fa) ? "" : "進出")] : null,
+  const node = o => { const R = compRuns(o.se), got = new Set(R.map(x => x.comp));
+    /* シートの「獲得タイトル」「FAカップ」にしかないもの（試合が入っていない大会）も出す */
+    o.titles.filter(t => t !== o.lg && !got.has(t)).forEach(t => R.push({ comp: t, txt: "優勝", cls: "win", euro: isEuro(t) }));
+    if (o.fa && !got.has("FAカップ")) R.push({ comp: "FAカップ", txt: esc(o.fa) + (/優勝|進出|敗退/.test(o.fa) ? "" : "進出"), cls: /優勝/.test(o.fa) ? "win" : "" });
+    const line = x => `<span class="hx-run${x.cls ? " " + x.cls : ""}">${compLogo(x.comp, "hx-cl")}<b>${esc(x.comp)}</b><em>${x.cls === "win" ? ICON.cup : ""}${esc(x.txt)}</em></span>`;
+    const cups = R.filter(x => !x.euro), eu = R.filter(x => x.euro);
+    const rows = [cups.length ? ["カップ戦", cups.map(line).join("")] : null, eu.length ? ["ヨーロッパ", eu.map(line).join("")] : null,
       o.cap ? ["主将", `<a href="#/player/${pslug(o.cap)}">${esc(o.cap)}</a>`] : null].filter(Boolean);
     return `<li class="hx${o.champ ? " champ" : ""}${o.pro ? " pro" : ""}${o.cur ? " cur" : ""}">
       <div class="hx-se">${esc(o.se)}</div><i class="hx-dot"></i>
-      <div class="hx-card"><div class="hx-head"><b class="hx-t">${o.t || "-"}<small>部</small></b><div class="hx-lgw"><span class="hx-lg">${esc(o.lg)}</span>${res(o)}</div></div>
+      <div class="hx-card"><div class="hx-head"><b class="hx-t">${o.t || "-"}<small>部</small></b><div class="hx-lgw"><span class="hx-lg">${compLogo(o.lg, "hx-cl")}${esc(o.lg)}</span>${res(o)}</div></div>
         ${o.pro ? `<p class="hx-pro">${oldName() ? `${esc(oldName())}から${esc(clubName())}へ。新体制で始動` : "EFL入り・プロクラブに"}</p>` : ""}
         ${rows.length ? `<dl class="hx-dl">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>` : ""}
         ${o.memo ? `<p class="hx-memo">${esc(o.memo)}</p>` : ""}</div></li>`; };
