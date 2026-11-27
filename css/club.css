@@ -152,3 +152,12 @@
 .at-c{display:inline-flex;align-items:center;gap:8px;font-weight:700}
 .at-c .logo.at-cl,.at-c .at-cl{width:22px;height:22px;object-fit:contain;flex:none}
 .at-c .logo.ph{font-size:8px}
+/* ヒストリー：カップ戦・ヨーロッパの成績 */
+.hx-lg{display:inline-flex;align-items:center;gap:6px}
+.hx-cl{height:20px;width:auto;flex:none}
+.hx-run{display:flex;align-items:center;gap:8px;min-width:0}
+.hx-run b{font-weight:700;color:var(--tx2);font-size:12px}
+.hx-run em{font-style:normal;font-weight:700;margin-left:auto;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.hx-run.win em{color:#b8860b}
+.hx-run em svg{width:12px;height:12px}
+.hx-dl dd{gap:6px}
