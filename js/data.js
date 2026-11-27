@@ -187,7 +187,7 @@ async function loadAll() {
   /* シーズンの情報はすべて自動（シーズンシートは使わない）
      リーグ：その季のリーグ戦の大会／順位：順位表／タイトル：リーグ戦を全部終えて1位、カップ戦は決勝で勝利／主将・副主将：選手推移シートの「役職」列 */
   /* 主将・副主将は選手推移シートの「役職」列（シーズンごと） */
-  const capRows = got.gr.map(o => ({ se: F(o, "シーズン"), name: F(o, "名前"), r: F(o, "役職") })).filter(x => x.se && x.name && x.r);
+  const capRows = D.capRows = got.gr.map(o => ({ se: F(o, "シーズン"), name: F(o, "名前"), r: F(o, "役職") })).filter(x => x.se && x.name && x.r);
   const capOf = se => (capRows.find(x => x.se === se && /^(主将|キャプテン)$/.test(x.r)) || {}).name || "";
   const vcapOf = se => capRows.filter(x => x.se === se && /^副/.test(x.r)).map(x => x.name);
   D.seasons = [...new Set(D.matches.map(m => m.season).filter(Boolean))].sort().map(se => {

@@ -184,3 +184,8 @@
   .pinj dl{border-left:0;border-top:1px solid var(--line)}
   .pinj dl>div{flex:1 1 0;padding:10px 14px}
 }
+/* キャプテン・副キャプテン */
+.cap-tag{display:inline-block;margin-top:5px;font-size:11px;font-weight:700;line-height:1;padding:3px 7px;border:1px solid var(--navy);color:var(--navy);background:#fff}
+.cap-tag.c1{background:var(--navy);color:#fff}
+.cap-tag2{display:inline-block;margin:10px 8px 0 0;font-size:13px;font-weight:700;letter-spacing:.06em;padding:3px 10px;border:1px solid #fff;color:#fff}
+.cap-tag2.c1{background:#fff;color:var(--navy)}
